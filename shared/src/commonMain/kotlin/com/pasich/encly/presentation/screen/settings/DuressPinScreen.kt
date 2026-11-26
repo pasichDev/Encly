@@ -84,6 +84,7 @@ fun DuressPinScreen(
     val flowActions = remember(state, securityViewModel) {
         PinFlowActions(
             verify = securityViewModel::verifyCurrentPin,
+            keyStoreProblem = securityViewModel::keyStoreProblem,
             lockoutMillis = securityViewModel::pinLockoutRemainingMillis,
             save = { pin -> securityViewModel.setDuressPin(pin) { result -> state.onDuressPinResult(result) } },
             close = { navController.popBack() },

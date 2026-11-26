@@ -2,6 +2,7 @@ package com.pasich.encly.presentation.viewmodel
 
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.lock_wrong_pin
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
@@ -76,7 +77,7 @@ class ReauthPassphraseTest {
 
     @Test
     fun aWrongPassphraseIsReportedAndWiped() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         val vm = viewModel(withPolicy = true)
         vm.start(BackupAction.IMPORT)
         val typed = FakePassphrasePolicy.GOOD.toCharArray()
@@ -94,9 +95,9 @@ class ReauthPassphraseTest {
     @Test
     fun aSecondPassphraseWhileOneIsBeingCheckedIsWipedAndNeverChecked() {
         val release = java.util.concurrent.CountDownLatch(1)
-        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
             release.await(5, java.util.concurrent.TimeUnit.SECONDS)
-            false
+            PinCheck.WRONG
         }
         val vm = viewModel(withPolicy = true)
         vm.start(BackupAction.IMPORT)
@@ -108,15 +109,15 @@ class ReauthPassphraseTest {
         waitUntilError(vm)
 
         assertArrayEquals(CharArray(second.size), second)
-        verify(security, times(1)).verifyPin(anyCharArray())
+        verify(security, times(1)).verifyPinResult(anyCharArray())
     }
 
     @Test
     fun aSecondPinWhileOneIsBeingCheckedIsWipedAndNeverChecked() {
         val release = java.util.concurrent.CountDownLatch(1)
-        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
             release.await(5, java.util.concurrent.TimeUnit.SECONDS)
-            false
+            PinCheck.WRONG
         }
         val vm = viewModel(withPolicy = false)
         vm.start(BackupAction.IMPORT)
@@ -128,12 +129,12 @@ class ReauthPassphraseTest {
         waitUntilError(vm)
 
         assertArrayEquals(CharArray(second.size), second)
-        verify(security, times(1)).verifyPin(anyCharArray())
+        verify(security, times(1)).verifyPinResult(anyCharArray())
     }
 
     @Test
     fun anEditTakesTheLastErrorAway() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         val vm = viewModel(withPolicy = true)
         vm.start(BackupAction.IMPORT)
         vm.reauthFlow.submitPin(FakePassphrasePolicy.GOOD.toCharArray())

@@ -77,6 +77,7 @@ fun WipePinScreen(
     val flowActions = remember(state, securityViewModel) {
         PinFlowActions(
             verify = securityViewModel::verifyCurrentPin,
+            keyStoreProblem = securityViewModel::keyStoreProblem,
             lockoutMillis = securityViewModel::pinLockoutRemainingMillis,
             save = { pin -> securityViewModel.setWipePin(pin) { result -> state.onWipePinResult(result) } },
             close = { navController.popBack() },

@@ -126,4 +126,62 @@ class StandardNotesStreamingTest {
         assertEquals(1, parsed.notes.size)
         assertEquals(10, parsed.skips.empty)
     }
+
+    @Test
+    fun aTagTitleOfMegabytesReferencedEndlesslyByOneNoteIsReadQuicklyAndCut() {
+        val hostile = "T".repeat(3 * 1024 * 1024)
+        val refs = """{"uuid":"n1","content_type":"Note"}""" // 35 bytes
+        val json = """{"version":"004","items":[${note(1)},""" +
+            """{"uuid":"t","content_type":"Tag","content":{"title":"$hostile","references":[""" +
+            List(150_000) { refs }.joinToString(",") + """]}}]}"""
+        assertTrue("fits the container limit", json.length < ImportLimits.MAX_CONTAINER_BYTES)
+
+        val started = System.nanoTime()
+        val parsed = parseBackup(json)
+        val millis = (System.nanoTime() - started) / 1_000_000
+
+        assertTrue("took $millis ms", millis < 5_000)
+        assertEquals(1, parsed.notes.single().tags.size)
+        assertEquals(StandardNotesParser.MAX_TAG_TITLE, parsed.notes.single().tags.single().length)
+    }
+
+    @Test
+    fun aNoteKeepsNoMoreTagsThanTheLimitAndTheSameTagCountsOnce() {
+        val tags = (1..300).map { tag("tag%03d".format(it), "n1") } + tag("tag001", "n1", "n1")
+        val parsed = parseBackup(backup(listOf(note(1)) + tags))
+
+        val kept = parsed.notes.single().tags
+        assertEquals(StandardNotesParser.MAX_TAGS_PER_NOTE, kept.size)
+        assertEquals(kept.sortedBy { it.lowercase() }, kept)
+        assertEquals(kept.distinct(), kept)
+    }
+
+    @Test
+    fun tagsAreStillSortedWithoutRegardToCase() {
+        val parsed = parseBackup(backup(listOf(note(1), tag("beta", "n1"), tag("Alpha", "n1"), tag("gamma", "n1"))))
+
+        assertEquals(listOf("Alpha", "beta", "gamma"), parsed.notes.single().tags)
+    }
+
+    @Test
+    fun aReadThatIsCancelledStopsBetweenItems() {
+        var checks = 0
+        val cancelled = assertThrows(IllegalStateException::class.java) {
+            StandardNotesParser.parse(listOf(entry(name, backup((1..50).map { note(it) }))), ImportLimits()) {
+                if (++checks > 10) throw IllegalStateException("cancelled")
+            }
+        }
+
+        assertEquals("cancelled", cancelled.message)
+        assertTrue(checks in 11..60)
+    }
+
+    @Test
+    fun aFileOfEndlessEmptyItemsKeepsNothingAndSaysHowManyWereSkipped() {
+        val blank = """{"uuid":"b","content_type":"Note","content":{"title":"","text":""}}"""
+        val parsed = parseBackup(backup(List(30_000) { blank } + note(1)), ImportLimits(maxNotes = 2))
+
+        assertEquals(1, parsed.notes.size)
+        assertEquals(30_000, parsed.skips.empty)
+    }
 }

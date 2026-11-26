@@ -9,8 +9,8 @@
     <string name="backup_import_summary">Questo backup contiene %1$s, %2$s e %3$s.</string>
     <string name="backup_merge_row_desc">Tutto ciò che è qui resta e si aggiunge ciò che manca. Gli elementi già presenti vengono saltati.</string>
     <string name="backup_replace_all">Sostituisci tutto</string>
-    <string name="backup_replace_row_desc">Elimina tutte le note, le attività e i tag su questo telefono, poi ripristina il backup.</string>
-    <string name="backup_intro_short">Conserva tutte le note, le attività e i tag in un file cifrato e ripristinali su qualsiasi telefono.</string>
+    <string name="backup_replace_row_desc">Elimina tutte le note, le attività e i tag su questo dispositivo, poi ripristina il backup.</string>
+    <string name="backup_intro_short">Conserva tutte le note, le attività e i tag in un file cifrato e ripristinali su qualsiasi dispositivo.</string>
     <string name="backup_section_export">Esporta</string>
     <string name="backup_section_import">Importa</string>
     <string name="security_encryption_pin_plain">Le tue note sono cifrate. Il tuo PIN (e l\'impronta, se attiva) le sblocca.</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">Dopo il ripristino potrai recuperare un file di backup con le sue 12 parole.</string>
     <string name="vault_unreadable_title">Impossibile aprire la cassaforte al momento</string>
     <string name="vault_unreadable_message">Encly non è riuscita a leggere i suoi dati. Un\'altra app o il sistema potrebbe usarli, oppure il dispositivo è ancora bloccato. Le tue note non sono perse. Riprova tra un attimo.</string>
+    <string name="vault_unreadable_message_desktop">Encly non è riuscita a leggere i suoi dati. Un\'altra app o il sistema potrebbe usarli, oppure il portachiavi di sistema è ancora bloccato. Le tue note non sono perse. Riprova tra un attimo.</string>
     <string name="vault_unreadable_retry">Riprova</string>
     <string name="vault_unreadable_still">Ancora non leggibile. Riprova tra un attimo.</string>
     <string name="pin_change_bar_title">Cambia PIN</string>
@@ -41,6 +42,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Il tuo PIN non può più sbloccare Encly su questo telefono: la sua chiave hardware è stata reimpostata. Usa la frase di recupero (o l\'impronta), poi imposta un nuovo PIN.</string>
     <string name="lock_device_locked">Il dispositivo segnala di essere ancora bloccato, quindi Encly è rimasto chiuso. Sblocca il dispositivo e riprova.</string>
+    <string name="lock_device_locked_desktop">Encly non ha potuto confermare che lo schermo sia sbloccato, quindi è rimasto chiuso. Sblocca lo schermo e riprova.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Troppi tentativi. Riprova tra %d minuto</item>
         <item quantity="many">Troppi tentativi. Riprova tra %d minuti</item>
@@ -54,7 +56,7 @@
     <string name="security_recovery_replace_title">Sostituisci la frase di recupero</string>
     <string name="security_recovery_replace_desc">Ricevi 12 nuove parole. I backup fatti prima richiedono ancora quelle vecchie.</string>
     <string name="security_recovery_replace_confirm_title">Sostituire la frase di recupero?</string>
-    <string name="security_recovery_replace_confirm_body">Riceverai 12 nuove parole. La vecchia frase non sblocca più le tue note su questo telefono. I backup già fatti si aprono solo con la vecchia frase: conservala finché conservi quei backup, oppure fai un nuovo backup dopo.</string>
+    <string name="security_recovery_replace_confirm_body">Riceverai 12 nuove parole. La vecchia frase non sblocca più le tue note su questo dispositivo. I backup già fatti si aprono solo con la vecchia frase: conservala finché conservi quei backup, oppure fai un nuovo backup dopo.</string>
     <string name="security_recovery_replace_confirm">Ricevi nuove parole</string>
     <string name="security_recovery_replace_warning_title">La vecchia frase qui non funziona più</string>
     <string name="security_recovery_replace_warning_body">Una volta confermato, solo queste parole sbloccano le tue note se dimentichi il PIN. I backup fatti prima richiedono ancora le vecchie parole.</string>
@@ -77,10 +79,10 @@
     <string name="auto_lock_10m">Dopo 10 minuti</string>
     <string name="auto_lock_15m">Dopo 15 minuti</string>
     <string name="auto_lock_30m">Dopo 30 minuti</string>
-    <string name="auto_lock_long_delay_warning">Un intervallo più lungo lascia aperto il vault in background. Chiunque abbia accesso al telefono sbloccato può vedere le tue note.</string>
+    <string name="auto_lock_long_delay_warning">Un intervallo più lungo lascia aperto il vault in background. Chiunque abbia accesso al dispositivo sbloccato può vedere le tue note.</string>
     <string name="security_protection_section">Come Encly protegge le tue note</string>
     <string name="security_protection_key_title">Una chiave casuale a 256 bit</string>
-    <string name="security_protection_key_desc">L’intero database è cifrato con una chiave creata su questo telefono.</string>
+    <string name="security_protection_key_desc">L’intero database è cifrato con una chiave creata su questo dispositivo.</string>
     <string name="security_protection_pin_title">Un PIN legato a questo telefono</string>
     <string name="security_protection_pin_desc">Il PIN è combinato con una chiave del chip sicuro del telefono, quindi non si può indovinare altrove.</string>
     <string name="security_protection_slots_title">Una serratura per ogni accesso</string>
@@ -208,4 +210,11 @@
     <string name="duress_passphrase_removed">Passphrase di coercizione disattivata</string>
     <string name="duress_passphrase_turned_off">Il segreto del tuo dispositivo è stato reimpostato, quindi la passphrase di coercizione ha smesso di funzionare. Impostala di nuovo: la cassaforte civetta conserva le sue note.</string>
     <string name="duress_passphrase_remove_confirm_title">Disattivare la passphrase di coercizione?</string>
+    <string name="keyring_not_running">Nessun portachiavi di sistema è in esecuzione. Installane o avviane uno (GNOME Keyring, KWallet o KeePassXC con il Secret Service attivo), poi riprova.</string>
+    <string name="keyring_no_default">Il portachiavi di sistema non ha un portachiavi predefinito e Encly non è riuscito a crearne uno. Creane uno in Password e chiavi o in KWallet Manager, poi riprova.</string>
+    <string name="keyring_prompt_dismissed">Il portachiavi di sistema non è stato sbloccato. Riprova e conferma la sua richiesta.</string>
+    <string name="key_not_found_title">Encly non ha trovato la sua chiave nel portachiavi di sistema</string>
+    <string name="key_not_found_message">I tuoi dati sono integri. Succede quando è in esecuzione un altro portachiavi, quando il portachiavi è stato reimpostato o quando la cartella dei dati è stata spostata. Avvia il portachiavi che contiene la chiave e riprova.</string>
+    <string name="key_not_found_last_resort">Solo se la chiave è persa per sempre: la cancellazione elimina tutte le note e le impostazioni su questo computer.</string>
+    <string name="lock_passphrase_slot_unusable">Queste note sono protette da un tipo di segreto più vecchio che questa versione non può verificare. Usa la frase di recupero, poi imposta una nuova passphrase.</string>
 </resources>

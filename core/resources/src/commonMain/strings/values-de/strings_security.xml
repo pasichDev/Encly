@@ -9,8 +9,8 @@
     <string name="backup_import_summary">Dieses Backup enthält %1$s, %2$s und %3$s.</string>
     <string name="backup_merge_row_desc">Alles hier bleibt, Fehlendes kommt dazu. Was schon da ist, wird übersprungen.</string>
     <string name="backup_replace_all">Alles ersetzen</string>
-    <string name="backup_replace_row_desc">Alle Notizen, Aufgaben und Tags auf diesem Handy löschen, dann das Backup wiederherstellen.</string>
-    <string name="backup_intro_short">Sichere alle Notizen, Aufgaben und Tags in einer verschlüsselten Datei und stelle sie auf jedem Handy wieder her.</string>
+    <string name="backup_replace_row_desc">Alle Notizen, Aufgaben und Tags auf diesem Gerät löschen, dann das Backup wiederherstellen.</string>
+    <string name="backup_intro_short">Sichere alle Notizen, Aufgaben und Tags in einer verschlüsselten Datei und stelle sie auf jedem Gerät wieder her.</string>
     <string name="backup_section_export">Exportieren</string>
     <string name="backup_section_import">Importieren</string>
     <string name="security_encryption_pin_plain">Deine Notizen sind verschlüsselt. Deine PIN (und dein Fingerabdruck, falls aktiviert) entsperrt sie.</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">Nach dem Zurücksetzen kannst du eine Backup-Datei mit ihren 12 Wörtern wiederherstellen.</string>
     <string name="vault_unreadable_title">Dein Tresor lässt sich gerade nicht öffnen</string>
     <string name="vault_unreadable_message">Encly konnte seine Daten eben nicht lesen. Eine andere App oder das System nutzt sie womöglich, oder das Gerät ist noch gesperrt. Deine Notizen sind nicht verloren. Versuche es gleich noch einmal.</string>
+    <string name="vault_unreadable_message_desktop">Encly konnte seine Daten eben nicht lesen. Eine andere App oder das System nutzt sie womöglich, oder der System-Schlüsselbund ist noch gesperrt. Deine Notizen sind nicht verloren. Versuche es gleich noch einmal.</string>
     <string name="vault_unreadable_retry">Erneut versuchen</string>
     <string name="vault_unreadable_still">Immer noch nicht lesbar. Versuche es gleich noch einmal.</string>
     <string name="pin_change_bar_title">PIN ändern</string>
@@ -38,6 +39,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Deine PIN kann Encly auf diesem Telefon nicht mehr entsperren: Ihr Hardware-Schlüssel wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase (oder deinen Fingerabdruck) und lege dann eine neue PIN fest.</string>
     <string name="lock_device_locked">Das Gerät meldet, dass es noch gesperrt ist, deshalb ist Encly geschlossen geblieben. Entsperre das Gerät und versuche es erneut.</string>
+    <string name="lock_device_locked_desktop">Encly konnte nicht bestätigen, dass dein Bildschirm entsperrt ist, und blieb deshalb geschlossen. Entsperre den Bildschirm und versuche es erneut.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Zu viele Versuche. Versuche es in %d Minute erneut</item>
         <item quantity="other">Zu viele Versuche. Versuche es in %d Minuten erneut</item>
@@ -49,7 +51,7 @@
     <string name="security_recovery_replace_title">Wiederherstellungsphrase ersetzen</string>
     <string name="security_recovery_replace_desc">Erhalte 12 neue Wörter. Frühere Backups brauchen weiterhin die alten.</string>
     <string name="security_recovery_replace_confirm_title">Wiederherstellungsphrase ersetzen?</string>
-    <string name="security_recovery_replace_confirm_body">Du erhältst 12 neue Wörter. Die alte Phrase entsperrt deine Notizen auf diesem Telefon nicht mehr. Bereits erstellte Backups öffnen sich weiterhin nur mit der alten Phrase – bewahre sie also auf, solange du diese Backups behältst, oder erstelle danach ein neues Backup.</string>
+    <string name="security_recovery_replace_confirm_body">Du erhältst 12 neue Wörter. Die alte Phrase entsperrt deine Notizen auf diesem Gerät nicht mehr. Bereits erstellte Backups öffnen sich weiterhin nur mit der alten Phrase – bewahre sie also auf, solange du diese Backups behältst, oder erstelle danach ein neues Backup.</string>
     <string name="security_recovery_replace_confirm">Neue Wörter erhalten</string>
     <string name="security_recovery_replace_warning_title">Deine alte Phrase funktioniert hier nicht mehr</string>
     <string name="security_recovery_replace_warning_body">Sobald du bestätigst, entsperren nur noch diese Wörter deine Notizen, wenn du die PIN vergisst. Frühere Backups brauchen weiterhin die alten Wörter.</string>
@@ -72,10 +74,10 @@
     <string name="auto_lock_10m">Nach 10 Minuten</string>
     <string name="auto_lock_15m">Nach 15 Minuten</string>
     <string name="auto_lock_30m">Nach 30 Minuten</string>
-    <string name="auto_lock_long_delay_warning">Bei längeren Zeiten bleibt der Tresor im Hintergrund offen. Wer Zugriff auf dein entsperrtes Telefon hat, kann deine Notizen sehen.</string>
+    <string name="auto_lock_long_delay_warning">Bei längeren Zeiten bleibt der Tresor im Hintergrund offen. Wer Zugriff auf dein entsperrtes Gerät hat, kann deine Notizen sehen.</string>
     <string name="security_protection_section">So schützt Encly deine Notizen</string>
     <string name="security_protection_key_title">Ein zufälliger 256-Bit-Schlüssel</string>
-    <string name="security_protection_key_desc">Die ganze Datenbank ist mit einem Schlüssel verschlüsselt, der auf diesem Telefon erzeugt wurde.</string>
+    <string name="security_protection_key_desc">Die ganze Datenbank ist mit einem Schlüssel verschlüsselt, der auf diesem Gerät erzeugt wurde.</string>
     <string name="security_protection_pin_title">Eine PIN, an dieses Telefon gebunden</string>
     <string name="security_protection_pin_desc">Deine PIN wird mit einem Schlüssel im Sicherheitschip des Telefons verknüpft und kann nirgendwo sonst erraten werden.</string>
     <string name="security_protection_slots_title">Ein eigenes Schloss für jeden Zugang</string>
@@ -203,4 +205,11 @@
     <string name="duress_passphrase_removed">Zwangs-Passphrase ausgeschaltet</string>
     <string name="duress_passphrase_turned_off">Das Geheimnis deines Geräts wurde zurückgesetzt, daher funktioniert die Zwangs-Passphrase nicht mehr. Lege sie neu fest; der Tarn-Tresor behält seine Notizen.</string>
     <string name="duress_passphrase_remove_confirm_title">Zwangs-Passphrase ausschalten?</string>
+    <string name="keyring_not_running">Es läuft kein System-Schlüsselbund. Installiere oder starte einen (GNOME-Schlüsselbund, KWallet oder KeePassXC mit aktiviertem Secret Service) und versuche es dann erneut.</string>
+    <string name="keyring_no_default">Der System-Schlüsselbund hat keinen Standard-Schlüsselbund, und Encly konnte keinen anlegen. Lege einen in „Passwörter und Schlüssel“ oder im KWallet-Manager an und versuche es dann erneut.</string>
+    <string name="keyring_prompt_dismissed">Der System-Schlüsselbund wurde nicht entsperrt. Versuche es erneut und bestätige seine Anfrage.</string>
+    <string name="key_not_found_title">Encly hat seinen Schlüssel im System-Schlüsselbund nicht gefunden</string>
+    <string name="key_not_found_message">Deine Daten sind unversehrt. Das passiert, wenn ein anderer Schlüsselbund läuft, der Schlüsselbund zurückgesetzt wurde oder der Datenordner verschoben wurde. Starte den Schlüsselbund, der den Schlüssel enthält, und versuche es erneut.</string>
+    <string name="key_not_found_last_resort">Nur wenn der Schlüssel endgültig weg ist: Das Löschen entfernt alle Notizen und Einstellungen auf diesem Computer.</string>
+    <string name="lock_passphrase_slot_unusable">Diese Notizen sind mit einer älteren Art von Geheimnis geschützt, die diese Version nicht prüfen kann. Nutze deine Wiederherstellungsphrase und lege dann eine neue Passphrase fest.</string>
 </resources>

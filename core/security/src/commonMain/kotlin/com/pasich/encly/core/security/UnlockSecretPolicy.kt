@@ -128,6 +128,13 @@ public interface UnlockSecretPolicy {
      */
     public fun canonical(typed: CharArray): CharArray?
 
+    /**
+     * [canonical] for a secret that is being CHOSEN: the same form, but without the bound that only unlocking applies,
+     * so that [mayBeSet] can say why a long one is refused ([SecretRule.TOO_LONG]) instead of the caller only learning
+     * that it "cannot be used". What unlocking accepts is [canonical]'s and unchanged. The caller wipes the copy.
+     */
+    public fun canonicalForSetting(typed: CharArray): CharArray? = canonical(typed)
+
     /** Whether [canonical] may be chosen as a secret. */
     public fun mayBeSet(canonical: CharArray): SecretRule
 

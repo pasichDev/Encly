@@ -20,6 +20,7 @@ import com.pasich.encly.core.resources.wipe_pin_confirm_title
 import com.pasich.encly.core.resources.wipe_pin_intro
 import com.pasich.encly.core.resources.wipe_pin_new_title
 import com.pasich.encly.core.resources.wipe_pin_set
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.presentation.navigation.LocalVaultLocked
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
@@ -46,9 +47,9 @@ class PinPathBusyAndLockTest : ComposeScreenTest() {
 
     private fun blockedVerify(answer: Boolean): CountDownLatch {
         val release = CountDownLatch(1)
-        `when`(app.security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(app.security.verifyPinResult(anyCharArray())).thenAnswer {
             release.await(10, TimeUnit.SECONDS)
-            answer
+            if (answer) PinCheck.OK else PinCheck.WRONG
         }
         return release
     }
@@ -81,7 +82,7 @@ class PinPathBusyAndLockTest : ComposeScreenTest() {
         assertKeypadWaits()
         release.countDown()
         waitForText(str(Res.string.lock_wrong_pin))
-        verify(app.security, times(1)).verifyPin(anyCharArray())
+        verify(app.security, times(1)).verifyPinResult(anyCharArray())
 
         typePin("1")
 
@@ -99,7 +100,7 @@ class PinPathBusyAndLockTest : ComposeScreenTest() {
         assertKeypadWaits()
         release.countDown()
         waitForText(str(Res.string.pin_create_title))
-        verify(app.security, times(1)).verifyPin(anyCharArray())
+        verify(app.security, times(1)).verifyPinResult(anyCharArray())
     }
 
     @Test
@@ -117,7 +118,7 @@ class PinPathBusyAndLockTest : ComposeScreenTest() {
 
     @Test
     fun aLockInTheMiddleOfAWipePinDropsTheKeptFirstEntryAndGoesBackToTheOptions() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         setNavScreen(
             viewModels(app.securitySettings()),
             route = NavRoutes.WipePinRoute.name,

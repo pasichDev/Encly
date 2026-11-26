@@ -68,6 +68,8 @@ internal class LockActions(
     /** The device-bound key is gone for good (see [PinUnlockResult.KEY_LOST]). */
     val onKeyLoss: () -> Unit,
     val onPromptBiometric: () -> Unit,
+    /** The vault is erased from the missing-key screen, the last resort. */
+    val onWipeVault: () -> Unit = {},
 )
 
 /** The form on show: the recovery phrase, or the PIN pad (the passphrase field where the secret is a passphrase). */
@@ -80,7 +82,15 @@ internal fun LockForms(
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        if (form.useRecovery) {
+        if (form.keyNotFound) {
+            KeyNotFoundContent(
+                KeyNotFoundActions(
+                    onTryAgain = form::leaveKeyNotFound,
+                    onRecover = form::recoverFromKeyNotFound.takeIf { capabilities.recoveryAvailable },
+                    onWipe = actions.onWipeVault,
+                ),
+            )
+        } else if (form.useRecovery) {
             SeedLockContent(
                 form = form,
                 busy = busy,

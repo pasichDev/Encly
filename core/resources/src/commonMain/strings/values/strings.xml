@@ -129,7 +129,7 @@
     <string name="editor_lock">Lock editing</string>
 
     <string name="empty_notes">No notes yet</string>
-    <string name="empty_notes_desc">Tap New note to write your first one.</string>
+    <string name="empty_notes_desc">Select New note to write your first one.</string>
     <string name="empty_trash_desc">Deleted notes wait here until you restore them or delete them for good.</string>
 
     <string name="enter_url">Enter a link</string>
@@ -141,7 +141,7 @@
 
     <string name="falied_content">Couldn\'t load the content</string>
 
-    <string name="faq_background_a">Encly saves your changes and, after the delay chosen in Settings → Security (15 seconds by default), closes the encrypted database and wipes the session key. Turning off the screen or locking the phone does this at once. After that you unlock again.</string>
+    <string name="faq_background_a">Encly saves your changes and, after the delay chosen in Settings → Security (15 seconds by default), closes the encrypted database and wipes the session key. Turning off the screen or locking the device does this at once. After that you unlock again.</string>
     <string name="faq_background_q">What happens when I leave the app?</string>
     <string name="faq_biometrics_a">Use the biometrics switch in Settings → Security. Creating or removing the biometric slot requires strong biometric authentication.</string>
     <string name="faq_biometrics_q">How do I turn biometrics on or off?</string>
@@ -153,7 +153,7 @@
     <string name="faq_forgot_pin_q">What if I forget my PIN?</string>
     <string name="faq_language_a">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies right away.</string>
     <string name="faq_language_q">How do I change the language?</string>
-    <string name="faq_new_note_a">Tap \"New note\" on the home screen. The toolbar above the keyboard adds headings, checklists, bulleted and numbered lists, quotes, links and separators.</string>
+    <string name="faq_new_note_a">Select \"New note\" on the home screen. The toolbar above the keyboard adds headings, checklists, bulleted and numbered lists, quotes, links and separators.</string>
     <string name="faq_new_note_q">How do I create a new note?</string>
     <string name="faq_recovery_phrase_a">It is a spare key of 12 words. It unlocks the vault if you forget your PIN, and it is the only key to your backup files. You create it during setup, or later in Settings → Security if you skipped it. Keep it on paper, offline.</string>
     <string name="faq_recovery_phrase_q">What is the recovery phrase for?</string>
@@ -266,7 +266,7 @@
     <string name="key_store_unavailable">Unlock your system keyring and try again</string>
 
 
-    <string name="press_to_edit">Tap to start editing…</string>
+    <string name="press_to_edit">Select to start editing…</string>
 
     <string name="priority_high">High</string>
     <string name="priority_low">Low</string>
@@ -333,7 +333,7 @@
     <string name="tag_reorder_failed">Couldn\'t save the tag order. Please try again.</string>
     <string name="tag_update_failed">Couldn\'t update the tag. Please try again.</string>
 
-    <string name="tap_again_to_delete">Tap again to delete</string>
+    <string name="tap_again_to_delete">Select again to delete</string>
 
     <string name="task_add">New task</string>
     <string name="task_clear_completed_failed">Couldn\'t clear completed tasks. Please try again.</string>
@@ -383,7 +383,7 @@
     <string name="backup_settings_subtitle">Encrypted backup, import and Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Encrypted with your recovery phrase</string>
-    <string name="backup_intro_body">A backup holds all your notes, tasks and tags, encrypted with your 12-word recovery phrase. Encly never uploads it: you choose where the file is saved. On a new phone, the same 12 words restore it.</string>
+    <string name="backup_intro_body">A backup holds all your notes, tasks and tags, encrypted with your 12-word recovery phrase. Encly never uploads it: you choose where the file is saved. On a new device, the same 12 words restore it.</string>
     <string name="backup_last_export">Last export: %1$s</string>
     <string name="backup_never_exported">No backup exported yet</string>
     <string name="backup_export">Export backup</string>
@@ -471,7 +471,7 @@
     <string name="onboarding_step_of">Step %1$d of %2$d</string>
     <string name="font_sample" translatable="false">Aa</string>
     <string name="onboarding_welcome_headline">A notebook only you can open.</string>
-    <string name="onboarding_welcome_sub">Notes and tasks, encrypted on this phone. Setup takes about a minute.</string>
+    <string name="onboarding_welcome_sub">Notes and tasks, encrypted on this device. Setup takes about a minute.</string>
     <string name="onboarding_fact_account_title">No account</string>
     <string name="onboarding_fact_account_desc">No sign-up, no email, no password reset.</string>
     <string name="onboarding_fact_offline_title">Works offline</string>
@@ -491,7 +491,7 @@
     <string name="onboarding_recovery_pin_desc">The phrase unlocks your vault and lets you set a new PIN.</string>
     <string name="onboarding_recovery_backups_title">Opens your backups</string>
     <string name="onboarding_recovery_backups_desc">Encrypted backup files can only be read with these words.</string>
-    <string name="onboarding_recovery_phone_title">New phone</string>
+    <string name="onboarding_recovery_phone_title">New device</string>
     <string name="onboarding_recovery_phone_desc">Backup file plus phrase restores every note, task and tag.</string>
     <string name="onboarding_recovery_warning">Nobody can recover it for you, not even us. Lose both the PIN and the phrase and the notes are gone.</string>
     <string name="onboarding_recovery_create">Create my phrase</string>
@@ -526,9 +526,9 @@
     <string name="onboarding_restore_label">Restore, then set a PIN</string>
     <string name="onboarding_restore_intro">Choose your Encly backup file, then enter the 12 words it was made with.</string>
     <string name="onboarding_restore_file_section">1 · Backup file</string>
-    <string name="onboarding_restore_tap_other">Tap to choose another file</string>
+    <string name="onboarding_restore_tap_other">Choose another file</string>
     <string name="onboarding_restore_phrase_section">2 · Recovery phrase</string>
-    <string name="onboarding_restore_phrase_helper">These words also become this phone\'s recovery phrase.</string>
+    <string name="onboarding_restore_phrase_helper">These words also become this device\'s recovery phrase.</string>
     <string name="notes_title">Notes</string>
     <string name="lock_now">Lock now</string>
     <string name="search_placeholder">Search titles and text</string>
@@ -542,7 +542,7 @@
     </plurals>
     <string name="home_tasks_none_open">Tasks · none open</string>
     <string name="task_empty_title">No tasks yet</string>
-    <string name="task_empty_desc">Tap New task to add your first one.</string>
+    <string name="task_empty_desc">Select New task to add your first one.</string>
     <string name="task_all_done_title">All done</string>
     <string name="task_done_section">Done · %1$d</string>
     <string name="task_section_in_work">In progress · %1$d</string>
@@ -562,12 +562,12 @@
     <string name="licenses_title">Open-source licenses</string>
     <string name="licenses_row_desc">The libraries and fonts Encly uses</string>
     <string name="licenses_heading">Built on open source</string>
-    <string name="licenses_intro">Encly is made with these libraries and fonts. Tap one to read its license.</string>
+    <string name="licenses_intro">Encly is made with these libraries and fonts. Select one to read its license.</string>
     <string name="licenses_libraries">Libraries</string>
     <string name="licenses_fonts">Fonts</string>
     <string name="tags_empty_title">No tags yet</string>
     <string name="tags_empty_desc">Tags group your notes. Create one above, then pick it for a note from its long-press menu.</string>
-    <string name="tags_hint">Tap a tag to rename, hide or delete it. Drag the handle to reorder.</string>
+    <string name="tags_hint">Select a tag to rename, hide or delete it. Drag the handle to reorder.</string>
     <string name="tag_add">Add tag</string>
     <string name="tag_name_label">Name</string>
     <string name="tag_show_in_list">Show in the notes list</string>
@@ -736,7 +736,7 @@
     <string name="table_menu_open">Open table menu</string>
     <string name="settings_editor_toolbar">Editor toolbar</string>
     <string name="settings_editor_toolbar_desc">Choose and order the editing tools</string>
-    <string name="toolbar_hint">Drag the handle to reorder. Tap the eye to hide a tool or bring it back. Tools under “More menu” sit behind the chevron.</string>
+    <string name="toolbar_hint">Drag the handle to reorder. Select the eye to hide a tool or bring it back. Tools under “More menu” sit behind the chevron.</string>
     <string name="toolbar_reset">Reset</string>
     <string name="toolbar_section_main">Toolbar</string>
     <string name="toolbar_section_more">More menu</string>
@@ -799,6 +799,8 @@
     <string name="security_encryption_pin_plain_nobio">Your notes are encrypted. Your PIN unlocks them.</string>
     <string name="security_encryption_seed_plain_nobio">Your notes are encrypted. Your PIN unlocks them, and your recovery phrase does if you forget the PIN.</string>
     <string name="lock_pin_key_lost_desktop">Your PIN can no longer unlock Encly on this computer: its secret in the system keychain is missing or was reset. Use your recovery phrase, then set a new PIN.</string>
+    <string name="error_keystore_unavailable_desktop">The system keyring did not respond. Try again; if it keeps failing, restart the keyring or log out and back in.</string>
+    <string name="loss_message_desktop">It looks like the encrypted data or the encryption keys (including the secret in the system keyring) were changed or damaged, so recovery is not possible.\n\nTo keep using the app, you need to reset it and wipe the damaged data on this computer. This permanently deletes all saved notes and settings.</string>
     <string name="security_protection_slots_desc_nobio">PIN and recovery phrase each open their own encrypted slot.</string>
     <string name="duress_pin_real_vault_nobio">Your real vault stays locked and untouched. Unlike the wipe PIN, the duress PIN doesn\'t erase anything. Your recovery phrase always opens the real vault.</string>
     <string name="security_protection_pin_title_device">A PIN bound to this device</string>
@@ -835,7 +837,7 @@
     <string name="onboarding_passphrase_again_body">So we know it\'s the one you meant.</string>
     <string name="onboarding_recovery_passphrase_title">Forgot your passphrase?</string>
     <string name="onboarding_recovery_passphrase_desc">The recovery phrase unlocks your vault and lets you set a new passphrase.</string>
-    <string name="onboarding_recovery_warning_passphrase">Nobody can recover it for you, not even us. Lose both the passphrase and the recovery phrase and the notes are gone.</string>
+    <string name="onboarding_recovery_warning_passphrase">Nobody can recover it for you, not even us. Your passphrase works together with a secret in this computer\'s system keyring. If that keyring is reset or replaced, you move to a new OS account, or your home folder is moved or restored without it, only the recovery phrase can still open your notes. Lose that too and they are gone.</string>
     <string name="onboarding_recovery_skip_passphrase">Skip: passphrase only, no backups</string>
     <string name="onboarding_ready_passphrase_title">Passphrase set</string>
     <string name="onboarding_ready_passphrase_desc">Asked every time Encly opens</string>

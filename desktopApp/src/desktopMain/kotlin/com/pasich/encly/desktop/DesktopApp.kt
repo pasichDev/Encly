@@ -86,8 +86,9 @@ fun DesktopApp(
             }
             resolved
         }
-        // A committed vault that is not open starts locked, before the first frame.
-        if (status == InitialStatus.AUTH) graph.sessionLockManager.requireUnlock()
+        // A committed vault that is not open starts locked, before the first frame. A window that opens is no lock
+        // request: an unlock another window is checking must still be published.
+        if (status == InitialStatus.AUTH) graph.sessionLockManager.requireUnlock(countsAsLockRequest = false)
         startStatus = status
         // Files the app was started with (or is given) wait for this.
         services.startStatus.complete(status)

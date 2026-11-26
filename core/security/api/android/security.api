@@ -411,6 +411,7 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public static final field STRIKE_GRACE I
 	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;)V
 	public fun <init> (Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/PinHardwareFactor;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/UnlockSecretPolicy;)V
+	public final fun abandonKeyStorePrompt ()V
 	public final fun changePin ([C[B)Lcom/pasich/encly/core/security/PinChange;
 	public final fun checkNewSecret ([C)Lcom/pasich/encly/core/security/SecretRule;
 	public final fun clearPendingWipe ()Z
@@ -423,6 +424,8 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public final fun duressPinTurnedOff ([B)Z
 	public final fun ensureWipeSlot ()Z
 	public final fun getAuthType ()Lcom/pasich/encly/core/security/AuthType;
+	public final fun getKeyStoreMayNeedPreparing ()Z
+	public final fun getKeyStoreProblem ()Lcom/pasich/encly/core/security/KeyStoreProblem;
 	public final fun getMaxTypedUnits ()I
 	public final fun getSecretKind ()Lcom/pasich/encly/core/security/SecretKind;
 	public final fun hasDecoyVault ([B)Z
@@ -432,6 +435,7 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public final fun markBiometricEnabled (Z)V
 	public final fun markWipeDatabaseCreated ()Z
 	public final fun pendingWipe ()Lcom/pasich/encly/core/security/WipeStage;
+	public final fun prepareKeyStore ()Lcom/pasich/encly/core/security/KeyStoreProblem;
 	public final fun recoveryFollowUp ()Lcom/pasich/encly/core/security/RecoveryFollowUp;
 	public final fun remainingLockoutMillis ()J
 	public final fun removeDuressPin ()Z
@@ -440,6 +444,8 @@ public final class com/pasich/encly/core/security/AuthenticationManager {
 	public final fun unlockWithPin ([C)Lcom/pasich/encly/core/security/PinUnlock;
 	public final fun verifyPinAuth ([CZ)Z
 	public static synthetic fun verifyPinAuth$default (Lcom/pasich/encly/core/security/AuthenticationManager;[CZILjava/lang/Object;)Z
+	public final fun verifyPinAuthResult ([CZ)Lcom/pasich/encly/core/security/PinCheck;
+	public static synthetic fun verifyPinAuthResult$default (Lcom/pasich/encly/core/security/AuthenticationManager;[CZILjava/lang/Object;)Lcom/pasich/encly/core/security/PinCheck;
 	public final fun wipe ()V
 	public final fun wipePinTurnedOff ()Z
 }
@@ -665,6 +671,17 @@ public final class com/pasich/encly/core/security/JvmVaultFileIoKt {
 	public static final fun VaultStore (Ljava/io/File;)Lcom/pasich/encly/core/security/VaultStore;
 }
 
+public final class com/pasich/encly/core/security/KeyStoreProblem : java/lang/Enum {
+	public static final field DISMISSED Lcom/pasich/encly/core/security/KeyStoreProblem;
+	public static final field LOCKED Lcom/pasich/encly/core/security/KeyStoreProblem;
+	public static final field NOT_RUNNING Lcom/pasich/encly/core/security/KeyStoreProblem;
+	public static final field NO_DEFAULT Lcom/pasich/encly/core/security/KeyStoreProblem;
+	public static final field OTHER Lcom/pasich/encly/core/security/KeyStoreProblem;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/KeyStoreProblem;
+	public static fun values ()[Lcom/pasich/encly/core/security/KeyStoreProblem;
+}
+
 public final class com/pasich/encly/core/security/KeyboardPrivacy {
 	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;)V
 	public final fun getStrict ()Lkotlinx/coroutines/flow/StateFlow;
@@ -711,18 +728,41 @@ public final class com/pasich/encly/core/security/PinChange : java/lang/Enum {
 	public static fun values ()[Lcom/pasich/encly/core/security/PinChange;
 }
 
+public final class com/pasich/encly/core/security/PinCheck : java/lang/Enum {
+	public static final field KEY_LOST Lcom/pasich/encly/core/security/PinCheck;
+	public static final field KEY_NOT_FOUND Lcom/pasich/encly/core/security/PinCheck;
+	public static final field KEY_STORE_FAILED Lcom/pasich/encly/core/security/PinCheck;
+	public static final field KEY_STORE_UNAVAILABLE Lcom/pasich/encly/core/security/PinCheck;
+	public static final field OK Lcom/pasich/encly/core/security/PinCheck;
+	public static final field WRONG Lcom/pasich/encly/core/security/PinCheck;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/pasich/encly/core/security/PinCheck;
+	public static fun values ()[Lcom/pasich/encly/core/security/PinCheck;
+}
+
 public final class com/pasich/encly/core/security/PinFactorException : java/lang/Exception {
-	public fun <init> (ZLjava/lang/Throwable;Z)V
-	public synthetic fun <init> (ZLjava/lang/Throwable;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLjava/lang/Throwable;ZZLcom/pasich/encly/core/security/KeyStoreProblem;)V
+	public synthetic fun <init> (ZLjava/lang/Throwable;ZZLcom/pasich/encly/core/security/KeyStoreProblem;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getLost ()Z
+	public final fun getNotFound ()Z
+	public final fun getProblem ()Lcom/pasich/encly/core/security/KeyStoreProblem;
 	public final fun getUnavailable ()Z
 }
 
 public abstract interface class com/pasich/encly/core/security/PinHardwareFactor {
+	public fun abandonPending ()V
 	public abstract fun delete (Lcom/pasich/encly/core/security/PinKeySlot;)V
 	public abstract fun ensureKey (Lcom/pasich/encly/core/security/PinKeySlot;)Z
+	public fun getMissingKeyMayReturn ()Z
 	public abstract fun mac (Lcom/pasich/encly/core/security/PinKeySlot;[B)[B
+	public fun prepare ()V
 	public abstract fun reset (Lcom/pasich/encly/core/security/PinKeySlot;)V
+}
+
+public final class com/pasich/encly/core/security/PinHardwareFactor$DefaultImpls {
+	public static fun abandonPending (Lcom/pasich/encly/core/security/PinHardwareFactor;)V
+	public static fun getMissingKeyMayReturn (Lcom/pasich/encly/core/security/PinHardwareFactor;)Z
+	public static fun prepare (Lcom/pasich/encly/core/security/PinHardwareFactor;)V
 }
 
 public final class com/pasich/encly/core/security/PinKeySlot : java/lang/Enum {
@@ -738,6 +778,7 @@ public final class com/pasich/encly/core/security/PinSecretPolicy : com/pasich/e
 	public fun <init> ()V
 	public fun accepts (Lcom/pasich/encly/core/security/SlotHeader;)Z
 	public fun canonical ([C)[C
+	public fun canonicalForSetting ([C)[C
 	public fun factorInput ([C[B)[B
 	public fun getChargesForUnusableSlot ()Z
 	public fun getDecoyInfo ()[B
@@ -802,6 +843,13 @@ public final class com/pasich/encly/core/security/PinUnlock$KeyLost : com/pasich
 
 public final class com/pasich/encly/core/security/PinUnlock$KeyStoreFailed : com/pasich/encly/core/security/PinUnlock {
 	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyStoreFailed;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/pasich/encly/core/security/PinUnlock$KeyStoreNotFound : com/pasich/encly/core/security/PinUnlock {
+	public static final field INSTANCE Lcom/pasich/encly/core/security/PinUnlock$KeyStoreNotFound;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -910,6 +958,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public static final field Companion Lcom/pasich/encly/core/security/SecurityManager$Companion;
 	public fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;)V
 	public synthetic fun <init> (Lcom/pasich/encly/core/platform/KeyValueStore;Lcom/pasich/encly/core/security/VaultStore;Lcom/pasich/encly/core/security/SeedPhraseManager;Lcom/pasich/encly/core/security/VaultDatabase;Lcom/pasich/encly/core/security/AuthenticationManager;Lcom/pasich/encly/core/security/BiometricManager;Lcom/pasich/encly/core/security/HandoffStagingSweeper;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun abandonKeyStorePrompt ()V
 	public final fun addRecoverySeed ([C)Z
 	public final fun authStrategy ()Lcom/pasich/encly/core/security/AuthStrategy;
 	public final fun biometricAvailable ()Z
@@ -947,10 +996,13 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public final fun isOnboardingShow ()Z
 	public final fun isValidRecoveryPhrase ([C)Z
 	public final fun keepUnlockMethodsAfterRecovery ()Z
+	public final fun keyStoreMayNeedPreparing ()Z
+	public final fun keyStoreProblem ()Lcom/pasich/encly/core/security/KeyStoreProblem;
 	public final fun lock ()V
 	public final fun markRestorePending ()Z
 	public final fun openInitialVault ()Z
 	public final fun pinLockoutRemainingMillis ()J
+	public final fun prepareKeyStore ()Lcom/pasich/encly/core/security/KeyStoreProblem;
 	public final fun recoveryStage ()Lcom/pasich/encly/core/security/RecoveryStage;
 	public final fun removeDuressPin ()Z
 	public final fun removeWipePin ()Z
@@ -966,6 +1018,7 @@ public final class com/pasich/encly/core/security/SecurityManager {
 	public static synthetic fun unlockWithRawKey$default (Lcom/pasich/encly/core/security/SecurityManager;[BZILjava/lang/Object;)Z
 	public final fun unlockWithSeed ([C)Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public final fun verifyPin ([C)Z
+	public final fun verifyPinResult ([C)Lcom/pasich/encly/core/security/PinCheck;
 	public final fun verifySeed ([C)Z
 	public final fun wipeAndReset ()Z
 }
@@ -1031,6 +1084,7 @@ public final class com/pasich/encly/core/security/SessionLockManager : androidx/
 	public synthetic fun <init> (Lcom/pasich/encly/core/security/SecurityManager;Lcom/pasich/encly/core/security/DeviceLockWatcher;Lcom/pasich/encly/core/security/LockoutClock;Lcom/pasich/encly/core/security/AutoLockPolicy;Lcom/pasich/encly/core/platform/MainThreadTimer;Lcom/pasich/encly/core/security/ScreenshotAllowance;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun allowSystemPicker ()V
 	public final fun endSystemPicker ()V
+	public final fun getErasedCount ()Lkotlinx/coroutines/flow/StateFlow;
 	public fun getLocked ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getLocking ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getSessionGeneration ()J
@@ -1046,8 +1100,10 @@ public final class com/pasich/encly/core/security/SessionLockManager : androidx/
 	public final fun onUnlockAbandoned ()V
 	public final fun onUnlocked (J)Z
 	public static synthetic fun onUnlocked$default (Lcom/pasich/encly/core/security/SessionLockManager;JILjava/lang/Object;)Z
+	public final fun onVaultErased ()V
 	public fun registerPreLockFlush (Lkotlin/jvm/functions/Function1;)Lkotlin/jvm/functions/Function0;
-	public final fun requireUnlock ()V
+	public final fun requireUnlock (Z)V
+	public static synthetic fun requireUnlock$default (Lcom/pasich/encly/core/security/SessionLockManager;ZILjava/lang/Object;)V
 }
 
 public final class com/pasich/encly/core/security/SessionLockManager$MetroFactory : dev/zacsweers/metro/internal/Factory {
@@ -1094,6 +1150,7 @@ public final class com/pasich/encly/core/security/SlotHeader$Companion {
 public abstract interface class com/pasich/encly/core/security/UnlockSecretPolicy {
 	public abstract fun accepts (Lcom/pasich/encly/core/security/SlotHeader;)Z
 	public abstract fun canonical ([C)[C
+	public fun canonicalForSetting ([C)[C
 	public abstract fun factorInput ([C[B)[B
 	public abstract fun getChargesForUnusableSlot ()Z
 	public abstract fun getDecoyInfo ()[B
@@ -1106,6 +1163,10 @@ public abstract interface class com/pasich/encly/core/security/UnlockSecretPolic
 	public abstract fun newHeader ([B)Lcom/pasich/encly/core/security/SlotHeader;
 	public abstract fun stretch ([CLcom/pasich/encly/core/security/SlotHeader;)[B
 	public abstract fun suggest ()[C
+}
+
+public final class com/pasich/encly/core/security/UnlockSecretPolicy$DefaultImpls {
+	public static fun canonicalForSetting (Lcom/pasich/encly/core/security/UnlockSecretPolicy;[C)[C
 }
 
 public abstract interface class com/pasich/encly/core/security/VaultDatabase {
@@ -1177,6 +1238,7 @@ public final class com/pasich/encly/core/security/VaultStore$Editor {
 public final class com/pasich/encly/core/security/VaultUnlockResult : java/lang/Enum {
 	public static final field DB_ERROR Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field INVALID_CREDENTIAL Lcom/pasich/encly/core/security/VaultUnlockResult;
+	public static final field KEY_NOT_FOUND Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field KEY_STORE_FAILED Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field KEY_STORE_UNAVAILABLE Lcom/pasich/encly/core/security/VaultUnlockResult;
 	public static final field LOCKED_OUT Lcom/pasich/encly/core/security/VaultUnlockResult;

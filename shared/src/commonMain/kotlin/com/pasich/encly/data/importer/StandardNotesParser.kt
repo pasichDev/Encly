@@ -25,13 +25,19 @@ internal object StandardNotesParser {
     private const val TAG = "Tag"
     private const val APP_DATA = "org.standardnotes.sn"
 
+    /** A tag title is cut to this many characters: far above any real tag name, far below a megabyte. */
+    internal const val MAX_TAG_TITLE = 256
+
+    /** The tags one note keeps; a real export has a handful, and the cap bounds the sort of a hostile one. */
+    internal const val MAX_TAGS_PER_NOTE = 100
+
     enum class Shape { DECRYPTED, ENCRYPTED }
 
     /** What the backup in [bytes] (valid UTF-8) is if it has the shape of a Standard Notes backup, else null. */
     fun shape(bytes: ByteArray, maxDepth: Int): Shape? = scan(bytes, maxDepth, maxNotes = null)?.shape
 
     /** What one pass over a backup file found. [notes] are in file order, with their tags. */
-    private class Backup(val shape: Shape?, val notes: List<ImportedNote>)
+    private class Backup(val shape: Shape?, val notes: List<ImportedNote>, val empties: Int = 0)
 
     /**
      * One pass over [bytes], an item at a time: the tree of the whole `items` array is never built, only
@@ -43,21 +49,28 @@ internal object StandardNotesParser {
      * [ImportError.TOO_LARGE], so a file of endless tiny items cannot pile up notes before the
      * caller's own limit is applied. Without it only the shape is found.
      */
-    private fun scan(bytes: ByteArray, maxDepth: Int, maxNotes: Int?): Backup? {
-        val pass = Pass(maxNotes)
+    private fun scan(bytes: ByteArray, maxDepth: Int, maxNotes: Int?, checkCancelled: () -> Unit = {}): Backup? {
+        val pass = Pass(maxNotes, checkCancelled)
         val ok = JsonScan.root(bytes, maxDepth) { key -> pass.member(this, key) }
-        val notes = pass.notes.map { it.copy(tags = tagNames(pass.tagsByNote[it.sourceKey])) }
-        return if (ok) Backup(pass.shape(), notes) else null
+        val notes = pass.notes.map {
+            checkCancelled()
+            it.copy(tags = tagNames(pass.tagsByNote[it.sourceKey]))
+        }
+        return if (ok) Backup(pass.shape(), notes, pass.empties) else null
     }
 
     /** The state of one [scan]: what the members and items seen so far say about the file. */
-    private class Pass(private val maxNotes: Int?) {
+    private class Pass(private val maxNotes: Int?, private val checkCancelled: () -> Unit) {
         private var version = false
         private var keyParams = false
         private var items = false
         private var encrypted = false
         private var typed = false
         private var kept = 0
+
+        /** How many notes had no content: reported as skipped, not kept. */
+        var empties = 0
+            private set
         val notes = ArrayList<ImportedNote>()
 
         /** Note uuid -> titles of the tags that reference it. */
@@ -85,6 +98,7 @@ internal object StandardNotesParser {
         }
 
         private fun read(element: JsonElement) {
+            checkCancelled()
             val item = ImportText.obj(element) ?: return
             val type = ImportText.string(item["content_type"])
             typed = typed || type != null
@@ -96,9 +110,17 @@ internal object StandardNotesParser {
             }
         }
 
+        /**
+         * A note with content counts against [maxNotes] and is kept. An empty one is only counted ([empties]): a
+         * file of endless empty items piles up nothing, however many there are.
+         */
         private fun add(note: ImportedNote, maxNotes: Int) {
-            notes += note
-            if (!ParseContext.isEmpty(note) && ++kept > maxNotes) throw ImportException(ImportError.TOO_LARGE)
+            if (ParseContext.isEmpty(note)) {
+                empties++
+            } else {
+                if (++kept > maxNotes) throw ImportException(ImportError.TOO_LARGE)
+                notes += note
+            }
         }
 
         private fun hasEncryptedContent(item: JsonObject): Boolean {
@@ -109,11 +131,24 @@ internal object StandardNotesParser {
         /** Adds to [tagsByNote] what a `Tag` item says. */
         private fun tagReferences(item: JsonObject) {
             val content = ImportText.obj(item["content"])
-            val title = ImportText.string(content?.get("title"))?.trim().orEmpty()
-            val references = (content?.get("references") as? JsonArray).orEmpty().mapNotNull(ImportText::obj)
-            for (ref in references.filter { ImportText.string(it["content_type"]) == NOTE && title.isNotEmpty() }) {
-                tagsByNote.getOrPut(ImportText.string(ref["uuid"])) { ArrayList() } += title
+            val title = ImportText.string(content?.get("title"))?.trim()?.take(MAX_TAG_TITLE).orEmpty()
+            if (title.isEmpty()) return
+            for (element in content?.get("references") as? JsonArray ?: return) {
+                checkCancelled()
+                val ref = ImportText.obj(element)
+                if (ref != null && ImportText.string(ref["content_type"]) == NOTE) {
+                    tag(ImportText.string(ref["uuid"]), title)
+                }
             }
+        }
+
+        /**
+         * Gives the note [uuid] the tag [title]. A hostile file can list one note under one tag endlessly: the same tag
+         * counts once, and a note keeps no more tags than any real export has.
+         */
+        private fun tag(uuid: String?, title: String) {
+            val titles = tagsByNote.getOrPut(uuid) { ArrayList() }
+            if (titles.size < MAX_TAGS_PER_NOTE && title !in titles) titles += title
         }
 
         fun shape(): Shape? = when {
@@ -125,17 +160,23 @@ internal object StandardNotesParser {
     }
 
     /** Alphabetical, so the tags' order does not depend on the order of the file. */
-    private fun tagNames(titles: List<String>?): List<String> =
-        ImportText.names(titles.orEmpty().sortedBy { it.lowercase() })
+    private fun tagNames(titles: List<String>?): List<String> = ImportText.names(
+        titles.orEmpty().map { it to it.lowercase() }.sortedBy { it.second }.map { it.first },
+    )
 
-    fun parse(entries: List<ImportEntry>, limits: ImportLimits): ParsedNotes {
+    fun parse(entries: List<ImportEntry>, limits: ImportLimits, checkCancelled: () -> Unit = {}): ParsedNotes {
         val context = ParseContext(limits)
         for (entry in entries.filter { it.name.startsWith(BACKUP_FILE_PREFIX) || it.extension == "json" }) {
             val readable = context.isText(entry)
-            val backup = if (readable) scan(entry.bytes, limits.maxJsonDepth, limits.maxNotes) else null
+            val backup = if (readable) scan(entry.bytes, limits.maxJsonDepth, limits.maxNotes, checkCancelled) else null
             when {
                 !readable -> Unit
-                backup != null && backup.shape == Shape.DECRYPTED -> backup.notes.forEach(context::add)
+
+                backup != null && backup.shape == Shape.DECRYPTED -> {
+                    backup.notes.forEach(context::add)
+                    context.empty += backup.empties
+                }
+
                 else -> context.unsupported++
             }
         }

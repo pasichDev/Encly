@@ -10,7 +10,11 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.error_database_open
 import com.pasich.encly.core.resources.error_keystore_unavailable
 import com.pasich.encly.core.resources.key_store_unavailable
+import com.pasich.encly.core.resources.keyring_no_default
+import com.pasich.encly.core.resources.keyring_not_running
+import com.pasich.encly.core.resources.keyring_prompt_dismissed
 import com.pasich.encly.core.resources.lock_device_locked
+import com.pasich.encly.core.resources.lock_passphrase_slot_unusable
 import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
@@ -55,6 +59,12 @@ internal class LockFormState(maxPassphraseUnits: Int = PassphraseInput.MAX_TYPED
         private set
 
     var lockoutSeconds by mutableLongStateOf(0L)
+
+    /**
+     * The keyring answered but holds no key: the screen that says so (try again, the recovery phrase, and last of all
+     * a wipe) replaces the forms until the user leaves it.
+     */
+    var keyNotFound by mutableStateOf(false)
 
     /** The recovery words typed so far. */
     val phrase = RecoveryPhraseState()
@@ -111,6 +121,14 @@ internal class LockFormState(maxPassphraseUnits: Int = PassphraseInput.MAX_TYPED
 
             PinUnlockResult.KEY_STORE_UNAVAILABLE -> pinError = Res.string.key_store_unavailable
 
+            PinUnlockResult.KEY_STORE_NOT_RUNNING -> pinError = Res.string.keyring_not_running
+
+            PinUnlockResult.KEY_STORE_NO_DEFAULT -> pinError = Res.string.keyring_no_default
+
+            PinUnlockResult.KEY_STORE_DISMISSED -> pinError = Res.string.keyring_prompt_dismissed
+
+            PinUnlockResult.KEY_NOT_FOUND -> keyNotFound = true
+
             PinUnlockResult.KEY_STORE_FAILED -> pinError = Res.string.error_keystore_unavailable
 
             PinUnlockResult.DEVICE_LOCKED -> pinError = Res.string.lock_device_locked
@@ -135,6 +153,23 @@ internal class LockFormState(maxPassphraseUnits: Int = PassphraseInput.MAX_TYPED
     /** System back: from the recovery form to the PIN pad; the PIN pad itself stays. */
     fun back() {
         if (useRecovery) leaveRecovery()
+    }
+
+    /** The stored secret slot is of a format this version cannot check: the recovery form says so, once. */
+    fun markSlotUnusable() {
+        phraseError = Res.string.lock_passphrase_slot_unusable
+    }
+
+    /** "Try again" on the missing-key screen: back to the form, with nothing left of the attempt. */
+    fun leaveKeyNotFound() {
+        keyNotFound = false
+        pinError = null
+    }
+
+    /** The recovery phrase from the missing-key screen. */
+    fun recoverFromKeyNotFound() {
+        keyNotFound = false
+        useRecovery = true
     }
 
     /** Back to the PIN pad; the typed words are dropped. */

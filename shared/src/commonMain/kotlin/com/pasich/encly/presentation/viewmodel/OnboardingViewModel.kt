@@ -9,12 +9,12 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
-import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.onboarding_error_initialization
 import com.pasich.encly.core.resources.onboarding_error_seed_generation
 import com.pasich.encly.core.resources.onboarding_error_vault_creation
 import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.resources.pin_save_failed
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.MAX_PIN_LENGTH
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.core.security.PinChange
@@ -137,16 +137,60 @@ class OnboardingViewModel(
 
     // --- navigation -----------------------------------------------------------------------
 
-    /** Welcome → "Get started". */
+    /** Welcome → "Get started" (or "Try again", when the key store was not ready: the same path again). */
     fun getStarted() {
-        resetPin()
-        _uiState.update { it.copy(path = OnboardingPath.CREATE, step = OnboardingStep.PIN, error = null) }
+        if (restoreRequested && _uiState.value.keyStoreProblem != null) {
+            startRestore()
+            return
+        }
+        restoreRequested = false
+        whenKeyStoreReady {
+            resetPin()
+            _uiState.update { it.copy(path = OnboardingPath.CREATE, step = OnboardingStep.PIN, error = null) }
+        }
     }
 
     /** Welcome → "I have a backup". */
     fun startRestore() {
-        _uiState.update {
-            it.copy(path = OnboardingPath.RESTORE, step = OnboardingStep.RESTORE, securityType = null, error = null)
+        restoreRequested = true
+        whenKeyStoreReady {
+            _uiState.update {
+                it.copy(path = OnboardingPath.RESTORE, step = OnboardingStep.RESTORE, securityType = null, error = null)
+            }
+        }
+    }
+
+    /** Whether "I have a backup" was the last way out of Welcome, so that "Try again" repeats it. */
+    private var restoreRequested = false
+
+    /**
+     * Runs [next] once the device key store is ready, before any secret is chosen or any phrase is written down: on a
+     * phone there is nothing to prepare and [next] runs at once. On a desktop the keyring is asked to start, unlock or
+     * make its default collection (the system's own prompt, off the main thread), and what is missing is said on
+     * Welcome, with "Try again", instead of after twelve words were written down.
+     */
+    private fun whenKeyStoreReady(next: () -> Unit) {
+        if (!onboardingUseCase.keyStoreMayNeedPreparing()) {
+            next()
+            return
+        }
+        if (_uiState.value.isLoading) return
+        _uiState.update { it.copy(isLoading = true, error = null, keyStoreProblem = null) }
+        viewModelScope.launch {
+            val problem = withContext(Dispatchers.Default) { onboardingUseCase.prepareKeyStore() }
+            if (problem == null) {
+                // Still "loading" while the next step is set, so nobody sees Welcome ready and unchanged in between.
+                next()
+                _uiState.update { it.copy(isLoading = false) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        keyStoreProblem = problem,
+                        error = UiText.of(keyStoreMessage(problem)),
+                    )
+                }
+            }
         }
     }
 
@@ -404,9 +448,9 @@ class OnboardingViewModel(
             withContext(Dispatchers.Default) { onboardingUseCase.configurePin(pin.copyOf()) }
         }
         if (change != PinChange.SET) {
-            // A locked desktop keyring says so; every other failure is the generic one.
+            // A keyring that is not usable says what is missing; every other failure is the generic one.
             val message = if (change == PinChange.KEY_STORE_UNAVAILABLE) {
-                Res.string.key_store_unavailable
+                keyStoreMessage(onboardingUseCase.keyStoreProblem())
             } else {
                 secretVariant(Res.string.pin_save_failed, secrets.kind)
             }
@@ -582,6 +626,8 @@ class OnboardingViewModel(
         val securityType: SecurityType? = null,
         val isLoading: Boolean = false,
         val error: UiText? = null,
+        /** The desktop keyring was not ready when Welcome asked: what is missing (the message is [error]). */
+        val keyStoreProblem: KeyStoreProblem? = null,
         // PIN
         val pinLength: Int = 0,
         val isConfirmingPin: Boolean = false,

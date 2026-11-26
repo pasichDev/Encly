@@ -86,7 +86,11 @@ class DesktopEnvironment(
                 } else {
                     awtDialogs
                 },
-                linkOpener = AwtLinkOpener,
+                linkOpener = if (os == DesktopOs.LINUX) {
+                    linuxLinkOpener(com.pasich.encly.desktop.nativeos.PortalLinkOpener())
+                } else {
+                    AwtLinkOpener
+                },
                 systemClipboard = { runCatching { java.awt.Toolkit.getDefaultToolkit().systemClipboard }.getOrNull() },
                 clipboardWriter = com.pasich.encly.desktop.nativeos.NativeClipboard.forOs(os),
                 dialogParent = dialogParent,

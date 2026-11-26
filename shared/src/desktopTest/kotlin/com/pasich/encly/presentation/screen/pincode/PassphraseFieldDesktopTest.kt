@@ -151,6 +151,9 @@ class PassphraseFieldDesktopTest {
                 chord(Key.CtrlLeft, listOf(Key.C, Key.X, Key.Insert))
                 chord(Key.MetaLeft, listOf(Key.C, Key.X))
                 chord(Key.ShiftLeft, listOf(Key.Delete))
+                // The dedicated keys of the desktop key map: no modifier.
+                pressKey(Key.Copy)
+                pressKey(Key.Cut)
             }
             waitForIdle()
 

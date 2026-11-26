@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.vault_reset_restore_hint
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyCallout
 import com.pasich.encly.presentation.designsystem.EnclyHoldToConfirmButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
@@ -58,7 +59,7 @@ fun LossRecoveryScreen(
                 modifier = Modifier.padding(top = spacing.xs),
             )
             Text(
-                text = stringResource(reason.message),
+                text = hostString(reason.message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

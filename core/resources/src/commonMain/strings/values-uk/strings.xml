@@ -124,7 +124,7 @@
 
     <string name="falied_content">Не вдалося завантажити вміст</string>
 
-    <string name="faq_background_a">Encly зберігає зміни й після затримки, вибраної в Налаштування → Безпека (за замовчуванням 15 секунд), закриває зашифровану базу та очищає сесійний ключ. Вимкнення екрана чи блокування телефона робить це одразу. Після цього потрібно розблокувати знову.</string>
+    <string name="faq_background_a">Encly зберігає зміни й після затримки, вибраної в Налаштування → Безпека (за замовчуванням 15 секунд), закриває зашифровану базу та очищає сесійний ключ. Вимкнення екрана чи блокування пристрою робить це одразу. Після цього потрібно розблокувати знову.</string>
     <string name="faq_background_q">Що відбувається після згортання застосунку?</string>
     <string name="faq_biometrics_a">У Налаштування → Безпека використайте перемикач біометрії. Щоб увімкнути або вимкнути розблокування біометрією, потрібно підтвердити його надійною біометрією (наприклад, відбитком пальця).</string>
     <string name="faq_biometrics_q">Як увімкнути або вимкнути біометрію?</string>
@@ -372,7 +372,7 @@
     <string name="backup_settings_subtitle">Зашифрована копія, імпорт і Markdown</string>
     <string name="backup_title">Резервна копія</string>
     <string name="backup_intro_title">Зашифровано вашою фразою відновлення</string>
-    <string name="backup_intro_body">Резервна копія містить усі ваші нотатки, завдання та мітки, зашифровані вашою фразою відновлення з 12 слів. Encly нікуди її не вивантажує: ви самі обираєте, де зберегти файл. На новому телефоні ті самі 12 слів її відновлять.</string>
+    <string name="backup_intro_body">Резервна копія містить усі ваші нотатки, завдання та мітки, зашифровані вашою фразою відновлення з 12 слів. Encly нікуди її не вивантажує: ви самі обираєте, де зберегти файл. На новому пристрої ті самі 12 слів її відновлять.</string>
     <string name="backup_last_export">Останній експорт: %1$s</string>
     <string name="backup_never_exported">Резервну копію ще не експортовано</string>
     <string name="backup_export">Експортувати копію</string>
@@ -459,7 +459,7 @@
     <string name="pin_unlock_with_fingerprint">Розблокувати відбитком пальця</string>
     <string name="onboarding_step_of">Крок %1$d з %2$d</string>
     <string name="onboarding_welcome_headline">Записник, який можете відкрити лише ви.</string>
-    <string name="onboarding_welcome_sub">Нотатки й завдання, зашифровані на цьому телефоні. Налаштування займе близько хвилини.</string>
+    <string name="onboarding_welcome_sub">Нотатки й завдання, зашифровані на цьому пристрої. Налаштування займе близько хвилини.</string>
     <string name="onboarding_fact_account_title">Без облікового запису</string>
     <string name="onboarding_fact_account_desc">Без реєстрації, без пошти, без скидання пароля.</string>
     <string name="onboarding_fact_offline_title">Працює офлайн</string>
@@ -479,7 +479,7 @@
     <string name="onboarding_recovery_pin_desc">Фраза відмикає сховище й дозволяє задати новий PIN.</string>
     <string name="onboarding_recovery_backups_title">Відкриває резервні копії</string>
     <string name="onboarding_recovery_backups_desc">Зашифровані файли копій можна прочитати лише з цими словами.</string>
-    <string name="onboarding_recovery_phone_title">Новий телефон</string>
+    <string name="onboarding_recovery_phone_title">Новий пристрій</string>
     <string name="onboarding_recovery_phone_desc">Файл копії разом із фразою відновлює всі нотатки, завдання й мітки.</string>
     <string name="onboarding_recovery_warning">Ніхто не відновить її за вас, навіть ми. Якщо втратити і PIN, і фразу, нотатки буде втрачено.</string>
     <string name="onboarding_recovery_create">Створити мою фразу</string>
@@ -514,9 +514,9 @@
     <string name="onboarding_restore_label">Відновлення, потім PIN</string>
     <string name="onboarding_restore_intro">Оберіть файл резервної копії Encly, потім введіть 12 слів, з якими її створено.</string>
     <string name="onboarding_restore_file_section">1 · Файл копії</string>
-    <string name="onboarding_restore_tap_other">Торкніться, щоб обрати інший файл</string>
+    <string name="onboarding_restore_tap_other">Обрати інший файл</string>
     <string name="onboarding_restore_phrase_section">2 · Фраза відновлення</string>
-    <string name="onboarding_restore_phrase_helper">Ці слова також стануть фразою відновлення на цьому телефоні.</string>
+    <string name="onboarding_restore_phrase_helper">Ці слова також стануть фразою відновлення на цьому пристрої.</string>
     <string name="notes_title">Нотатки</string>
     <string name="lock_now">Заблокувати зараз</string>
     <string name="search_placeholder">Пошук у заголовках і тексті</string>
@@ -809,6 +809,8 @@
     <string name="security_encryption_pin_plain_nobio">Ваші нотатки зашифровано. Їх відкриває ваш PIN.</string>
     <string name="security_encryption_seed_plain_nobio">Ваші нотатки зашифровано. Їх відкриває ваш PIN, а якщо ви забудете PIN, то фраза відновлення.</string>
     <string name="lock_pin_key_lost_desktop">Ваш PIN більше не може розблокувати Encly на цьому комп’ютері: секрет у системній в’язці ключів зник або був скинутий. Скористайтеся фразою відновлення, а потім задайте новий PIN.</string>
+    <string name="error_keystore_unavailable_desktop">Системна в’язка ключів не відповіла. Спробуйте ще раз; якщо помилка повторюється, перезапустіть її або вийдіть із системи й увійдіть знову.</string>
+    <string name="loss_message_desktop">Схоже, що зашифровані дані або ключі шифрування (зокрема секрет у системній в’язці ключів) були змінені або пошкоджені, тож відновлення неможливе.\n\nЩоб і далі користуватися застосунком, потрібно скинути його та стерти пошкоджені дані на цьому комп’ютері. Усі збережені нотатки й налаштування буде видалено назавжди.</string>
     <string name="security_protection_slots_desc_nobio">PIN і фраза відновлення відкривають кожен свій зашифрований слот.</string>
     <string name="duress_pin_real_vault_nobio">Ваше справжнє сховище лишається заблокованим і недоторканим. На відміну від PIN для стирання, PIN під примусом нічого не стирає. Фраза відновлення завжди відкриває справжнє сховище.</string>
     <string name="security_protection_pin_title_device">PIN прив’язаний до цього пристрою</string>
@@ -845,7 +847,7 @@
     <string name="onboarding_passphrase_again_body">Щоб переконатися, що це саме та парольна фраза.</string>
     <string name="onboarding_recovery_passphrase_title">Забули парольну фразу?</string>
     <string name="onboarding_recovery_passphrase_desc">Фраза відновлення відмикає сховище й дозволяє задати нову парольну фразу.</string>
-    <string name="onboarding_recovery_warning_passphrase">Ніхто не відновить її за вас, навіть ми. Якщо втратити і парольну фразу, і фразу відновлення, нотатки буде втрачено.</string>
+    <string name="onboarding_recovery_warning_passphrase">Ніхто не відновить її за вас, навіть ми. Парольна фраза працює разом із секретом у системній в’язці ключів цього комп’ютера. Якщо в’язку скинуто чи замінено, ви перейшли на новий обліковий запис ОС або домашню теку перенесено чи відновлено без неї, ваші нотатки зможе відкрити лише фраза відновлення. Якщо втратити і її, нотатки зникнуть.</string>
     <string name="onboarding_recovery_skip_passphrase">Пропустити: лише парольна фраза, без резервних копій</string>
     <string name="onboarding_ready_passphrase_title">Парольну фразу задано</string>
     <string name="onboarding_ready_passphrase_desc">Запитується щоразу, коли відкривається Encly</string>

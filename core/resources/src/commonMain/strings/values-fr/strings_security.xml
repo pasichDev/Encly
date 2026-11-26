@@ -9,8 +9,8 @@
     <string name="backup_import_summary">Cette sauvegarde contient %1$s, %2$s et %3$s.</string>
     <string name="backup_merge_row_desc">Tout ce qui est ici est conservé et ce qui manque est ajouté. Les éléments déjà présents sont ignorés.</string>
     <string name="backup_replace_all">Tout remplacer</string>
-    <string name="backup_replace_row_desc">Supprimer toutes les notes, tâches et étiquettes de ce téléphone, puis restaurer la sauvegarde.</string>
-    <string name="backup_intro_short">Conservez toutes vos notes, tâches et étiquettes dans un fichier chiffré et restaurez-les sur n\'importe quel téléphone.</string>
+    <string name="backup_replace_row_desc">Supprimer toutes les notes, tâches et étiquettes de cet appareil, puis restaurer la sauvegarde.</string>
+    <string name="backup_intro_short">Conservez toutes vos notes, tâches et étiquettes dans un fichier chiffré et restaurez-les sur n\'importe quel appareil.</string>
     <string name="backup_section_export">Exporter</string>
     <string name="backup_section_import">Importer</string>
     <string name="security_encryption_pin_plain">Vos notes sont chiffrées. Votre code PIN (et votre empreinte, si elle est activée) les déverrouille.</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">Après la réinitialisation, vous pourrez restaurer un fichier de sauvegarde avec ses 12 mots.</string>
     <string name="vault_unreadable_title">Impossible d\'ouvrir votre coffre pour le moment</string>
     <string name="vault_unreadable_message">Encly n\'a pas pu lire ses données à l\'instant. Une autre appli ou le système les utilise peut-être, ou l\'appareil est encore verrouillé. Vos notes ne sont pas perdues. Réessayez dans un instant.</string>
+    <string name="vault_unreadable_message_desktop">Encly n\'a pas pu lire ses données à l\'instant. Une autre appli ou le système les utilise peut-être, ou le trousseau du système est encore verrouillé. Vos notes ne sont pas perdues. Réessayez dans un instant.</string>
     <string name="vault_unreadable_retry">Réessayer</string>
     <string name="vault_unreadable_still">Toujours illisible. Réessayez dans un instant.</string>
     <string name="pin_change_bar_title">Changer le code PIN</string>
@@ -41,6 +42,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Votre PIN ne peut plus déverrouiller Encly sur ce téléphone : sa clé matérielle a été réinitialisée. Utilisez votre phrase de récupération (ou votre empreinte), puis définissez un nouveau PIN.</string>
     <string name="lock_device_locked">L’appareil indique qu’il est encore verrouillé, Encly est donc resté fermé. Déverrouillez l’appareil, puis réessayez.</string>
+    <string name="lock_device_locked_desktop">Encly n’a pas pu confirmer que votre écran est déverrouillé, il est donc resté fermé. Déverrouillez l’écran, puis réessayez.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Trop de tentatives. Réessayez dans %d minute</item>
         <item quantity="many">Trop de tentatives. Réessayez dans %d minutes</item>
@@ -54,7 +56,7 @@
     <string name="security_recovery_replace_title">Remplacer la phrase de récupération</string>
     <string name="security_recovery_replace_desc">Obtenez 12 nouveaux mots. Les sauvegardes faites avant nécessitent toujours les anciens.</string>
     <string name="security_recovery_replace_confirm_title">Remplacer la phrase de récupération ?</string>
-    <string name="security_recovery_replace_confirm_body">Vous obtiendrez 12 nouveaux mots. L\'ancienne phrase ne déverrouille plus vos notes sur ce téléphone. Les sauvegardes déjà faites ne s\'ouvrent qu\'avec l\'ancienne phrase : gardez-la tant que vous conservez ces sauvegardes, ou faites une nouvelle sauvegarde ensuite.</string>
+    <string name="security_recovery_replace_confirm_body">Vous obtiendrez 12 nouveaux mots. L\'ancienne phrase ne déverrouille plus vos notes sur cet appareil. Les sauvegardes déjà faites ne s\'ouvrent qu\'avec l\'ancienne phrase : gardez-la tant que vous conservez ces sauvegardes, ou faites une nouvelle sauvegarde ensuite.</string>
     <string name="security_recovery_replace_confirm">Obtenir de nouveaux mots</string>
     <string name="security_recovery_replace_warning_title">Votre ancienne phrase ne fonctionne plus ici</string>
     <string name="security_recovery_replace_warning_body">Une fois confirmé, seuls ces mots déverrouillent vos notes si vous oubliez le PIN. Les sauvegardes faites avant nécessitent toujours les anciens mots.</string>
@@ -77,10 +79,10 @@
     <string name="auto_lock_10m">Après 10 minutes</string>
     <string name="auto_lock_15m">Après 15 minutes</string>
     <string name="auto_lock_30m">Après 30 minutes</string>
-    <string name="auto_lock_long_delay_warning">Un délai plus long laisse le coffre ouvert en arrière-plan. Toute personne ayant accès à votre téléphone déverrouillé peut voir vos notes.</string>
+    <string name="auto_lock_long_delay_warning">Un délai plus long laisse le coffre ouvert en arrière-plan. Toute personne ayant accès à votre appareil déverrouillé peut voir vos notes.</string>
     <string name="security_protection_section">Comment Encly protège vos notes</string>
     <string name="security_protection_key_title">Une clé aléatoire de 256 bits</string>
-    <string name="security_protection_key_desc">Toute la base est chiffrée avec une clé créée sur ce téléphone.</string>
+    <string name="security_protection_key_desc">Toute la base est chiffrée avec une clé créée sur cet appareil.</string>
     <string name="security_protection_pin_title">Un code PIN lié à ce téléphone</string>
     <string name="security_protection_pin_desc">Votre code PIN est combiné à une clé de la puce sécurisée du téléphone : impossible de le deviner ailleurs.</string>
     <string name="security_protection_slots_title">Une serrure par moyen d’accès</string>
@@ -208,4 +210,11 @@
     <string name="duress_passphrase_removed">Mot de passe de contrainte désactivé</string>
     <string name="duress_passphrase_turned_off">Le secret de votre appareil a été réinitialisé, le mot de passe de contrainte ne fonctionne donc plus. Définissez-le à nouveau ; le coffre leurre conserve ses notes.</string>
     <string name="duress_passphrase_remove_confirm_title">Désactiver le mot de passe de contrainte ?</string>
+    <string name="keyring_not_running">Aucun trousseau du système n\'est en cours d\'exécution. Installez-en un ou démarrez-en un (GNOME Keyring, KWallet ou KeePassXC avec son Secret Service activé), puis réessayez.</string>
+    <string name="keyring_no_default">Le trousseau du système n\'a pas de trousseau par défaut et Encly n\'a pas pu en créer un. Créez-en un dans Mots de passe et clés ou dans KWallet Manager, puis réessayez.</string>
+    <string name="keyring_prompt_dismissed">Le trousseau du système n\'a pas été déverrouillé. Réessayez et confirmez sa demande.</string>
+    <string name="key_not_found_title">Encly n\'a pas trouvé sa clé dans le trousseau du système</string>
+    <string name="key_not_found_message">Vos données sont intactes. Cela arrive quand un autre trousseau est en cours d\'exécution, quand le trousseau a été réinitialisé ou quand le dossier de données a été déplacé. Démarrez le trousseau qui contient la clé, puis réessayez.</string>
+    <string name="key_not_found_last_resort">Seulement si la clé est perdue pour de bon : l\'effacement supprime toutes les notes et tous les paramètres de cet ordinateur.</string>
+    <string name="lock_passphrase_slot_unusable">Ces notes sont protégées par un ancien type de secret que cette version ne peut pas vérifier. Utilisez votre phrase de récupération, puis définissez un nouveau mot de passe.</string>
 </resources>

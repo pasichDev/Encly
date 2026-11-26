@@ -20,6 +20,7 @@ import com.pasich.encly.core.resources.vault_unreadable_message
 import com.pasich.encly.core.resources.vault_unreadable_retry
 import com.pasich.encly.core.resources.vault_unreadable_still
 import com.pasich.encly.core.resources.vault_unreadable_title
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
@@ -53,7 +54,7 @@ fun StorageUnreadableScreen(onRetry: () -> Unit, stillUnreadable: Boolean, modif
                 modifier = Modifier.padding(top = spacing.xs),
             )
             Text(
-                text = stringResource(Res.string.vault_unreadable_message),
+                text = hostString(Res.string.vault_unreadable_message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

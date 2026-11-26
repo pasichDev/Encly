@@ -14,6 +14,7 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
@@ -130,7 +131,7 @@ internal class TestApp {
         `when`(security.generateMnemonicCode()).thenAnswer { phrase.toCharArray() }
         `when`(security.initializeNewVault(anyChars())).thenReturn(true)
         `when`(security.changePin(anyCharArray())).thenReturn(PinChange.SET)
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.isValidRecoveryPhrase(anyChars() ?: CharArray(0))).thenAnswer {
             Bip39().isValid(it.getArgument<CharArray>(0))
         }
@@ -145,7 +146,7 @@ internal class TestApp {
     fun inDecoySession(recoveryPhrase: Boolean = true) = apply {
         withAuth(recoveryPhrase)
         `when`(security.isDecoySession()).thenReturn(true)
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.hasBackupKey()).thenReturn(true)
         `when`(security.isDatabaseUnlocked()).thenReturn(true)
         `when`(security.wipeAndReset()).thenReturn(false)

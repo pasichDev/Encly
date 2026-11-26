@@ -23,8 +23,9 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.action_continue
 import com.pasich.encly.core.resources.passphrase_label
 import com.pasich.encly.core.resources.pin_change_current_title
-import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_mismatch_retry
+import com.pasich.encly.core.security.KeyStoreProblem
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.platform.secretString
@@ -45,6 +46,7 @@ import com.pasich.encly.presentation.screen.pincode.clearWhenVaultLocks
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecretRefusal
+import com.pasich.encly.presentation.viewmodel.pinCheckError
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -75,6 +77,9 @@ internal class PinFlowState(
     var busy by mutableStateOf(false)
     val isPassphrase: Boolean get() = kind == SecretKind.PASSWORD
 
+    /** Counts the locks of the vault: the answer of a check that began before one is dropped (see [lock]). */
+    private var generation = 0
+
     /** Something complete enough to send is typed: a PIN of enough digits, or any passphrase (the policy decides). */
     val canSubmit: Boolean get() = if (isPassphrase) passphrase.canSubmit else input.canSubmit
     var errorText by mutableStateOf<StringResource?>(null)
@@ -102,7 +107,11 @@ internal class PinFlowState(
         when (step) {
             PinStep.VERIFY -> {
                 busy = true
-                actions.verify(pin) { ok -> onCurrentPinChecked(ok, actions.lockoutMillis()) }
+                val asked = generation
+                actions.verify(pin) { check ->
+                    // The vault locked while this was being checked: an answer that comes after it opens nothing.
+                    if (asked == generation) onCurrentPinChecked(check, actions)
+                }
             }
 
             PinStep.NEW -> {
@@ -164,6 +173,7 @@ internal class PinFlowState(
     /** The vault locked: what is typed and kept is dropped, and a step that asks for a new secret is left. */
     fun lock() {
         clear()
+        generation++
         busy = false
         if (step == PinStep.NEW || step == PinStep.CONFIRM) {
             errorText = null
@@ -171,12 +181,12 @@ internal class PinFlowState(
         }
     }
 
-    private fun onCurrentPinChecked(ok: Boolean, lockoutMillis: Long) {
+    private fun onCurrentPinChecked(check: PinCheck, actions: PinFlowActions) {
         busy = false
-        val lockout = lockoutSecondsLeft(lockoutMillis)
+        val lockout = lockoutSecondsLeft(actions.lockoutMillis())
         errorText = null
         when {
-            ok -> step = PinStep.OPTIONS
+            check == PinCheck.OK -> step = PinStep.OPTIONS
 
             // A locked-out PIN is refused even when right: say so, not "wrong PIN".
             lockout > 0L -> {
@@ -184,8 +194,9 @@ internal class PinFlowState(
                 shakeKey++
             }
 
+            // A key store that did not answer says what it is missing; only a wrong secret says "wrong".
             else -> {
-                errorText = Res.string.pin_current_wrong
+                errorText = pinCheckError(check, actions.keyStoreProblem())
                 shakeKey++
             }
         }
@@ -235,7 +246,7 @@ internal fun PinFlowState.suggest(actions: PinFlowActions) {
 
 /** What a PIN flow calls out to; [save] takes over the confirmed PIN (and wipes it). */
 internal class PinFlowActions(
-    val verify: (CharArray, (Boolean) -> Unit) -> Unit,
+    val verify: (CharArray, (PinCheck) -> Unit) -> Unit,
     val lockoutMillis: () -> Long,
     val save: (CharArray) -> Unit,
     val close: () -> Unit,
@@ -245,6 +256,8 @@ internal class PinFlowActions(
     val same: (CharArray, CharArray) -> Boolean = { a, b -> a.contentEquals(b) },
     /** A passphrase to offer, or null where there is none (a PIN). */
     val suggest: () -> CharArray? = { null },
+    /** What the key store was missing when [verify] found it unusable, for the message. */
+    val keyStoreProblem: () -> KeyStoreProblem? = { null },
 )
 
 /** The strings of a PIN flow's steps. */

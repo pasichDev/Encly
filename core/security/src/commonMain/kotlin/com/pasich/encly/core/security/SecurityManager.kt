@@ -53,6 +53,13 @@ public enum class VaultUnlockResult {
     KEY_STORE_UNAVAILABLE,
 
     /**
+     * The store of the device-bound PIN key holds no key, but may be another one than the key was made in (a desktop
+     * keyring: a different provider is running, the keyring is closed, the vault folder moved): the vault is intact
+     * and nothing was counted. Never on Android or iOS, where a missing key is [PIN_KEY_LOST].
+     */
+    KEY_NOT_FOUND,
+
+    /**
      * The device's key store failed on this attempt (it may pass), or the password stretch could not be made for lack
      * of memory; the attempt was refunded, the database is fine.
      */
@@ -358,6 +365,8 @@ public class SecurityManager(
 
             PinUnlock.KeyStoreUnavailable -> VaultUnlockResult.KEY_STORE_UNAVAILABLE
 
+            PinUnlock.KeyStoreNotFound -> VaultUnlockResult.KEY_NOT_FOUND
+
             PinUnlock.KeyStoreFailed -> VaultUnlockResult.KEY_STORE_FAILED
 
             PinUnlock.Failed -> VaultUnlockResult.DB_ERROR
@@ -500,11 +509,33 @@ public class SecurityManager(
      * Re-authentication with the PIN of the open vault (the duress PIN in a decoy session);
      * counts like an unlock attempt. [pin] is wiped.
      */
-    public fun verifyPin(pin: CharArray): Boolean = try {
-        authenticationManager.verifyPinAuth(pin, decoy = isDecoySession())
+    public fun verifyPin(pin: CharArray): Boolean = verifyPinResult(pin) == PinCheck.OK
+
+    /** [verifyPin], telling a wrong secret from a device key store that did not answer. [pin] is wiped. */
+    public fun verifyPinResult(pin: CharArray): PinCheck = try {
+        authenticationManager.verifyPinAuthResult(pin, decoy = isDecoySession())
     } finally {
         SensitiveDataCleaner.clear(pin)
     }
+
+    /**
+     * What the last unlock, check or setting that found the device key store unusable said was missing (no store
+     * running, locked, no default keyring, a prompt dismissed), for the message; null when it did not meet that.
+     */
+    public fun keyStoreProblem(): KeyStoreProblem? = authenticationManager.keyStoreProblem
+
+    /** Whether [prepareKeyStore] has anything to do on this platform (a desktop keyring; false on Android and iOS). */
+    public fun keyStoreMayNeedPreparing(): Boolean = authenticationManager.keyStoreMayNeedPreparing
+
+    /**
+     * Gets the device key store ready before a vault is made around a key in it: null when it is, else what is missing
+     * (and the system's own prompt was already shown where it has one). Blocks while the user answers it: never on the
+     * main thread. Nothing is created.
+     */
+    public fun prepareKeyStore(): KeyStoreProblem? = authenticationManager.prepareKeyStore()
+
+    /** Ends a system prompt the key store waits on; the lock of the vault does it ([lock]). */
+    public fun abandonKeyStorePrompt(): Unit = authenticationManager.abandonKeyStorePrompt()
 
     public fun verifySeed(phrase: CharArray): Boolean = seedPhraseManager.verifyMnemonic(phrase)
 
@@ -726,6 +757,9 @@ public class SecurityManager(
      * session key behind; the failure is passed on.
      */
     public fun lock() {
+        // Before the lock waits for anything: a keyring prompt left open must not outlive the lock, and the unlock that
+        // waits on it must not keep this one waiting.
+        authenticationManager.abandonKeyStorePrompt()
         synchronized(databaseLock) {
             try {
                 vaultDatabase.reset()

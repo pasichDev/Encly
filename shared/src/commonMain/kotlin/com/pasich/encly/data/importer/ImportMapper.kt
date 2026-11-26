@@ -198,6 +198,8 @@ object ImportAnalyzer {
         forced: ImportSource? = null,
         limits: ImportLimits = ImportLimits(),
         now: Long = currentTimeMillis(),
+        /** Throws the caller's cancellation; asked between the items of a big file. */
+        checkCancelled: () -> Unit = {},
     ): Analysis {
         val kinds = FormatDetector.classify(read.entries, limits)
         val detection = if (forced == null) FormatDetector.detect(kinds) else FormatDetector.validate(forced, kinds)
@@ -211,7 +213,8 @@ object ImportAnalyzer {
             is Detection.Encrypted -> Analysis.Encrypted(detection.source)
 
             is Detection.Found -> try {
-                Analysis.Ready(plan(detection.source, read, classified(kinds, forced), limits, now))
+                val run = PlanRun(limits, now, checkCancelled)
+                Analysis.Ready(plan(detection.source, read, classified(kinds, forced), run))
             } catch (e: ImportException) {
                 Analysis.Failed(e.error)
             }
@@ -239,21 +242,20 @@ object ImportAnalyzer {
         entries: List<ImportEntry>,
         limits: ImportLimits,
         notesnookFile: (ImportEntry) -> Boolean,
+        checkCancelled: () -> Unit,
     ): ParsedNotes = when (source) {
         ImportSource.GOOGLE_KEEP -> KeepParser.parse(entries, limits)
-        ImportSource.STANDARD_NOTES -> StandardNotesParser.parse(entries, limits)
+        ImportSource.STANDARD_NOTES -> StandardNotesParser.parse(entries, limits, checkCancelled)
         ImportSource.JOPLIN -> JoplinParser.parse(entries, limits)
         ImportSource.NOTESNOOK -> MarkdownNotesParser.parse(entries, limits, notesnook = true, notesnookFile)
         ImportSource.MARKDOWN -> MarkdownNotesParser.parse(entries, limits, notesnook = false)
     }
 
-    private fun plan(
-        source: ImportSource,
-        read: ReadResult,
-        kinds: List<EntryKind>,
-        limits: ImportLimits,
-        now: Long,
-    ): ImportPlan {
+    /** What a plan is made under: the limits, the time it is made at, and the caller's cancellation check. */
+    private data class PlanRun(val limits: ImportLimits, val now: Long, val checkCancelled: () -> Unit)
+
+    private fun plan(source: ImportSource, read: ReadResult, kinds: List<EntryKind>, run: PlanRun): ImportPlan {
+        val (limits, now, checkCancelled) = run
         val skipped = setOf(EntryKind.IGNORED, EntryKind.STANDARD_NOTES_ENCRYPTED, EntryKind.NOTESNOOK_BACKUP)
         // Ignored files still reach the parsers when they are media, so attachments can be counted.
         val usable = read.entries.filterIndexed { index, entry ->
@@ -263,7 +265,7 @@ object ImportAnalyzer {
         val encrypted = kinds.count { it == EntryKind.STANDARD_NOTES_ENCRYPTED || it == EntryKind.NOTESNOOK_BACKUP }
         // Notesnook's rules belong to the files recognised as its own, not to the whole selection.
         val notesnook = read.entries.filterIndexedTo(HashSet()) { index, _ -> kinds[index] == EntryKind.NOTESNOOK }
-        val parsed = parse(source, usable, limits, notesnook::contains)
+        val parsed = parse(source, usable, limits, notesnook::contains, checkCancelled)
         val markdown = source == ImportSource.NOTESNOOK || source == ImportSource.MARKDOWN
         // Media the reader passed over without keeping it: the attachments of a Markdown folder.
         val withEncrypted = ParsedNotes(

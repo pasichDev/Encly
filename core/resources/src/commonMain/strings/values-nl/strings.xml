@@ -112,7 +112,7 @@
     <string name="editor_lock">Bewerken vergrendelen</string>
 
     <string name="empty_notes">Nog geen notities</string>
-    <string name="empty_notes_desc">Tik op Nieuwe notitie om je eerste te schrijven.</string>
+    <string name="empty_notes_desc">Selecteer Nieuwe notitie om je eerste te schrijven.</string>
     <string name="empty_trash_desc">Verwijderde notities blijven hier tot je ze herstelt of definitief verwijdert.</string>
 
     <string name="enter_url">Voer een link in</string>
@@ -124,7 +124,7 @@
 
     <string name="falied_content">Kan de inhoud niet laden</string>
 
-    <string name="faq_background_a">Encly slaat je wijzigingen op en sluit na de vertraging die je in Instellingen → Beveiliging kiest (standaard 15 seconden) de versleutelde database en wist de sessiesleutel. Het scherm uitzetten of de telefoon vergrendelen doet dit meteen. Daarna ontgrendel je opnieuw.</string>
+    <string name="faq_background_a">Encly slaat je wijzigingen op en sluit na de vertraging die je in Instellingen → Beveiliging kiest (standaard 15 seconden) de versleutelde database en wist de sessiesleutel. Het scherm uitzetten of het apparaat vergrendelen doet dit meteen. Daarna ontgrendel je opnieuw.</string>
     <string name="faq_background_q">Wat gebeurt er als ik de app verlaat?</string>
     <string name="faq_biometrics_a">Gebruik de biometrieschakelaar in Instellingen → Beveiliging. Voor het maken of verwijderen van het biometrische slot is sterke biometrische verificatie nodig.</string>
     <string name="faq_biometrics_q">Hoe zet ik biometrie aan of uit?</string>
@@ -136,7 +136,7 @@
     <string name="faq_forgot_pin_q">Wat als ik mijn pincode vergeet?</string>
     <string name="faq_language_a">Open Instellingen → Taal en kies een van de beschikbare talen, of \'Systeemstandaard\' om de taal van je apparaat te volgen. De wijziging gaat meteen in.</string>
     <string name="faq_language_q">Hoe wijzig ik de taal?</string>
-    <string name="faq_new_note_a">Tik op het startscherm op ‘Nieuwe notitie’. De balk boven het toetsenbord voegt koppen, checklists, opsommingen, genummerde lijsten, citaten, links en scheidingslijnen toe.</string>
+    <string name="faq_new_note_a">Selecteer op het startscherm ‘Nieuwe notitie’. De balk boven het toetsenbord voegt koppen, checklists, opsommingen, genummerde lijsten, citaten, links en scheidingslijnen toe.</string>
     <string name="faq_new_note_q">Hoe maak ik een nieuwe notitie?</string>
     <string name="faq_recovery_phrase_a">Het is een reservesleutel van 12 woorden. Hij ontgrendelt de kluis als je je pincode vergeet en is de enige sleutel tot je back-upbestanden. Je maakt hem tijdens het instellen, of later via Instellingen → Beveiliging als je hem hebt overgeslagen. Bewaar hem op papier, offline.</string>
     <string name="faq_recovery_phrase_q">Waarvoor is de herstelzin?</string>
@@ -249,7 +249,7 @@
     <string name="key_store_unavailable">Ontgrendel de sleutelhanger van het systeem en probeer het opnieuw</string>
 
 
-    <string name="press_to_edit">Tik om te beginnen met bewerken…</string>
+    <string name="press_to_edit">Selecteer om te beginnen met bewerken…</string>
 
     <string name="priority_high">Hoog</string>
     <string name="priority_low">Laag</string>
@@ -316,7 +316,7 @@
     <string name="tag_reorder_failed">Kan de volgorde van de labels niet opslaan. Probeer het opnieuw.</string>
     <string name="tag_update_failed">Kan het label niet bijwerken. Probeer het opnieuw.</string>
 
-    <string name="tap_again_to_delete">Tik nogmaals om te verwijderen</string>
+    <string name="tap_again_to_delete">Selecteer nogmaals om te verwijderen</string>
 
     <string name="task_add">Nieuwe taak</string>
     <string name="task_clear_completed_failed">Kan de voltooide taken niet wissen. Probeer het opnieuw.</string>
@@ -366,7 +366,7 @@
     <string name="backup_settings_subtitle">Versleutelde back-up, import en Markdown</string>
     <string name="backup_title">Back-up</string>
     <string name="backup_intro_title">Versleuteld met je herstelzin</string>
-    <string name="backup_intro_body">Een back-up bevat al je notities, taken en labels, versleuteld met je herstelzin van 12 woorden. Encly uploadt hem nergens heen: jij kiest waar het bestand wordt opgeslagen. Op een nieuwe telefoon zetten dezelfde 12 woorden hem terug.</string>
+    <string name="backup_intro_body">Een back-up bevat al je notities, taken en labels, versleuteld met je herstelzin van 12 woorden. Encly uploadt hem nergens heen: jij kiest waar het bestand wordt opgeslagen. Op een nieuw apparaat zetten dezelfde 12 woorden hem terug.</string>
     <string name="backup_last_export">Laatste export: %1$s</string>
     <string name="backup_never_exported">Nog geen back-up geëxporteerd</string>
     <string name="backup_export">Back-up exporteren</string>
@@ -453,7 +453,7 @@
     <string name="pin_unlock_with_fingerprint">Ontgrendelen met vingerafdruk</string>
     <string name="onboarding_step_of">Stap %1$d van %2$d</string>
     <string name="onboarding_welcome_headline">Een notitieboek dat alleen jij kunt openen.</string>
-    <string name="onboarding_welcome_sub">Notities en taken, versleuteld op deze telefoon. Instellen duurt ongeveer een minuut.</string>
+    <string name="onboarding_welcome_sub">Notities en taken, versleuteld op dit apparaat. Instellen duurt ongeveer een minuut.</string>
     <string name="onboarding_fact_account_title">Geen account</string>
     <string name="onboarding_fact_account_desc">Geen aanmelding, geen e-mail, geen wachtwoordherstel.</string>
     <string name="onboarding_fact_offline_title">Werkt offline</string>
@@ -473,7 +473,7 @@
     <string name="onboarding_recovery_pin_desc">De zin ontgrendelt je kluis en laat je een nieuwe pincode instellen.</string>
     <string name="onboarding_recovery_backups_title">Opent je back-ups</string>
     <string name="onboarding_recovery_backups_desc">Versleutelde back-upbestanden zijn alleen met deze woorden te lezen.</string>
-    <string name="onboarding_recovery_phone_title">Nieuwe telefoon</string>
+    <string name="onboarding_recovery_phone_title">Nieuw apparaat</string>
     <string name="onboarding_recovery_phone_desc">Back-upbestand plus zin zet elke notitie, taak en elk label terug.</string>
     <string name="onboarding_recovery_warning">Niemand kan hem voor je herstellen, ook wij niet. Verlies je zowel de pincode als de zin, dan zijn de notities weg.</string>
     <string name="onboarding_recovery_create">Mijn zin maken</string>
@@ -508,9 +508,9 @@
     <string name="onboarding_restore_label">Terugzetten, dan pincode instellen</string>
     <string name="onboarding_restore_intro">Kies je Encly-back-upbestand en voer dan de 12 woorden in waarmee het is gemaakt.</string>
     <string name="onboarding_restore_file_section">1 · Back-upbestand</string>
-    <string name="onboarding_restore_tap_other">Tik om een ander bestand te kiezen</string>
+    <string name="onboarding_restore_tap_other">Kies een ander bestand</string>
     <string name="onboarding_restore_phrase_section">2 · Herstelzin</string>
-    <string name="onboarding_restore_phrase_helper">Deze woorden worden ook de herstelzin van deze telefoon.</string>
+    <string name="onboarding_restore_phrase_helper">Deze woorden worden ook de herstelzin van dit apparaat.</string>
     <string name="notes_title">Notities</string>
     <string name="lock_now">Nu vergrendelen</string>
     <string name="search_placeholder">Zoeken in titels en tekst</string>
@@ -524,7 +524,7 @@
     </plurals>
     <string name="home_tasks_none_open">Taken · geen open</string>
     <string name="task_empty_title">Nog geen taken</string>
-    <string name="task_empty_desc">Tik op Nieuwe taak om je eerste toe te voegen.</string>
+    <string name="task_empty_desc">Selecteer Nieuwe taak om je eerste toe te voegen.</string>
     <string name="task_all_done_title">Alles klaar</string>
     <string name="task_done_section">Klaar · %1$d</string>
     <string name="task_section_in_work">Bezig · %1$d</string>
@@ -544,12 +544,12 @@
     <string name="licenses_title">Opensourcelicenties</string>
     <string name="licenses_row_desc">De bibliotheken en lettertypen die Encly gebruikt</string>
     <string name="licenses_heading">Gebouwd op open source</string>
-    <string name="licenses_intro">Encly is gemaakt met deze bibliotheken en lettertypen. Tik erop om de licentie te lezen.</string>
+    <string name="licenses_intro">Encly is gemaakt met deze bibliotheken en lettertypen. Selecteer er een om de licentie te lezen.</string>
     <string name="licenses_libraries">Bibliotheken</string>
     <string name="licenses_fonts">Lettertypen</string>
     <string name="tags_empty_title">Nog geen tags</string>
     <string name="tags_empty_desc">Tags groeperen je notities. Maak er hierboven een aan en kies hem voor een notitie via lang indrukken.</string>
-    <string name="tags_hint">Tik op een tag om hem te hernoemen, verbergen of verwijderen. Sleep de greep om te ordenen.</string>
+    <string name="tags_hint">Selecteer een tag om hem te hernoemen, verbergen of verwijderen. Sleep de greep om te ordenen.</string>
     <string name="tag_add">Tag toevoegen</string>
     <string name="tag_name_label">Naam</string>
     <string name="tag_show_in_list">Tonen in de notitielijst</string>
@@ -781,6 +781,8 @@
     <string name="security_encryption_pin_plain_nobio">Je notities zijn versleuteld. Je pincode ontgrendelt ze.</string>
     <string name="security_encryption_seed_plain_nobio">Je notities zijn versleuteld. Je pincode ontgrendelt ze, en je herstelzin als je de pincode vergeet.</string>
     <string name="lock_pin_key_lost_desktop">Je pincode kan Encly op deze computer niet meer ontgrendelen: het geheim in de sleutelhanger van het systeem ontbreekt of is gereset. Gebruik je herstelzin en stel daarna een nieuwe pincode in.</string>
+    <string name="error_keystore_unavailable_desktop">De sleutelhanger van het systeem reageerde niet. Probeer het opnieuw; als het blijft mislukken, start je hem opnieuw of log je uit en weer in.</string>
+    <string name="loss_message_desktop">Het lijkt erop dat de versleutelde gegevens of de versleutelingssleutels (ook het geheim in de sleutelhanger van het systeem) zijn gewijzigd of beschadigd, waardoor herstel niet mogelijk is.\n\nOm de app te blijven gebruiken, moet je hem resetten en de beschadigde gegevens op deze computer wissen. Hierdoor worden alle opgeslagen notities en instellingen definitief verwijderd.</string>
     <string name="security_protection_slots_desc_nobio">Pincode en herstelzin openen elk hun eigen versleutelde slot.</string>
     <string name="duress_pin_real_vault_nobio">Je echte kluis blijft vergrendeld en onaangeroerd. Anders dan de wis-pincode wist de dwangpincode niets. Je herstelzin opent altijd de echte kluis.</string>
     <string name="security_protection_pin_title_device">Een pincode gekoppeld aan dit apparaat</string>
@@ -817,7 +819,7 @@
     <string name="onboarding_passphrase_again_body">Zo weten we zeker dat het de bedoelde is.</string>
     <string name="onboarding_recovery_passphrase_title">Wachtwoord vergeten?</string>
     <string name="onboarding_recovery_passphrase_desc">De herstelzin ontgrendelt je kluis en laat je een nieuw wachtwoord instellen.</string>
-    <string name="onboarding_recovery_warning_passphrase">Niemand kan hem voor je herstellen, ook wij niet. Verlies je zowel het wachtwoord als de herstelzin, dan zijn de notities weg.</string>
+    <string name="onboarding_recovery_warning_passphrase">Niemand kan hem voor je herstellen, ook wij niet. Je wachtwoord werkt samen met een geheim in de sleutelhanger van het systeem op deze computer. Wordt die sleutelhanger gereset of vervangen, stap je over naar een nieuw gebruikersaccount of wordt je thuismap verplaatst of hersteld zonder sleutelhanger, dan kan alleen je herstelzin je notities nog openen. Verlies je die ook, dan zijn de notities weg.</string>
     <string name="onboarding_recovery_skip_passphrase">Overslaan: alleen wachtwoord, geen back-ups</string>
     <string name="onboarding_ready_passphrase_title">Wachtwoord ingesteld</string>
     <string name="onboarding_ready_passphrase_desc">Gevraagd telkens als Encly opent</string>

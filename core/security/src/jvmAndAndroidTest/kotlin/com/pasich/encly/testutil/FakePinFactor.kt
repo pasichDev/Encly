@@ -1,5 +1,6 @@
 package com.pasich.encly.testutil
 
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.core.security.PinKeySlot
@@ -26,6 +27,26 @@ internal class FakePinFactor : PinHardwareFactor {
     /** The store of the keys is locked or not running (a desktop keyring): every MAC and reset fails as such. */
     var unavailable = false
 
+    /** What [unavailable] says is missing. */
+    var problem: KeyStoreProblem? = null
+
+    /** The store answers but holds no key, and that does not prove the key is gone (a desktop keyring). */
+    var notFound = false
+
+    /** [prepare] fails as a store with this problem. */
+    var prepareProblem: KeyStoreProblem? = null
+
+    /** A MAC that waits on the user (a keyring prompt) until [abandonPending]; then fails as a dismissed prompt. */
+    var promptOpen: java.util.concurrent.CountDownLatch? = null
+    val asking = java.util.concurrent.CountDownLatch(1)
+    var prepared = 0
+        private set
+    var abandoned = 0
+        private set
+
+    override val missingKeyMayReturn: Boolean get() = missingMayReturn
+    var missingMayReturn = false
+
     /** Slots whose MAC fails like a transient Keystore error, while the others still work. */
     var failingSlots: Set<PinKeySlot> = emptySet()
     var calls = 0
@@ -43,7 +64,7 @@ internal class FakePinFactor : PinHardwareFactor {
 
     override fun reset(slot: PinKeySlot) {
         keys.remove(slot)
-        if (unavailable) throw PinFactorException(lost = false, unavailable = true)
+        if (unavailable) throw PinFactorException(lost = false, unavailable = true, problem = problem)
         if (failingReset) throw PinFactorException(lost = false)
         keys[slot] = ByteArray(32).also { SecureRandom().nextBytes(it) }
         lost = false
@@ -51,7 +72,13 @@ internal class FakePinFactor : PinHardwareFactor {
     }
 
     override fun mac(slot: PinKeySlot, data: ByteArray): ByteArray {
-        if (unavailable) throw PinFactorException(lost = false, unavailable = true)
+        if (unavailable) throw PinFactorException(lost = false, unavailable = true, problem = problem)
+        promptOpen?.let {
+            asking.countDown()
+            it.await(10, java.util.concurrent.TimeUnit.SECONDS)
+            throw PinFactorException(lost = false, unavailable = true, problem = KeyStoreProblem.DISMISSED)
+        }
+        if (notFound) throw PinFactorException(lost = false, notFound = true)
         if (failing || slot in failingSlots) throw PinFactorException(lost = false)
         val current = keys[slot]
         if (lost || current == null) throw PinFactorException(lost = true)
@@ -64,6 +91,24 @@ internal class FakePinFactor : PinHardwareFactor {
 
     override fun delete(slot: PinKeySlot) {
         keys.remove(slot)
+    }
+
+    /** The key of [slot] as it is now, or null; to see that a new vault did not keep an old one. */
+    fun keyOf(slot: PinKeySlot): List<Byte>? = keys[slot]?.toList()
+
+    /** Puts [key] in [slot] as one a former vault left behind. */
+    fun leave(slot: PinKeySlot, key: ByteArray) {
+        keys[slot] = key
+    }
+
+    override fun prepare() {
+        prepareProblem?.let { throw PinFactorException(lost = false, unavailable = true, problem = it) }
+        prepared++
+    }
+
+    override fun abandonPending() {
+        abandoned++
+        promptOpen?.countDown()
     }
 }
 

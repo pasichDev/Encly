@@ -9,8 +9,8 @@
     <string name="backup_import_summary">Ta kopia zawiera: %1$s, %2$s i %3$s.</string>
     <string name="backup_merge_row_desc">Wszystko tutaj zostaje, a brakujące elementy zostaną dodane. Te, które już są, zostaną pominięte.</string>
     <string name="backup_replace_all">Zastąp wszystko</string>
-    <string name="backup_replace_row_desc">Usuń wszystkie notatki, zadania i tagi z tego telefonu, a potem przywróć kopię.</string>
-    <string name="backup_intro_short">Zachowaj wszystkie notatki, zadania i tagi w jednym zaszyfrowanym pliku i przywróć je na dowolnym telefonie.</string>
+    <string name="backup_replace_row_desc">Usuń wszystkie notatki, zadania i tagi z tego urządzenia, a potem przywróć kopię.</string>
+    <string name="backup_intro_short">Zachowaj wszystkie notatki, zadania i tagi w jednym zaszyfrowanym pliku i przywróć je na dowolnym urządzeniu.</string>
     <string name="backup_section_export">Eksport</string>
     <string name="backup_section_import">Import</string>
     <string name="security_encryption_pin_plain">Twoje notatki są zaszyfrowane. Odblokowuje je Twój PIN (i odcisk palca, jeśli jest włączony).</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">Po zresetowaniu możesz przywrócić plik kopii zapasowej za pomocą jego 12 słów.</string>
     <string name="vault_unreadable_title">Nie można teraz otworzyć sejfu</string>
     <string name="vault_unreadable_message">Encly nie mogło odczytać swoich danych. Może używa ich inna aplikacja lub system albo urządzenie jest nadal zablokowane. Twoje notatki nie zostały utracone. Spróbuj ponownie za chwilę.</string>
+    <string name="vault_unreadable_message_desktop">Encly nie mogło odczytać swoich danych. Może używa ich inna aplikacja lub system albo systemowy pęk kluczy jest nadal zablokowany. Twoje notatki nie zostały utracone. Spróbuj ponownie za chwilę.</string>
     <string name="vault_unreadable_retry">Spróbuj ponownie</string>
     <string name="vault_unreadable_still">Nadal nie można odczytać. Spróbuj ponownie za chwilę.</string>
     <string name="pin_change_bar_title">Zmień PIN</string>
@@ -44,6 +45,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Twój PIN nie może już odblokować Encly na tym telefonie: jego klucz sprzętowy został zresetowany. Użyj frazy odzyskiwania (lub odcisku palca), a potem ustaw nowy PIN.</string>
     <string name="lock_device_locked">Urządzenie zgłasza, że jest nadal zablokowane, więc Encly pozostało zamknięte. Odblokuj urządzenie i spróbuj ponownie.</string>
+    <string name="lock_device_locked_desktop">Encly nie mogło potwierdzić, że ekran jest odblokowany, więc pozostało zamknięte. Odblokuj ekran i spróbuj ponownie.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Zbyt wiele prób. Spróbuj ponownie za %d minutę</item>
         <item quantity="few">Zbyt wiele prób. Spróbuj ponownie za %d minuty</item>
@@ -59,7 +61,7 @@
     <string name="security_recovery_replace_title">Zmień frazę odzyskiwania</string>
     <string name="security_recovery_replace_desc">Otrzymaj 12 nowych słów. Kopie zapasowe zrobione wcześniej nadal wymagają starych.</string>
     <string name="security_recovery_replace_confirm_title">Zmienić frazę odzyskiwania?</string>
-    <string name="security_recovery_replace_confirm_body">Otrzymasz 12 nowych słów. Stara fraza przestanie odblokowywać Twoje notatki na tym telefonie. Kopie zapasowe, które już masz, otworzą się tylko starą frazą, więc zachowaj ją, dopóki przechowujesz te kopie, albo zrób potem nową kopię.</string>
+    <string name="security_recovery_replace_confirm_body">Otrzymasz 12 nowych słów. Stara fraza przestanie odblokowywać Twoje notatki na tym urządzeniu. Kopie zapasowe, które już masz, otworzą się tylko starą frazą, więc zachowaj ją, dopóki przechowujesz te kopie, albo zrób potem nową kopię.</string>
     <string name="security_recovery_replace_confirm">Otrzymaj nowe słowa</string>
     <string name="security_recovery_replace_warning_title">Stara fraza przestaje tu działać</string>
     <string name="security_recovery_replace_warning_body">Po potwierdzeniu tylko te słowa odblokują Twoje notatki, gdy zapomnisz PIN. Kopie zapasowe zrobione wcześniej nadal wymagają starych słów.</string>
@@ -82,10 +84,10 @@
     <string name="auto_lock_10m">Po 10 minutach</string>
     <string name="auto_lock_15m">Po 15 minutach</string>
     <string name="auto_lock_30m">Po 30 minutach</string>
-    <string name="auto_lock_long_delay_warning">Dłuższy czas pozostawia sejf otwarty w tle. Osoba z dostępem do odblokowanego telefonu może zobaczyć Twoje notatki.</string>
+    <string name="auto_lock_long_delay_warning">Dłuższy czas pozostawia sejf otwarty w tle. Osoba z dostępem do odblokowanego urządzenia może zobaczyć Twoje notatki.</string>
     <string name="security_protection_section">Jak Encly chroni twoje notatki</string>
     <string name="security_protection_key_title">Losowy klucz 256-bitowy</string>
-    <string name="security_protection_key_desc">Cała baza jest zaszyfrowana kluczem utworzonym na tym telefonie.</string>
+    <string name="security_protection_key_desc">Cała baza jest zaszyfrowana kluczem utworzonym na tym urządzeniu.</string>
     <string name="security_protection_pin_title">PIN powiązany z tym telefonem</string>
     <string name="security_protection_pin_desc">PIN jest łączony z kluczem w bezpiecznym układzie telefonu, więc nie da się go odgadnąć nigdzie indziej.</string>
     <string name="security_protection_slots_title">Osobny zamek dla każdego wejścia</string>
@@ -213,4 +215,11 @@
     <string name="duress_passphrase_removed">Hasło przymusowe wyłączone</string>
     <string name="duress_passphrase_turned_off">Sekret twojego urządzenia został zresetowany, więc hasło przymusowe przestało działać. Ustaw je ponownie; sejf-przynęta zachowuje swoje notatki.</string>
     <string name="duress_passphrase_remove_confirm_title">Wyłączyć hasło przymusowe?</string>
+    <string name="keyring_not_running">Żaden systemowy pęk kluczy nie jest uruchomiony. Zainstaluj lub uruchom jeden (GNOME Keyring, KWallet albo KeePassXC z włączoną usługą Secret Service), a potem spróbuj ponownie.</string>
+    <string name="keyring_no_default">Systemowy pęk kluczy nie ma domyślnego pęku, a Encly nie mógł go utworzyć. Utwórz go w Hasłach i kluczach lub w KWallet Manager, a potem spróbuj ponownie.</string>
+    <string name="keyring_prompt_dismissed">Systemowy pęk kluczy nie został odblokowany. Spróbuj ponownie i potwierdź jego prośbę.</string>
+    <string name="key_not_found_title">Encly nie znalazł swojego klucza w systemowym pęku kluczy</string>
+    <string name="key_not_found_message">Twoje dane są nienaruszone. Tak się dzieje, gdy działa inny pęk kluczy, gdy pęk kluczy został zresetowany albo gdy folder z danymi został przeniesiony. Uruchom pęk kluczy, który zawiera klucz, i spróbuj ponownie.</string>
+    <string name="key_not_found_last_resort">Tylko jeśli klucz przepadł na dobre: wyczyszczenie usuwa wszystkie notatki i ustawienia na tym komputerze.</string>
+    <string name="lock_passphrase_slot_unusable">Te notatki są chronione starszym rodzajem sekretu, którego ta wersja nie potrafi sprawdzić. Użyj frazy odzyskiwania, a potem ustaw nowe hasło.</string>
 </resources>

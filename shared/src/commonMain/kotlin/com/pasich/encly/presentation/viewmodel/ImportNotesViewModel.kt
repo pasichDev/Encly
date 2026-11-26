@@ -203,7 +203,7 @@ class ImportNotesViewModel(
         withContext(ioDispatcher) {
             val context = currentCoroutineContext()
             val read = ImportReader().read(source) { context.ensureActive() }
-            show(ImportAnalyzer.analyze(read), read, store)
+            show(ImportAnalyzer.analyze(read, checkCancelled = { context.ensureActive() }), read, store)
         }
     } catch (e: CancellationException) {
         throw e
@@ -253,7 +253,11 @@ class ImportNotesViewModel(
         job = viewModelScope.launch {
             settle(
                 try {
-                    withContext(ioDispatcher) { show(ImportAnalyzer.analyze(read, forced = source), read, store) }
+                    withContext(ioDispatcher) {
+                        val context = currentCoroutineContext()
+                        val analysis = ImportAnalyzer.analyze(read, forced = source) { context.ensureActive() }
+                        show(analysis, read, store)
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: ImportException) {

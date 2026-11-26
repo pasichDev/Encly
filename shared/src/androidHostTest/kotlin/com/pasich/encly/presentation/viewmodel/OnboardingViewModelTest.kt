@@ -7,8 +7,12 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_wrong_phrase
 import com.pasich.encly.core.resources.key_store_unavailable
+import com.pasich.encly.core.resources.keyring_no_default
+import com.pasich.encly.core.resources.keyring_not_running
+import com.pasich.encly.core.resources.keyring_prompt_dismissed
 import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.resources.pin_save_failed
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
@@ -316,6 +320,94 @@ class OnboardingViewModelTest {
         vm.settled()
         assertEquals(OnboardingStep.READY, vm.state.step)
         verify(security, times(2)).changePin("123456".toCharArray())
+    }
+
+    @Test
+    fun aPhoneNeverAsksTheKeyStoreBeforeThePinStep() = runTest {
+        val vm = viewModel()
+
+        vm.getStarted()
+
+        assertEquals(OnboardingStep.PIN, vm.state.step)
+        verify(security, never()).prepareKeyStore()
+    }
+
+    @Test
+    fun theDesktopKeyringIsAskedBeforeAnySecretIsChosen() = runTest {
+        `when`(security.keyStoreMayNeedPreparing()).thenReturn(true)
+        `when`(security.prepareKeyStore()).thenReturn(null)
+        val vm = viewModel()
+
+        vm.getStarted()
+        vm.settled()
+
+        assertEquals(OnboardingStep.PIN, vm.state.step)
+        assertNull(vm.state.keyStoreProblem)
+        assertNull(vm.state.error)
+        verify(security).prepareKeyStore()
+    }
+
+    @Test
+    fun aKeyringThatIsNotReadyIsSaidOnWelcomeAndTryAgainAsksAgain() = runTest {
+        `when`(security.keyStoreMayNeedPreparing()).thenReturn(true)
+        val cases = mapOf(
+            KeyStoreProblem.NOT_RUNNING to Res.string.keyring_not_running,
+            KeyStoreProblem.LOCKED to Res.string.key_store_unavailable,
+            KeyStoreProblem.NO_DEFAULT to Res.string.keyring_no_default,
+            KeyStoreProblem.DISMISSED to Res.string.keyring_prompt_dismissed,
+            KeyStoreProblem.OTHER to Res.string.key_store_unavailable,
+        )
+        val vm = viewModel()
+        for ((problem, message) in cases) {
+            `when`(security.prepareKeyStore()).thenReturn(problem)
+
+            vm.getStarted()
+            vm.settled()
+
+            assertEquals(OnboardingStep.WELCOME, vm.state.step)
+            assertEquals(problem, vm.state.keyStoreProblem)
+            assertEquals(UiText.of(message), vm.state.error)
+            assertFalse(vm.state.isLoading)
+        }
+
+        // The user fixed it: the same button goes on, with the old message gone.
+        `when`(security.prepareKeyStore()).thenReturn(null)
+        vm.getStarted()
+        vm.settled()
+        assertEquals(OnboardingStep.PIN, vm.state.step)
+        assertNull(vm.state.keyStoreProblem)
+        assertNull(vm.state.error)
+    }
+
+    @Test
+    fun theBackupPathChecksTheKeyringToAndTryAgainRepeatsThatPath() = runTest {
+        `when`(security.keyStoreMayNeedPreparing()).thenReturn(true)
+        `when`(security.prepareKeyStore()).thenReturn(KeyStoreProblem.NOT_RUNNING)
+        val vm = viewModel()
+
+        vm.startRestore()
+        vm.settled()
+        assertEquals(OnboardingStep.WELCOME, vm.state.step)
+        assertEquals(KeyStoreProblem.NOT_RUNNING, vm.state.keyStoreProblem)
+
+        `when`(security.prepareKeyStore()).thenReturn(null)
+        vm.getStarted() // the footer's "Try again"
+        vm.settled()
+
+        assertEquals(OnboardingStep.RESTORE, vm.state.step)
+        assertEquals(OnboardingPath.RESTORE, vm.state.path)
+    }
+
+    @Test
+    fun aKeyringThatCannotBeUsedWhenThePinIsSetSaysWhatIsMissing() = runTest {
+        `when`(security.changePin(anyCharArray())).thenReturn(PinChange.KEY_STORE_UNAVAILABLE)
+        `when`(security.keyStoreProblem()).thenReturn(KeyStoreProblem.NO_DEFAULT)
+        val vm = viewModel()
+        vm.getStarted()
+        vm.choosePin()
+        vm.skipPhrase()
+
+        assertEquals(UiText.of(Res.string.keyring_no_default), vm.settled().error)
     }
 
     @Test

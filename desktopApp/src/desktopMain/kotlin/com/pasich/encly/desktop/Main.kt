@@ -6,6 +6,7 @@ import com.pasich.encly.core.keystore.SecretStoreUnavailableException
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.desktop.di.DesktopAppGraph
 import com.pasich.encly.desktop.nativeos.NativeBackupExclusion
+import com.pasich.encly.desktop.nativeos.NoDisplayNotice
 import com.pasich.encly.desktop.platform.DesktopEnvironment
 import com.pasich.encly.desktop.storage.AppDirectories
 import com.pasich.encly.desktop.storage.DesktopOs
@@ -34,6 +35,8 @@ private const val APP_NAME = "Encly"
 fun main(args: Array<String>) {
     System.setProperty("apple.awt.application.name", APP_NAME)
     val os = DesktopOs.current()
+    // A Wayland session without XWayland leaves the JVM headless: no window can open, and nothing else would say why.
+    if (os == DesktopOs.LINUX && GraphicsEnvironment.isHeadless()) fail(NO_DISPLAY_MESSAGE)
     useNativeLookAndFeel(os)
 
     val dataDirectory = try {
@@ -159,8 +162,17 @@ private fun setDockIcon() {
 
 private fun fail(message: String, exitCode: Int = 1): Nothing {
     System.err.println(message)
-    if (!GraphicsEnvironment.isHeadless()) {
+    if (GraphicsEnvironment.isHeadless()) {
+        // No dialog without a display: tell the desktop through a notification, if it can be reached without one.
+        NoDisplayNotice.send(APP_NAME, message)
+    } else {
         runCatching { JOptionPane.showMessageDialog(null, message, APP_NAME, JOptionPane.ERROR_MESSAGE) }
     }
     exitProcess(exitCode)
 }
+
+/** What a Linux session with no X11 display is told: there is no Wayland window yet, XWayland is needed. */
+private const val NO_DISPLAY_MESSAGE =
+    "Encly needs an X11 display and found none (DISPLAY is not set). On a Wayland session, run XWayland " +
+        "(most desktops start it by default) and give Encly access to the X11 socket; Wayland itself is not " +
+        "supported yet."

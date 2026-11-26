@@ -91,8 +91,11 @@ fun SecuritySettingsScreen(
                 securityViewModel.refresh()
             },
             onVaultErased = {
-                navController.navigate(NavRoutes.OnboardingRoute.name) {
-                    popUpTo(0) { inclusive = true }
+                // The app's own handler (see EnclyApp) may have got there first.
+                if (navController.currentDestination?.route != NavRoutes.OnboardingRoute.name) {
+                    navController.navigate(NavRoutes.OnboardingRoute.name) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             },
             onErrorShown = securityViewModel::clearError,

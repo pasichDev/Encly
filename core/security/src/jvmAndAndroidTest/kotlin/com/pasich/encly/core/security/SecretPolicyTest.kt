@@ -345,6 +345,9 @@ class SecretPolicyTest {
         val recording = object : UnlockSecretPolicy by PinSecretPolicy() {
             override fun canonical(typed: CharArray): CharArray? =
                 PinSecretPolicy().canonical(typed)?.also { canonicals += it }
+
+            // Delegation hands the default over to the delegate: the recording policy answers for setting too.
+            override fun canonicalForSetting(typed: CharArray): CharArray? = canonical(typed)
         }
         val pinAuth = AuthenticationManager(tempVaultStore(), FakePinFactor(), FakeLockoutClock(), recording)
         val pin = "135790".toCharArray()

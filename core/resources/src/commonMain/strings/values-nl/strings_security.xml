@@ -9,8 +9,8 @@
     <string name="backup_import_summary">Deze back-up bevat %1$s, %2$s en %3$s.</string>
     <string name="backup_merge_row_desc">Alles hier blijft en wat ontbreekt wordt toegevoegd. Wat er al is, wordt overgeslagen.</string>
     <string name="backup_replace_all">Alles vervangen</string>
-    <string name="backup_replace_row_desc">Verwijder alle notities, taken en tags op deze telefoon en zet daarna de back-up terug.</string>
-    <string name="backup_intro_short">Bewaar al je notities, taken en tags in één versleuteld bestand en zet ze terug op elke telefoon.</string>
+    <string name="backup_replace_row_desc">Verwijder alle notities, taken en tags op dit apparaat en zet daarna de back-up terug.</string>
+    <string name="backup_intro_short">Bewaar al je notities, taken en tags in één versleuteld bestand en zet ze terug op elk apparaat.</string>
     <string name="backup_section_export">Exporteren</string>
     <string name="backup_section_import">Importeren</string>
     <string name="security_encryption_pin_plain">Je notities zijn versleuteld. Je pincode (en je vingerafdruk, als die aan staat) ontgrendelt ze.</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">Na de reset kun je een back-upbestand terugzetten met de 12 woorden ervan.</string>
     <string name="vault_unreadable_title">Je kluis kan nu niet worden geopend</string>
     <string name="vault_unreadable_message">Encly kon zijn gegevens zojuist niet lezen. Een andere app of het systeem gebruikt ze misschien, of het apparaat is nog vergrendeld. Je notities zijn niet kwijt. Probeer het zo opnieuw.</string>
+    <string name="vault_unreadable_message_desktop">Encly kon zijn gegevens zojuist niet lezen. Een andere app of het systeem gebruikt ze misschien, of de sleutelhanger van het systeem is nog vergrendeld. Je notities zijn niet kwijt. Probeer het zo opnieuw.</string>
     <string name="vault_unreadable_retry">Opnieuw proberen</string>
     <string name="vault_unreadable_still">Nog steeds niet leesbaar. Probeer het zo opnieuw.</string>
     <string name="pin_change_bar_title">Pincode wijzigen</string>
@@ -38,6 +39,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Je pincode kan Encly op deze telefoon niet meer ontgrendelen: de hardwaresleutel is gereset. Gebruik je herstelzin (of vingerafdruk) en stel daarna een nieuwe pincode in.</string>
     <string name="lock_device_locked">Het apparaat meldt dat het nog vergrendeld is, daarom bleef Encly dicht. Ontgrendel het apparaat en probeer het opnieuw.</string>
+    <string name="lock_device_locked_desktop">Encly kon niet bevestigen dat je scherm is ontgrendeld en bleef daarom dicht. Ontgrendel het scherm en probeer het opnieuw.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Te veel pogingen. Probeer het over %d minuut opnieuw</item>
         <item quantity="other">Te veel pogingen. Probeer het over %d minuten opnieuw</item>
@@ -49,7 +51,7 @@
     <string name="security_recovery_replace_title">Herstelzin vervangen</string>
     <string name="security_recovery_replace_desc">Krijg 12 nieuwe woorden. Eerder gemaakte back-ups hebben nog steeds de oude nodig.</string>
     <string name="security_recovery_replace_confirm_title">Herstelzin vervangen?</string>
-    <string name="security_recovery_replace_confirm_body">Je krijgt 12 nieuwe woorden. De oude zin ontgrendelt je notities op deze telefoon niet meer. Back-ups die je al hebt gemaakt, openen alleen met de oude zin, dus bewaar die zolang je die back-ups bewaart, of maak daarna een nieuwe back-up.</string>
+    <string name="security_recovery_replace_confirm_body">Je krijgt 12 nieuwe woorden. De oude zin ontgrendelt je notities op dit apparaat niet meer. Back-ups die je al hebt gemaakt, openen alleen met de oude zin, dus bewaar die zolang je die back-ups bewaart, of maak daarna een nieuwe back-up.</string>
     <string name="security_recovery_replace_confirm">Nieuwe woorden krijgen</string>
     <string name="security_recovery_replace_warning_title">Je oude zin werkt hier niet meer</string>
     <string name="security_recovery_replace_warning_body">Zodra je bevestigt, ontgrendelen alleen deze woorden je notities als je de pincode vergeet. Eerder gemaakte back-ups hebben nog steeds de oude woorden nodig.</string>
@@ -72,10 +74,10 @@
     <string name="auto_lock_10m">Na 10 minuten</string>
     <string name="auto_lock_15m">Na 15 minuten</string>
     <string name="auto_lock_30m">Na 30 minuten</string>
-    <string name="auto_lock_long_delay_warning">Bij een langere tijd blijft de kluis op de achtergrond open. Wie toegang heeft tot je ontgrendelde telefoon, kan je notities zien.</string>
+    <string name="auto_lock_long_delay_warning">Bij een langere tijd blijft de kluis op de achtergrond open. Wie toegang heeft tot je ontgrendelde apparaat, kan je notities zien.</string>
     <string name="security_protection_section">Zo beschermt Encly je notities</string>
     <string name="security_protection_key_title">Een willekeurige 256-bits sleutel</string>
-    <string name="security_protection_key_desc">De hele database is versleuteld met een sleutel die op deze telefoon is gemaakt.</string>
+    <string name="security_protection_key_desc">De hele database is versleuteld met een sleutel die op dit apparaat is gemaakt.</string>
     <string name="security_protection_pin_title">Een pincode gebonden aan deze telefoon</string>
     <string name="security_protection_pin_desc">Je pincode wordt gecombineerd met een sleutel in de beveiligde chip van de telefoon, dus hij is nergens anders te raden.</string>
     <string name="security_protection_slots_title">Een eigen slot voor elke toegang</string>
@@ -203,4 +205,11 @@
     <string name="duress_passphrase_removed">Dwangwachtwoord uitgeschakeld</string>
     <string name="duress_passphrase_turned_off">Het geheim van je apparaat is gereset, dus het dwangwachtwoord werkt niet meer. Stel het opnieuw in; de schijnkluis behoudt zijn notities.</string>
     <string name="duress_passphrase_remove_confirm_title">Het dwangwachtwoord uitschakelen?</string>
+    <string name="keyring_not_running">Er draait geen sleutelhanger van het systeem. Installeer of start er een (GNOME Keyring, KWallet of KeePassXC met de Secret Service ingeschakeld) en probeer het opnieuw.</string>
+    <string name="keyring_no_default">De sleutelhanger van het systeem heeft geen standaardsleutelhanger en Encly kon er geen maken. Maak er een in Wachtwoorden en sleutels of KWallet Manager en probeer het opnieuw.</string>
+    <string name="keyring_prompt_dismissed">De sleutelhanger van het systeem is niet ontgrendeld. Probeer het opnieuw en bevestig het verzoek.</string>
+    <string name="key_not_found_title">Encly heeft zijn sleutel niet gevonden in de sleutelhanger van het systeem</string>
+    <string name="key_not_found_message">Je gegevens zijn intact. Dit gebeurt als er een andere sleutelhanger draait, als de sleutelhanger is gereset of als de gegevensmap is verplaatst. Start de sleutelhanger die de sleutel bevat en probeer het opnieuw.</string>
+    <string name="key_not_found_last_resort">Alleen als de sleutel voorgoed weg is: wissen verwijdert alle notities en instellingen op deze computer.</string>
+    <string name="lock_passphrase_slot_unusable">Deze notities zijn beveiligd met een oudere soort geheim die deze versie niet kan controleren. Gebruik je herstelzin en stel daarna een nieuw wachtwoord in.</string>
 </resources>

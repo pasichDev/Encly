@@ -68,6 +68,7 @@ import com.pasich.encly.core.security.AuthSettings
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.data.backup.BackupPhraseSetup
@@ -120,9 +121,9 @@ internal class PassphraseChangeScreenTest : PassphraseScreenTest() {
     @Test
     fun whileTheCurrentPassphraseIsBeingCheckedNothingMoreIsTakenAndItIsCheckedOnce() {
         val release = java.util.concurrent.CountDownLatch(1)
-        `when`(app.security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(app.security.verifyPinResult(anyCharArray())).thenAnswer {
             release.await(10, java.util.concurrent.TimeUnit.SECONDS)
-            true
+            PinCheck.OK
         }
         showChange()
 
@@ -135,7 +136,7 @@ internal class PassphraseChangeScreenTest : PassphraseScreenTest() {
         rule.onNodeWithContentDescription(str(Res.string.passphrase_label)).assertIsNotEnabled()
         release.countDown()
         waitForText(str(Res.string.passphrase_create_title))
-        verify(app.security, times(1)).verifyPin(anyCharArray())
+        verify(app.security, times(1)).verifyPinResult(anyCharArray())
     }
 
     @Test
@@ -152,7 +153,7 @@ internal class PassphraseChangeScreenTest : PassphraseScreenTest() {
 
     @Test
     fun theCurrentPassphraseIsAskedFirstAndAWrongOneIsRefusedAndCleared() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         showChange()
         rule.onNodeWithText(str(Res.string.passphrase_change_current_title)).assertIsDisplayed()
 
@@ -165,7 +166,7 @@ internal class PassphraseChangeScreenTest : PassphraseScreenTest() {
 
     @Test
     fun aRightOneOpensTheNewPassphraseStepWithTheSuggestion() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         showChange()
 
         enterPassphrase(good)
@@ -264,7 +265,7 @@ internal class PassphraseChangeScreenTest : PassphraseScreenTest() {
 @OptIn(ExperimentalTestApi::class)
 internal class PassphraseWipeAndDuressScreenTest : PassphraseScreenTest() {
     private fun showWipe() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         setNavScreen(
             viewModels(passphraseSettings()),
             route = NavRoutes.WipePinRoute.name,
@@ -274,7 +275,7 @@ internal class PassphraseWipeAndDuressScreenTest : PassphraseScreenTest() {
     }
 
     private fun showDuress() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         setNavScreen(
             viewModels(passphraseSettings()),
             route = NavRoutes.DuressPinRoute.name,
@@ -354,7 +355,7 @@ internal class PassphraseWipeAndDuressScreenTest : PassphraseScreenTest() {
     @Test
     fun aLockInTheMiddleOfAWipePassphraseDropsWhatWasTypedAndKept() {
         var locked by mutableStateOf(false)
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         setNavScreen(
             viewModels(passphraseSettings()),
             route = NavRoutes.WipePinRoute.name,
@@ -462,7 +463,7 @@ internal class PassphraseWordingScreenTest : PassphraseScreenTest() {
 
     @Test
     fun theReauthenticationAsksForThePassphraseInAField() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         val backup = backupViewModel()
         setNavScreen(viewModels(backup, app.markdownExport()), route = NavRoutes.BackupRoute.name) { nav ->
             BackupScreen(nav)
@@ -536,7 +537,7 @@ internal class PassphraseWordingScreenTest : PassphraseScreenTest() {
 
     @Test
     fun anExportWithoutARecoveryPhraseExplainsItInThePassphraseWording() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(app.security.hasBackupKey()).thenReturn(false)
         val backup = backupViewModel()
         setNavScreen(viewModels(backup, app.markdownExport()), route = NavRoutes.BackupRoute.name) { nav ->
@@ -573,9 +574,9 @@ internal class PassphraseWordingScreenTest : PassphraseScreenTest() {
     @Test
     fun whileTheReauthenticationChecksTheFieldWaitsAndAWrongAnswerIsAnnouncedAgainAfterAnEdit() {
         val release = java.util.concurrent.CountDownLatch(1)
-        `when`(app.security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(app.security.verifyPinResult(anyCharArray())).thenAnswer {
             release.await(10, java.util.concurrent.TimeUnit.SECONDS)
-            false
+            PinCheck.WRONG
         }
         val backup = backupViewModel()
         setNavScreen(viewModels(backup, app.markdownExport()), route = NavRoutes.BackupRoute.name) { nav ->
@@ -590,7 +591,7 @@ internal class PassphraseWordingScreenTest : PassphraseScreenTest() {
         rule.onNodeWithContentDescription(str(Res.string.passphrase_label)).assertIsNotEnabled()
         release.countDown()
         waitForText(str(Res.string.lock_wrong_passphrase))
-        verify(app.security, times(1)).verifyPin(anyCharArray())
+        verify(app.security, times(1)).verifyPinResult(anyCharArray())
 
         typePassphrase("n")
 

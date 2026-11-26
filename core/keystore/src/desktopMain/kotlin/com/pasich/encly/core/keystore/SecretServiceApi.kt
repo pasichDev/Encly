@@ -32,6 +32,9 @@ internal interface SecretServiceApi : DBusInterface {
     fun Unlock(objects: List<DBusPath>): UnlockResult
 
     fun ReadAlias(name: String): DBusPath
+
+    @JvmSuppressWildcards
+    fun CreateCollection(properties: Map<String, Variant<*>>, alias: String): CreateCollectionResult
 }
 
 @DBusInterfaceName("org.freedesktop.Secret.Collection")
@@ -47,6 +50,14 @@ internal interface SecretItemApi : DBusInterface {
     fun GetSecret(session: DBusPath): SecretStruct
 
     fun Delete(): DBusPath
+}
+
+@DBusInterfaceName("org.freedesktop.Secret.Prompt")
+@Suppress("FunctionNaming", "ktlint:standard:function-naming")
+internal interface SecretPromptApi : DBusInterface {
+    fun Prompt(windowId: String)
+
+    fun Dismiss()
 }
 
 @DBusInterfaceName("org.freedesktop.Secret.Session")
@@ -78,6 +89,12 @@ internal class SearchItemsResult(
 /** `Unlock` returns `(ao unlocked, o prompt)`. */
 internal class UnlockResult(
     @field:Position(0) @JvmField val unlocked: List<@JvmSuppressWildcards DBusPath>,
+    @field:Position(1) @JvmField val prompt: DBusPath,
+) : Tuple()
+
+/** `CreateCollection` returns `(o collection, o prompt)`. */
+internal class CreateCollectionResult(
+    @field:Position(0) @JvmField val collection: DBusPath,
     @field:Position(1) @JvmField val prompt: DBusPath,
 ) : Tuple()
 

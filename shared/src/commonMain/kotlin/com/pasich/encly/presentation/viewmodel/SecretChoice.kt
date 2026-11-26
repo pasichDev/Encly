@@ -44,7 +44,8 @@ class SecretChoice(private val policy: UnlockSecretPolicy) {
     fun refusal(typed: CharArray): SecretRefusal? = if (kind == SecretKind.PIN) null else passphraseRefusal(typed)
 
     private fun passphraseRefusal(typed: CharArray): SecretRefusal? {
-        val canonical = policy.canonical(typed) ?: return SecretRefusal.UNUSABLE
+        // The form for choosing: a passphrase over what unlock takes is "too long", not "cannot be used".
+        val canonical = policy.canonicalForSetting(typed) ?: return SecretRefusal.UNUSABLE
         return try {
             when (policy.mayBeSet(canonical)) {
                 SecretRule.OK -> null

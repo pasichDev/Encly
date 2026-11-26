@@ -112,7 +112,7 @@
     <string name="editor_lock">Bearbeitung sperren</string>
 
     <string name="empty_notes">Noch keine Notizen</string>
-    <string name="empty_notes_desc">Tippe auf „Neue Notiz“, um die erste zu schreiben.</string>
+    <string name="empty_notes_desc">Wähle „Neue Notiz“, um die erste zu schreiben.</string>
     <string name="empty_trash_desc">Gelöschte Notizen bleiben hier, bis du sie wiederherstellst oder endgültig löschst.</string>
 
     <string name="enter_url">Link eingeben</string>
@@ -124,7 +124,7 @@
 
     <string name="falied_content">Inhalt konnte nicht geladen werden</string>
 
-    <string name="faq_background_a">Encly speichert deine Änderungen und schließt nach der unter Einstellungen → Sicherheit gewählten Verzögerung (standardmäßig 15 Sekunden) die verschlüsselte Datenbank und löscht den Sitzungsschlüssel. Bildschirm aus oder Telefon sperren tut das sofort. Danach entsperrst du erneut.</string>
+    <string name="faq_background_a">Encly speichert deine Änderungen und schließt nach der unter Einstellungen → Sicherheit gewählten Verzögerung (standardmäßig 15 Sekunden) die verschlüsselte Datenbank und löscht den Sitzungsschlüssel. Bildschirm aus oder Gerät sperren tut das sofort. Danach entsperrst du erneut.</string>
     <string name="faq_background_q">Was passiert, wenn ich die App verlasse?</string>
     <string name="faq_biometrics_a">Nutze den Biometrie-Schalter unter Einstellungen → Sicherheit. Das Anlegen oder Entfernen des biometrischen Slots erfordert eine starke biometrische Authentifizierung.</string>
     <string name="faq_biometrics_q">Wie aktiviere oder deaktiviere ich die Biometrie?</string>
@@ -136,7 +136,7 @@
     <string name="faq_forgot_pin_q">Was passiert, wenn ich meine PIN vergesse?</string>
     <string name="faq_language_a">Öffne Einstellungen → Sprache und wähle eine der verfügbaren Sprachen oder „Systemstandard“, um der Sprache deines Geräts zu folgen. Die Änderung gilt sofort.</string>
     <string name="faq_language_q">Wie ändere ich die Sprache?</string>
-    <string name="faq_new_note_a">Tippe auf dem Startbildschirm auf „Neue Notiz“. Die Leiste über der Tastatur fügt Überschriften, Checklisten, Aufzählungen, nummerierte Listen, Zitate, Links und Trennlinien ein.</string>
+    <string name="faq_new_note_a">Wähle auf dem Startbildschirm „Neue Notiz“. Die Leiste über der Tastatur fügt Überschriften, Checklisten, Aufzählungen, nummerierte Listen, Zitate, Links und Trennlinien ein.</string>
     <string name="faq_new_note_q">Wie erstelle ich eine neue Notiz?</string>
     <string name="faq_recovery_phrase_a">Sie ist ein Ersatzschlüssel aus 12 Wörtern. Sie entsperrt den Tresor, wenn du deine PIN vergisst, und ist der einzige Schlüssel zu deinen Backup-Dateien. Du erstellst sie bei der Einrichtung oder später unter Einstellungen → Sicherheit, falls du sie übersprungen hast. Bewahre sie auf Papier auf, offline.</string>
     <string name="faq_recovery_phrase_q">Wofür ist die Wiederherstellungsphrase?</string>
@@ -249,7 +249,7 @@
     <string name="key_store_unavailable">Entsperre den System-Schlüsselbund und versuche es erneut</string>
 
 
-    <string name="press_to_edit">Tippe, um mit dem Bearbeiten zu beginnen…</string>
+    <string name="press_to_edit">Auswählen, um mit dem Bearbeiten zu beginnen…</string>
 
     <string name="priority_high">Hoch</string>
     <string name="priority_low">Niedrig</string>
@@ -316,7 +316,7 @@
     <string name="tag_reorder_failed">Die Reihenfolge der Labels konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="tag_update_failed">Das Label konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
 
-    <string name="tap_again_to_delete">Zum Löschen erneut tippen</string>
+    <string name="tap_again_to_delete">Zum Löschen erneut auswählen</string>
 
     <string name="task_add">Neue Aufgabe</string>
     <string name="task_clear_completed_failed">Erledigte Aufgaben konnten nicht gelöscht werden. Bitte versuche es erneut.</string>
@@ -366,7 +366,7 @@
     <string name="backup_settings_subtitle">Verschlüsselte Sicherung, Import und Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Mit deiner Wiederherstellungsphrase verschlüsselt</string>
-    <string name="backup_intro_body">Ein Backup enthält alle deine Notizen, Aufgaben und Labels, verschlüsselt mit deiner 12-Wörter-Wiederherstellungsphrase. Encly lädt es nirgendwo hoch: Du entscheidest, wo die Datei gespeichert wird. Auf einem neuen Handy stellen dieselben 12 Wörter es wieder her.</string>
+    <string name="backup_intro_body">Ein Backup enthält alle deine Notizen, Aufgaben und Labels, verschlüsselt mit deiner 12-Wörter-Wiederherstellungsphrase. Encly lädt es nirgendwo hoch: Du entscheidest, wo die Datei gespeichert wird. Auf einem neuen Gerät stellen dieselben 12 Wörter es wieder her.</string>
     <string name="backup_last_export">Letzter Export: %1$s</string>
     <string name="backup_never_exported">Noch kein Backup exportiert</string>
     <string name="backup_export">Backup exportieren</string>
@@ -453,7 +453,7 @@
     <string name="pin_unlock_with_fingerprint">Mit Fingerabdruck entsperren</string>
     <string name="onboarding_step_of">Schritt %1$d von %2$d</string>
     <string name="onboarding_welcome_headline">Ein Notizbuch, das nur du öffnen kannst.</string>
-    <string name="onboarding_welcome_sub">Notizen und Aufgaben, verschlüsselt auf diesem Handy. Die Einrichtung dauert etwa eine Minute.</string>
+    <string name="onboarding_welcome_sub">Notizen und Aufgaben, verschlüsselt auf diesem Gerät. Die Einrichtung dauert etwa eine Minute.</string>
     <string name="onboarding_fact_account_title">Kein Konto</string>
     <string name="onboarding_fact_account_desc">Keine Anmeldung, keine E-Mail, kein Passwort-Reset.</string>
     <string name="onboarding_fact_offline_title">Funktioniert offline</string>
@@ -473,7 +473,7 @@
     <string name="onboarding_recovery_pin_desc">Die Phrase entsperrt deinen Tresor und lässt dich eine neue PIN festlegen.</string>
     <string name="onboarding_recovery_backups_title">Öffnet deine Backups</string>
     <string name="onboarding_recovery_backups_desc">Verschlüsselte Backup-Dateien lassen sich nur mit diesen Wörtern lesen.</string>
-    <string name="onboarding_recovery_phone_title">Neues Handy</string>
+    <string name="onboarding_recovery_phone_title">Neues Gerät</string>
     <string name="onboarding_recovery_phone_desc">Backup-Datei plus Phrase stellt jede Notiz, Aufgabe und jedes Label wieder her.</string>
     <string name="onboarding_recovery_warning">Niemand kann sie für dich wiederherstellen, auch wir nicht. Verlierst du PIN und Phrase, sind die Notizen weg.</string>
     <string name="onboarding_recovery_create">Meine Phrase erstellen</string>
@@ -508,9 +508,9 @@
     <string name="onboarding_restore_label">Wiederherstellen, dann PIN festlegen</string>
     <string name="onboarding_restore_intro">Wähle deine Encly-Backup-Datei und gib dann die 12 Wörter ein, mit denen sie erstellt wurde.</string>
     <string name="onboarding_restore_file_section">1 · Backup-Datei</string>
-    <string name="onboarding_restore_tap_other">Tippen, um eine andere Datei zu wählen</string>
+    <string name="onboarding_restore_tap_other">Andere Datei wählen</string>
     <string name="onboarding_restore_phrase_section">2 · Wiederherstellungsphrase</string>
-    <string name="onboarding_restore_phrase_helper">Diese Wörter werden auch die Wiederherstellungsphrase dieses Handys.</string>
+    <string name="onboarding_restore_phrase_helper">Diese Wörter werden auch die Wiederherstellungsphrase dieses Geräts.</string>
     <string name="notes_title">Notizen</string>
     <string name="lock_now">Jetzt sperren</string>
     <string name="search_placeholder">Titel und Text durchsuchen</string>
@@ -524,7 +524,7 @@
     </plurals>
     <string name="home_tasks_none_open">Aufgaben · keine offen</string>
     <string name="task_empty_title">Noch keine Aufgaben</string>
-    <string name="task_empty_desc">Tippe auf „Neue Aufgabe“, um die erste anzulegen.</string>
+    <string name="task_empty_desc">Wähle „Neue Aufgabe“, um die erste anzulegen.</string>
     <string name="task_all_done_title">Alles erledigt</string>
     <string name="task_done_section">Erledigt · %1$d</string>
     <string name="task_section_in_work">In Arbeit · %1$d</string>
@@ -544,12 +544,12 @@
     <string name="licenses_title">Open-Source-Lizenzen</string>
     <string name="licenses_row_desc">Bibliotheken und Schriften, die Encly nutzt</string>
     <string name="licenses_heading">Auf Open Source gebaut</string>
-    <string name="licenses_intro">Encly nutzt diese Bibliotheken und Schriften. Tippe darauf, um die Lizenz zu lesen.</string>
+    <string name="licenses_intro">Encly nutzt diese Bibliotheken und Schriften. Wähle einen Eintrag, um die Lizenz zu lesen.</string>
     <string name="licenses_libraries">Bibliotheken</string>
     <string name="licenses_fonts">Schriften</string>
     <string name="tags_empty_title">Noch keine Tags</string>
     <string name="tags_empty_desc">Tags ordnen deine Notizen. Lege oben einen an und wähle ihn dann per langem Druck auf eine Notiz aus.</string>
-    <string name="tags_hint">Tippe auf einen Tag, um ihn umzubenennen, auszublenden oder zu löschen. Zum Sortieren am Griff ziehen.</string>
+    <string name="tags_hint">Wähle einen Tag, um ihn umzubenennen, auszublenden oder zu löschen. Zum Sortieren am Griff ziehen.</string>
     <string name="tag_add">Tag hinzufügen</string>
     <string name="tag_name_label">Name</string>
     <string name="tag_show_in_list">In der Notizliste zeigen</string>
@@ -781,6 +781,8 @@
     <string name="security_encryption_pin_plain_nobio">Deine Notizen sind verschlüsselt. Deine PIN entsperrt sie.</string>
     <string name="security_encryption_seed_plain_nobio">Deine Notizen sind verschlüsselt. Deine PIN entsperrt sie, und wenn du die PIN vergisst, deine Wiederherstellungsphrase.</string>
     <string name="lock_pin_key_lost_desktop">Deine PIN kann Encly auf diesem Computer nicht mehr entsperren: Das Geheimnis im Schlüsselbund des Systems fehlt oder wurde zurückgesetzt. Nutze deine Wiederherstellungsphrase und lege dann eine neue PIN fest.</string>
+    <string name="error_keystore_unavailable_desktop">Der System-Schlüsselbund hat nicht geantwortet. Versuche es erneut; wenn der Fehler bleibt, starte ihn neu oder melde dich ab und wieder an.</string>
+    <string name="loss_message_desktop">Die verschlüsselten Daten oder die Verschlüsselungsschlüssel (auch das Geheimnis im System-Schlüsselbund) wurden offenbar verändert oder beschädigt, daher ist keine Wiederherstellung möglich.\n\nUm die App weiter zu nutzen, musst du sie zurücksetzen und die beschädigten Daten auf diesem Computer löschen. Dadurch werden alle gespeicherten Notizen und Einstellungen endgültig gelöscht.</string>
     <string name="security_protection_slots_desc_nobio">PIN und Wiederherstellungsphrase öffnen je einen eigenen verschlüsselten Slot.</string>
     <string name="duress_pin_real_vault_nobio">Dein echter Tresor bleibt gesperrt und unberührt. Anders als die Lösch-PIN löscht die Zwangs-PIN nichts. Deine Wiederherstellungsphrase öffnet immer den echten Tresor.</string>
     <string name="security_protection_pin_title_device">Eine PIN, an dieses Gerät gebunden</string>
@@ -817,7 +819,7 @@
     <string name="onboarding_passphrase_again_body">Damit wir wissen, dass es die richtige ist.</string>
     <string name="onboarding_recovery_passphrase_title">Passphrase vergessen?</string>
     <string name="onboarding_recovery_passphrase_desc">Die Wiederherstellungsphrase entsperrt deinen Tresor und lässt dich eine neue Passphrase festlegen.</string>
-    <string name="onboarding_recovery_warning_passphrase">Niemand kann sie für dich wiederherstellen, auch wir nicht. Verlierst du Passphrase und Wiederherstellungsphrase, sind die Notizen weg.</string>
+    <string name="onboarding_recovery_warning_passphrase">Niemand kann sie für dich wiederherstellen, auch wir nicht. Deine Passphrase wirkt zusammen mit einem Geheimnis im Schlüsselbund dieses Computers. Wird dieser Schlüsselbund zurückgesetzt oder ersetzt, wechselst du zu einem neuen Betriebssystem-Konto oder wird dein Home-Ordner ohne ihn verschoben oder wiederhergestellt, kann nur noch die Wiederherstellungsphrase deine Notizen öffnen. Verlierst du auch sie, sind die Notizen weg.</string>
     <string name="onboarding_recovery_skip_passphrase">Überspringen: nur Passphrase, keine Backups</string>
     <string name="onboarding_ready_passphrase_title">Passphrase festgelegt</string>
     <string name="onboarding_ready_passphrase_desc">Wird bei jedem Öffnen von Encly abgefragt</string>

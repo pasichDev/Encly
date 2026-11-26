@@ -35,7 +35,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.navigation.NavHostController
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.action_continue
-import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.passphrase_label
 import com.pasich.encly.core.resources.pin_change_bar_title
 import com.pasich.encly.core.resources.pin_change_confirm_subtitle
@@ -45,12 +44,12 @@ import com.pasich.encly.core.resources.pin_change_current_title
 import com.pasich.encly.core.resources.pin_change_new_subtitle
 import com.pasich.encly.core.resources.pin_changed
 import com.pasich.encly.core.resources.pin_create_title
-import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_in_use
 import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.resources.pin_reset_subtitle
 import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SensitiveDataCleaner
 import com.pasich.encly.platform.LocalSessionSharedAcrossWindows
@@ -77,6 +76,8 @@ import com.pasich.encly.presentation.screen.pincode.clearWhenVaultLocks
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.screen.pincode.pinLockoutText
 import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
+import com.pasich.encly.presentation.viewmodel.keyStoreMessage
+import com.pasich.encly.presentation.viewmodel.pinCheckError
 import com.pasich.encly.ui.theme.EnclyMotion
 import com.pasich.encly.ui.theme.EnclyTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -114,6 +115,9 @@ private class PinChangeState(
     /** The passphrase of the current step, where the secret is one. */
     val passphrase = PassphraseInput(maxPassphraseUnits)
 
+    /** Counts the locks of the vault: the answer of a check that began before one is dropped (see [lock]). */
+    private var generation = 0
+
     /** A secret is being checked or saved: nothing more is taken until the answer is here. */
     var busy by mutableStateOf(false)
     val isPassphrase: Boolean get() = kind == SecretKind.PASSWORD
@@ -143,7 +147,11 @@ private class PinChangeState(
         when (step) {
             0 -> {
                 busy = true
-                viewModel.verifyCurrentPin(pin) { ok -> onCurrentPinChecked(ok, viewModel) }
+                val asked = generation
+                viewModel.verifyCurrentPin(pin) { check ->
+                    // The vault locked while this was being checked: an answer that comes after it opens nothing.
+                    if (asked == generation) onCurrentPinChecked(check, viewModel)
+                }
             }
 
             1 -> {
@@ -166,6 +174,7 @@ private class PinChangeState(
     /** The vault locked: what is typed and kept is dropped, and the flow goes back to where it asks again. */
     fun lock() {
         clear()
+        generation++
         busy = false
         val start = if (isReset) 1 else 0
         if (step != start) {
@@ -212,9 +221,13 @@ private class PinChangeState(
                 busy = false
                 when (result) {
                     PinChange.SET -> animationState = PinAnimationState.SuccessAnimation
+
                     PinChange.IN_USE -> restartNewPin(Res.string.pin_in_use)
+
                     PinChange.FAILED -> restartNewPin(Res.string.pin_update_failed)
-                    PinChange.KEY_STORE_UNAVAILABLE -> restartNewPin(Res.string.key_store_unavailable)
+
+                    PinChange.KEY_STORE_UNAVAILABLE ->
+                        restartNewPin(keyStoreMessage(viewModel.keyStoreProblem()))
                 }
             }
         } else {
@@ -231,12 +244,12 @@ private class PinChangeState(
         firstPin = null
     }
 
-    private fun onCurrentPinChecked(ok: Boolean, viewModel: SecuritySettingsViewModel) {
+    private fun onCurrentPinChecked(check: PinCheck, viewModel: SecuritySettingsViewModel) {
         busy = false
         val lockout = lockoutSecondsLeft(viewModel.pinLockoutRemainingMillis())
         errorText = null
         when {
-            ok -> step = 1
+            check == PinCheck.OK -> step = 1
 
             // A locked-out PIN is refused even when right: say so, not "wrong PIN".
             lockout > 0L -> {
@@ -244,8 +257,9 @@ private class PinChangeState(
                 shakeKey++
             }
 
+            // A key store that did not answer says what it is missing; only a wrong secret says "wrong".
             else -> {
-                errorText = Res.string.pin_current_wrong
+                errorText = pinCheckError(check, viewModel.keyStoreProblem())
                 shakeKey++
             }
         }

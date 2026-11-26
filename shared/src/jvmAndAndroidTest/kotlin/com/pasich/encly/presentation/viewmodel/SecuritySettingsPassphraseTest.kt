@@ -11,6 +11,7 @@ import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
@@ -99,23 +100,23 @@ class SecuritySettingsPassphraseTest {
 
     @Test
     fun aWrongCurrentPassphraseIsReportedInThePassphraseWording() = runTest {
-        `when`(security.verifyPin("nope nope nope".toCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult("nope nope nope".toCharArray())).thenReturn(PinCheck.WRONG)
 
-        val ok = CompletableDeferred<Boolean>()
+        val ok = CompletableDeferred<PinCheck>()
         passphrase.verifyCurrentPin("nope nope nope".toCharArray()) { ok.complete(it) }
 
-        assertFalse(ok.await())
+        assertEquals(PinCheck.WRONG, ok.await())
         assertEquals(UiText.of(Res.string.passphrase_current_wrong), passphrase.uiState.value.error)
     }
 
     @Test
     fun aWrongCurrentPinKeepsTheOldWording() = runTest {
-        `when`(security.verifyPin("111111".toCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult("111111".toCharArray())).thenReturn(PinCheck.WRONG)
 
-        val ok = CompletableDeferred<Boolean>()
+        val ok = CompletableDeferred<PinCheck>()
         pin.verifyCurrentPin("111111".toCharArray()) { ok.complete(it) }
 
-        assertFalse(ok.await())
+        assertEquals(PinCheck.WRONG, ok.await())
         assertEquals(UiText.of(Res.string.pin_current_wrong), pin.uiState.value.error)
     }
 

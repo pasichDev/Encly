@@ -78,6 +78,7 @@ import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
 import com.pasich.encly.core.security.Mnemonic
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.PinCodeConfigScreen
@@ -196,7 +197,7 @@ class SecurityScreensTest : ComposeScreenTest() {
 
     @Test
     fun aWrongCurrentPinIsRefused() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         showPinChange()
 
         enterPin("000000")
@@ -298,7 +299,7 @@ class SecurityScreensTest : ComposeScreenTest() {
     // --- wipe PIN -------------------------------------------------------------------------
 
     private fun showWipePin(pinIsRight: Boolean = true) {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(pinIsRight)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(if (pinIsRight) PinCheck.OK else PinCheck.WRONG)
         setNavScreen(
             viewModels(app.securitySettings()),
             route = NavRoutes.WipePinRoute.name,
@@ -390,7 +391,7 @@ class SecurityScreensTest : ComposeScreenTest() {
     // --- duress PIN -----------------------------------------------------------------------
 
     private fun showDuressPin(isSet: Boolean = false) {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(app.security.getSettingsAuth()).thenReturn(AuthSettings(AuthType.PIN, false, true, hasDuressPin = isSet))
         setNavScreen(
             viewModels(app.securitySettings()),
@@ -425,7 +426,7 @@ class SecurityScreensTest : ComposeScreenTest() {
     @Test
     fun theDuressPinPageAsksForThePinFirst() {
         showDuressPin()
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
 
         rule.onNodeWithText(str(Res.string.duress_pin_current_subtitle)).assertIsDisplayed()
         enterPin("000000")

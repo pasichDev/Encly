@@ -173,6 +173,8 @@ class BackupViewModel(
             if (erased) {
                 // A fresh vault starts protected, whatever the erased one allowed.
                 screenshots.revoke()
+                // Every window shows this vault: each drops what it shows and starts over, not only this one.
+                sessionLockManager.onVaultErased()
                 state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }
             } else {
                 state.finish(BackupMessage.Text(Res.string.security_erase_failed))

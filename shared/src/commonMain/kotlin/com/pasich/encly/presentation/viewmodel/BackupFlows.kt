@@ -14,6 +14,7 @@ import com.pasich.encly.core.resources.backup_phrase_check_wrong
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.security_recovery_replaced
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -28,6 +29,7 @@ import com.pasich.encly.presentation.screen.backup.backupErrorMessage
 import com.pasich.encly.presentation.screen.backup.backupExportErrorMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -156,14 +158,12 @@ class BackupFlowState(private val scope: CoroutineScope, lastExportAt: Long?, pr
         scope.launch { block() }
     }
 
-    fun launchBusy(block: suspend () -> Unit) {
-        scope.launch {
-            ui.update { it.copy(busy = true) }
-            try {
-                block()
-            } finally {
-                ui.update { it.copy(busy = false) }
-            }
+    fun launchBusy(block: suspend () -> Unit): Job = scope.launch {
+        ui.update { it.copy(busy = true) }
+        try {
+            block()
+        } finally {
+            ui.update { it.copy(busy = false) }
         }
     }
 }
@@ -221,20 +221,31 @@ class ReauthFlow(
             if (step != null) state.go(step.copy(error = null))
             return
         }
-        state.launchBusy {
-            val ok = withContext(Dispatchers.Default) {
+        val job = state.launchBusy {
+            val check = withContext(Dispatchers.Default) {
                 try {
-                    securityManager.verifyPin(pin)
+                    securityManager.verifyPinResult(pin)
                 } finally {
                     SensitiveDataCleaner.clear(pin)
                 }
             }
-            if (ok) {
+            // Cancel (or a lock) during the check ended this re-authentication: its answer, right or wrong, is not
+            // acted on. An edit of the field only clears the error, it does not end the step.
+            if ((state.step as? BackupStep.Reauth)?.action != step.action) return@launchBusy
+            if (check == PinCheck.OK) {
                 onAuthenticated(step.action)
             } else {
-                state.go(step.copy(error = Res.string.lock_wrong_pin, failures = step.failures + 1))
+                // Only a wrong secret says "wrong": a key store that did not answer says what it is missing.
+                val error = if (check == PinCheck.WRONG) {
+                    Res.string.lock_wrong_pin
+                } else {
+                    pinCheckError(check, securityManager.keyStoreProblem()) ?: Res.string.lock_wrong_pin
+                }
+                state.go(step.copy(error = error, failures = step.failures + 1))
             }
         }
+        // A launch cancelled before its body began never reaches the wipe inside it: the secret goes on completion.
+        job.invokeOnCompletion { SensitiveDataCleaner.clear(pin) }
     }
 
     /** An edit of the secret (a digit or a character): the error of the last attempt goes, so a repeat is announced. */

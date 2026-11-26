@@ -7,6 +7,8 @@ import com.pasich.encly.core.resources.auto_lock_desc_device
 import com.pasich.encly.core.resources.duress_pin_real_vault
 import com.pasich.encly.core.resources.duress_pin_real_vault_named
 import com.pasich.encly.core.resources.duress_pin_real_vault_nobio
+import com.pasich.encly.core.resources.error_keystore_unavailable
+import com.pasich.encly.core.resources.error_keystore_unavailable_desktop
 import com.pasich.encly.core.resources.faq_db_key_a
 import com.pasich.encly.core.resources.faq_db_key_a_desktop
 import com.pasich.encly.core.resources.faq_db_key_a_ios
@@ -22,9 +24,13 @@ import com.pasich.encly.core.resources.import_intro
 import com.pasich.encly.core.resources.import_intro_device
 import com.pasich.encly.core.resources.lock_biometric_invalidated
 import com.pasich.encly.core.resources.lock_biometric_invalidated_named
+import com.pasich.encly.core.resources.lock_device_locked
+import com.pasich.encly.core.resources.lock_device_locked_desktop
 import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_pin_key_lost_desktop
 import com.pasich.encly.core.resources.lock_pin_key_lost_named
+import com.pasich.encly.core.resources.loss_message
+import com.pasich.encly.core.resources.loss_message_desktop
 import com.pasich.encly.core.resources.onboarding_ready_biometric_retry
 import com.pasich.encly.core.resources.onboarding_ready_biometric_retry_named
 import com.pasich.encly.core.resources.onboarding_ready_biometric_title
@@ -47,6 +53,8 @@ import com.pasich.encly.core.resources.security_protection_pin_title_device
 import com.pasich.encly.core.resources.security_protection_slots_desc
 import com.pasich.encly.core.resources.security_protection_slots_desc_named
 import com.pasich.encly.core.resources.security_protection_slots_desc_nobio
+import com.pasich.encly.core.resources.vault_unreadable_message
+import com.pasich.encly.core.resources.vault_unreadable_message_desktop
 import com.pasich.encly.core.resources.wipe_pin_biometric_warning
 import com.pasich.encly.core.resources.wipe_pin_biometric_warning_named
 import org.jetbrains.compose.resources.StringResource
@@ -127,7 +135,18 @@ private fun iosVariant(res: StringResource): StringResource = when (res) {
 
 private fun desktopVariant(res: StringResource): StringResource = when (res) {
     str.security_protection_pin_desc -> str.security_protection_pin_desc_desktop
+
     str.faq_db_key_a -> str.faq_db_key_a_desktop
+
+    // The computer has a screen lock and a system keyring, not a phone's lock and hardware key store.
+    str.lock_device_locked -> str.lock_device_locked_desktop
+
+    str.error_keystore_unavailable -> str.error_keystore_unavailable_desktop
+
+    str.loss_message -> str.loss_message_desktop
+
+    str.vault_unreadable_message -> str.vault_unreadable_message_desktop
+
     else -> neutralVariant(res)
 }
 

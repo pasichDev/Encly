@@ -4,7 +4,11 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.error_database_open
 import com.pasich.encly.core.resources.error_keystore_unavailable
 import com.pasich.encly.core.resources.key_store_unavailable
+import com.pasich.encly.core.resources.keyring_no_default
+import com.pasich.encly.core.resources.keyring_not_running
+import com.pasich.encly.core.resources.keyring_prompt_dismissed
 import com.pasich.encly.core.resources.lock_device_locked
+import com.pasich.encly.core.resources.lock_passphrase_slot_unusable
 import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
@@ -94,6 +98,52 @@ class LockFormStateTest {
         assertEquals(Res.string.key_store_unavailable, form.pinError)
         assertNull(form.phraseError)
         assertFalse(form.lockedOut)
+    }
+
+    @Test
+    fun eachWayTheKeyringCanBeUnusableHasItsOwnMessage() {
+        val cases = mapOf(
+            PinUnlockResult.KEY_STORE_NOT_RUNNING to Res.string.keyring_not_running,
+            PinUnlockResult.KEY_STORE_NO_DEFAULT to Res.string.keyring_no_default,
+            PinUnlockResult.KEY_STORE_DISMISSED to Res.string.keyring_prompt_dismissed,
+        )
+        for ((result, message) in cases) {
+            form.onPinResult(result, lockoutRemainingMillis = 0L)
+            assertEquals(message, form.pinError)
+            assertFalse(form.keyNotFound)
+            assertFalse(form.lockedOut)
+        }
+    }
+
+    @Test
+    fun aKeyThatIsNotFoundShowsItsOwnScreenWithTheWayOutNotAnErrorLine() {
+        form.onPinResult(PinUnlockResult.KEY_NOT_FOUND, lockoutRemainingMillis = 0L)
+
+        assertTrue(form.keyNotFound)
+        assertNull(form.pinError)
+        assertFalse(form.useRecovery)
+
+        // Try again: back to the form, nothing left of the attempt.
+        form.leaveKeyNotFound()
+        assertFalse(form.keyNotFound)
+        assertNull(form.pinError)
+        assertFalse(form.useRecovery)
+
+        // The recovery phrase: its form opens.
+        form.onPinResult(PinUnlockResult.KEY_NOT_FOUND, lockoutRemainingMillis = 0L)
+        form.recoverFromKeyNotFound()
+        assertFalse(form.keyNotFound)
+        assertTrue(form.useRecovery)
+    }
+
+    @Test
+    fun aSecretSlotThisVersionCannotCheckIsSaidOnTheRecoveryForm() {
+        form.useRecovery = true
+        form.markSlotUnusable()
+
+        assertEquals(Res.string.lock_passphrase_slot_unusable, form.phraseError)
+        form.onPhraseEdited()
+        assertNull(form.phraseError)
     }
 
     @Test

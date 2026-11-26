@@ -56,11 +56,19 @@ public class DesktopPasswordPolicy internal constructor(private val engine: Argo
      * of a password that [mayBeSet] accepts gets a canonical form.
      */
     override fun canonical(typed: CharArray): CharArray? {
-        val nfc = if (PasswordCanonical.withinTypedCap(typed)) PasswordCanonical.canonical(typed) else null
+        val nfc = canonicalForSetting(typed)
         if (nfc == null || PasswordCanonical.withinUnlockBounds(nfc)) return nfc
         SensitiveDataCleaner.clear(nfc)
         return null
     }
+
+    /**
+     * The NFC form of [typed] within the typed cap, with no unlock bound: a new password whose NFC form is over 256
+     * units (but within the cap) is then told it is [SecretRule.TOO_LONG] by [mayBeSet], not that it "cannot be
+     * used". Unlocking never takes this form ([canonical] applies the bound), so what unlock accepts is unchanged.
+     */
+    override fun canonicalForSetting(typed: CharArray): CharArray? =
+        if (PasswordCanonical.withinTypedCap(typed)) PasswordCanonical.canonical(typed) else null
 
     override fun mayBeSet(canonical: CharArray): SecretRule = PasswordCanonical.checkForSet(canonical)
 

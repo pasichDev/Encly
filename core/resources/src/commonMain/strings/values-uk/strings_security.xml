@@ -9,8 +9,8 @@
     <string name="backup_import_summary">У цій копії: %1$s, %2$s і %3$s.</string>
     <string name="backup_merge_row_desc">Усе, що тут є, залишиться, а відсутнє додасться. Те, що вже є, буде пропущено.</string>
     <string name="backup_replace_all">Замінити все</string>
-    <string name="backup_replace_row_desc">Видалити всі нотатки, завдання й мітки на цьому телефоні, а потім відновити копію.</string>
-    <string name="backup_intro_short">Збережіть усі нотатки, завдання й мітки в одному зашифрованому файлі та відновіть їх на будь-якому телефоні.</string>
+    <string name="backup_replace_row_desc">Видалити всі нотатки, завдання й мітки на цьому пристрої, а потім відновити копію.</string>
+    <string name="backup_intro_short">Збережіть усі нотатки, завдання й мітки в одному зашифрованому файлі та відновіть їх на будь-якому пристрої.</string>
     <string name="backup_section_export">Експорт</string>
     <string name="backup_section_import">Імпорт</string>
     <string name="security_encryption_pin_plain">Ваші нотатки зашифровано. Їх відкриває ваш PIN (і відбиток пальця, якщо ввімкнено).</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">Після скидання можна відновити резервну копію з файлу за її 12 словами.</string>
     <string name="vault_unreadable_title">Зараз не вдається відкрити сховище</string>
     <string name="vault_unreadable_message">Encly не змогло прочитати свої дані. Їх може використовувати інший застосунок чи система, або пристрій ще заблокований. Ваші нотатки не втрачено. Спробуйте ще раз за мить.</string>
+    <string name="vault_unreadable_message_desktop">Encly не змогло прочитати свої дані. Їх може використовувати інший застосунок чи система, або системна в’язка ключів ще заблокована. Ваші нотатки не втрачено. Спробуйте ще раз за мить.</string>
     <string name="vault_unreadable_retry">Спробувати ще раз</string>
     <string name="vault_unreadable_still">Досі не вдається прочитати. Спробуйте ще раз за мить.</string>
     <string name="pin_change_bar_title">Змінити PIN</string>
@@ -44,6 +45,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">Ваш PIN більше не може розблокувати Encly на цьому телефоні: його апаратний ключ скинуто. Скористайтеся фразою відновлення (або відбитком пальця), а потім задайте новий PIN.</string>
     <string name="lock_device_locked">Пристрій повідомляє, що він досі заблокований, тому Encly залишився закритим. Розблокуйте пристрій і спробуйте ще раз.</string>
+    <string name="lock_device_locked_desktop">Encly не вдалося переконатися, що екран розблоковано, тому воно залишилося закритим. Розблокуйте екран і спробуйте ще раз.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="one">Забагато спроб. Спробуйте через %d хвилину</item>
         <item quantity="few">Забагато спроб. Спробуйте через %d хвилини</item>
@@ -59,7 +61,7 @@
     <string name="security_recovery_replace_title">Замінити фразу відновлення</string>
     <string name="security_recovery_replace_desc">Отримайте 12 нових слів. Для резервних копій, зроблених раніше, і далі потрібні старі.</string>
     <string name="security_recovery_replace_confirm_title">Замінити фразу відновлення?</string>
-    <string name="security_recovery_replace_confirm_body">Ви отримаєте 12 нових слів. Стара фраза більше не розблоковуватиме ваші нотатки на цьому телефоні. Уже зроблені резервні копії відкриваються лише старою фразою, тож зберігайте її, доки зберігаєте ці копії, або згодом зробіть нову копію.</string>
+    <string name="security_recovery_replace_confirm_body">Ви отримаєте 12 нових слів. Стара фраза більше не розблоковуватиме ваші нотатки на цьому пристрої. Уже зроблені резервні копії відкриваються лише старою фразою, тож зберігайте її, доки зберігаєте ці копії, або згодом зробіть нову копію.</string>
     <string name="security_recovery_replace_confirm">Отримати нові слова</string>
     <string name="security_recovery_replace_warning_title">Стара фраза тут більше не працює</string>
     <string name="security_recovery_replace_warning_body">Після підтвердження лише ці слова розблоковуватимуть ваші нотатки, якщо ви забудете PIN. Для резервних копій, зроблених раніше, і далі потрібні старі слова.</string>
@@ -82,10 +84,10 @@
     <string name="auto_lock_10m">Через 10 хвилин</string>
     <string name="auto_lock_15m">Через 15 хвилин</string>
     <string name="auto_lock_30m">Через 30 хвилин</string>
-    <string name="auto_lock_long_delay_warning">Довший час залишає сховище відкритим у фоні. Людина з доступом до розблокованого телефона може побачити ваші нотатки.</string>
+    <string name="auto_lock_long_delay_warning">Довший час залишає сховище відкритим у фоні. Людина з доступом до розблокованого пристрою може побачити ваші нотатки.</string>
     <string name="security_protection_section">Як Encly захищає нотатки</string>
     <string name="security_protection_key_title">Випадковий 256-бітний ключ</string>
-    <string name="security_protection_key_desc">Уся база зашифрована ключем, створеним на цьому телефоні.</string>
+    <string name="security_protection_key_desc">Уся база зашифрована ключем, створеним на цьому пристрої.</string>
     <string name="security_protection_pin_title">PIN прив’язаний до телефона</string>
     <string name="security_protection_pin_desc">PIN змішується з ключем у захищеному чипі телефона, тож його не підібрати на іншому пристрої.</string>
     <string name="security_protection_slots_title">Окремий замок для кожного входу</string>
@@ -213,4 +215,11 @@
     <string name="duress_passphrase_removed">Парольну фразу під примусом вимкнено</string>
     <string name="duress_passphrase_turned_off">Секрет вашого пристрою було скинуто, тож парольна фраза під примусом перестала діяти. Задайте її знову; підставне сховище зберігає свої нотатки.</string>
     <string name="duress_passphrase_remove_confirm_title">Вимкнути парольну фразу під примусом?</string>
+    <string name="keyring_not_running">Системну в’язку ключів не запущено. Установіть або запустіть її (GNOME Keyring, KWallet чи KeePassXC з увімкненою службою Secret Service), а потім спробуйте ще раз.</string>
+    <string name="keyring_no_default">У системної в’язки ключів немає типової в’язки, і Encly не зміг її створити. Створіть її в «Паролі та ключі» або KWallet Manager, а потім спробуйте ще раз.</string>
+    <string name="keyring_prompt_dismissed">Системну в’язку ключів не розблоковано. Спробуйте ще раз і підтвердьте її запит.</string>
+    <string name="key_not_found_title">Encly не знайшов свого ключа в системній в’язці ключів</string>
+    <string name="key_not_found_message">Ваші дані цілі. Таке трапляється, коли запущено іншу в’язку ключів, коли в’язку скинуто або коли теку з даними перемістили. Запустіть в’язку, у якій лежить ключ, і спробуйте ще раз.</string>
+    <string name="key_not_found_last_resort">Лише якщо ключ зник назавжди: очищення видаляє всі нотатки й налаштування на цьому комп’ютері.</string>
+    <string name="lock_passphrase_slot_unusable">Ці нотатки захищено старішим видом секрету, який ця версія не може перевірити. Скористайтеся фразою відновлення, а потім задайте нову парольну фразу.</string>
 </resources>

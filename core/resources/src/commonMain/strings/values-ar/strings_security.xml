@@ -9,8 +9,8 @@
     <string name="backup_import_summary">تحتوي هذه النسخة الاحتياطية على %1$s و%2$s و%3$s.</string>
     <string name="backup_merge_row_desc">احتفظ بكل ما هنا وأضف ما ينقص. العناصر الموجودة بالفعل تُتخطى.</string>
     <string name="backup_replace_all">استبدال كل شيء</string>
-    <string name="backup_replace_row_desc">احذف كل ملاحظة ومهمة ووسم على هذا الهاتف، ثم استعد النسخة الاحتياطية.</string>
-    <string name="backup_intro_short">احتفظ بكل ملاحظاتك ومهامك ووسومك في ملف واحد مشفر، واستعدها على أي هاتف.</string>
+    <string name="backup_replace_row_desc">احذف كل ملاحظة ومهمة ووسم على هذا الجهاز، ثم استعد النسخة الاحتياطية.</string>
+    <string name="backup_intro_short">احتفظ بكل ملاحظاتك ومهامك ووسومك في ملف واحد مشفر، واستعدها على أي جهاز.</string>
     <string name="backup_section_export">تصدير</string>
     <string name="backup_section_import">استيراد</string>
     <string name="security_encryption_pin_plain">ملاحظاتك مشفرة. يفتحها رمز PIN (وبصمتك إن كانت مفعّلة).</string>
@@ -20,6 +20,7 @@
     <string name="vault_reset_restore_hint">بعد إعادة التعيين يمكنك استعادة ملف نسخة احتياطية بكلماته الـ12.</string>
     <string name="vault_unreadable_title">يتعذّر فتح خزنتك الآن</string>
     <string name="vault_unreadable_message">لم يستطع Encly قراءة بياناته الآن. قد يكون تطبيق آخر أو النظام يستخدمها، أو قد يكون الجهاز لا يزال مقفلًا. ملاحظاتك لم تضِع. حاول مرة أخرى بعد قليل.</string>
+    <string name="vault_unreadable_message_desktop">لم يستطع Encly قراءة بياناته الآن. قد يكون تطبيق آخر أو النظام يستخدمها، أو قد تكون سلسلة مفاتيح النظام لا تزال مقفلة. ملاحظاتك لم تضِع. حاول مرة أخرى بعد قليل.</string>
     <string name="vault_unreadable_retry">حاول مرة أخرى</string>
     <string name="vault_unreadable_still">ما زال يتعذّر قراءتها. حاول مرة أخرى بعد قليل.</string>
     <string name="pin_change_bar_title">تغيير رمز PIN</string>
@@ -50,6 +51,7 @@
     <!-- PIN key lost, longer lockouts, recovery phrase replacement, keyboard privacy. -->
     <string name="lock_pin_key_lost">لم يعد رمز PIN قادرًا على فتح Encly على هذا الهاتف: أُعيد تعيين مفتاحه العتادي. استخدم عبارة الاسترداد (أو بصمتك)، ثم عيّن رمز PIN جديدًا.</string>
     <string name="lock_device_locked">يُبلغ الجهاز أنه ما زال مقفلًا، لذلك بقي Encly مغلقًا. افتح قفل الجهاز ثم حاول مرة أخرى.</string>
+    <string name="lock_device_locked_desktop">لم يتمكن Encly من التأكد من أن الشاشة غير مقفلة، لذلك بقي مغلقًا. افتح قفل الشاشة ثم حاول مرة أخرى.</string>
     <plurals name="lock_lockout_minutes">
         <item quantity="zero">محاولات كثيرة جدًا. أعد المحاولة بعد %d دقيقة</item>
         <item quantity="one">محاولات كثيرة جدًا. أعد المحاولة بعد %d دقيقة</item>
@@ -69,7 +71,7 @@
     <string name="security_recovery_replace_title">استبدال عبارة الاسترداد</string>
     <string name="security_recovery_replace_desc">احصل على 12 كلمة جديدة. النسخ الاحتياطية التي أُنشئت قبلها تظل تحتاج إلى الكلمات القديمة.</string>
     <string name="security_recovery_replace_confirm_title">استبدال عبارة الاسترداد؟</string>
-    <string name="security_recovery_replace_confirm_body">ستحصل على 12 كلمة جديدة. ستتوقف العبارة القديمة عن فتح ملاحظاتك على هذا الهاتف. أما النسخ الاحتياطية التي أنشأتها بالفعل فلن تُفتح إلا بالعبارة القديمة، فاحتفظ بها ما دمت تحتفظ بتلك النسخ، أو أنشئ نسخة جديدة بعد ذلك.</string>
+    <string name="security_recovery_replace_confirm_body">ستحصل على 12 كلمة جديدة. ستتوقف العبارة القديمة عن فتح ملاحظاتك على هذا الجهاز. أما النسخ الاحتياطية التي أنشأتها بالفعل فلن تُفتح إلا بالعبارة القديمة، فاحتفظ بها ما دمت تحتفظ بتلك النسخ، أو أنشئ نسخة جديدة بعد ذلك.</string>
     <string name="security_recovery_replace_confirm">احصل على كلمات جديدة</string>
     <string name="security_recovery_replace_warning_title">ستتوقف عبارتك القديمة عن العمل هنا</string>
     <string name="security_recovery_replace_warning_body">بمجرد أن تؤكد، لن يفتح ملاحظاتك إن نسيت رمز PIN إلا هذه الكلمات. أما النسخ الاحتياطية التي أُنشئت قبلها فتحتاج إلى الكلمات القديمة.</string>
@@ -92,10 +94,10 @@
     <string name="auto_lock_10m">بعد 10 دقائق</string>
     <string name="auto_lock_15m">بعد 15 دقيقة</string>
     <string name="auto_lock_30m">بعد 30 دقيقة</string>
-    <string name="auto_lock_long_delay_warning">المهل الأطول تترك خزنتك مفتوحة في الخلفية. وقد يرى ملاحظاتك كل من يصل إلى هاتفك المفتوح.</string>
+    <string name="auto_lock_long_delay_warning">المهل الأطول تترك خزنتك مفتوحة في الخلفية. وقد يرى ملاحظاتك كل من يصل إلى جهازك المفتوح.</string>
     <string name="security_protection_section">كيف يحمي Encly ملاحظاتك</string>
     <string name="security_protection_key_title">مفتاح عشوائي بطول 256 بت</string>
-    <string name="security_protection_key_desc">قاعدة البيانات كلها مشفرة بمفتاح أُنشئ على هذا الهاتف.</string>
+    <string name="security_protection_key_desc">قاعدة البيانات كلها مشفرة بمفتاح أُنشئ على هذا الجهاز.</string>
     <string name="security_protection_pin_title">رمز PIN مرتبط بهذا الهاتف</string>
     <string name="security_protection_pin_desc">يُمزج رمز PIN بمفتاح في الشريحة الآمنة بالهاتف، فلا يمكن تخمينه في أي مكان آخر.</string>
     <string name="security_protection_slots_title">أقفال منفصلة لكل طريق دخول</string>
@@ -223,4 +225,11 @@
     <string name="duress_passphrase_removed">تم إيقاف كلمة مرور الإكراه</string>
     <string name="duress_passphrase_turned_off">أُعيد تعيين سر الجهاز، فتوقفت كلمة مرور الإكراه عن العمل. عيّنها من جديد؛ فالخزنة الوهمية تحتفظ بملاحظاتها.</string>
     <string name="duress_passphrase_remove_confirm_title">إيقاف كلمة مرور الإكراه؟</string>
+    <string name="keyring_not_running">لا توجد سلسلة مفاتيح للنظام قيد التشغيل. ثبّت واحدة أو شغّلها (GNOME Keyring أو KWallet أو KeePassXC مع تفعيل Secret Service)، ثم حاول مرة أخرى.</string>
+    <string name="keyring_no_default">ليست لدى سلسلة مفاتيح النظام سلسلة افتراضية، ولم يتمكن Encly من إنشاء واحدة. أنشئ واحدة في «كلمات المرور والمفاتيح» أو KWallet Manager، ثم حاول مرة أخرى.</string>
+    <string name="keyring_prompt_dismissed">لم يُفتح قفل سلسلة مفاتيح النظام. حاول مرة أخرى ووافق على طلبها.</string>
+    <string name="key_not_found_title">لم يجد Encly مفتاحه في سلسلة مفاتيح النظام</string>
+    <string name="key_not_found_message">بياناتك سليمة. يحدث هذا عند تشغيل سلسلة مفاتيح أخرى، أو عند إعادة تعيين سلسلة المفاتيح، أو عند نقل مجلد البيانات. شغّل سلسلة المفاتيح التي تحتوي على المفتاح وحاول مرة أخرى.</string>
+    <string name="key_not_found_last_resort">فقط إذا كان المفتاح قد ضاع نهائيًا: يؤدي المسح إلى حذف كل الملاحظات والإعدادات على هذا الكمبيوتر.</string>
+    <string name="lock_passphrase_slot_unusable">هذه الملاحظات محمية بنوع أقدم من الأسرار لا يستطيع هذا الإصدار التحقق منه. استخدم عبارة الاسترداد، ثم عيّن كلمة مرور جديدة.</string>
 </resources>

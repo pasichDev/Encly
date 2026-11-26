@@ -19,6 +19,22 @@ class SecretChoiceTest {
     private fun refusal(typed: String) = passphrase.refusal(typed.toCharArray())
 
     @Test
+    fun aPassphraseOverWhatUnlockTakesIsTooLongNotUnusable() {
+        val long = "x".repeat(300)
+        val policy = object : com.pasich.encly.core.security.UnlockSecretPolicy by FakePassphrasePolicy() {
+            // As the desktop policy: unlock takes no more than 256 units, choosing is told why it is too much.
+            override fun canonical(typed: CharArray): CharArray? = typed.takeIf { it.size <= 256 }?.copyOf()
+
+            override fun canonicalForSetting(typed: CharArray): CharArray? = typed.copyOf()
+
+            override fun mayBeSet(canonical: CharArray): SecretRule =
+                if (canonical.size > 128) SecretRule.TOO_LONG else SecretRule.OK
+        }
+
+        assertEquals(SecretRefusal.TOO_LONG, SecretChoice(policy).refusal(long.toCharArray()))
+    }
+
+    @Test
     fun theKindIsTheOneOfThePolicy() {
         assertEquals(SecretKind.PASSWORD, passphrase.kind)
         assertEquals(SecretKind.PIN, pin.kind)

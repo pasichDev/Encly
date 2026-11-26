@@ -156,10 +156,16 @@ private fun Modifier.refuseSecondaryButton(): Modifier = pointerInput(Unit) {
 
 private fun KeyEvent.isEnter(): Boolean = key == Key.Enter || key == Key.NumPadEnter
 
-/** Copy and cut, by the keys of every desktop: Ctrl or Command with C, X or Insert, and Shift+Delete. */
+/**
+ * Copy and cut, by the keys of every desktop: Ctrl or Command with C, X or Insert, Shift+Delete, and the dedicated
+ * Copy and Cut keys, which Compose's desktop key map runs without any modifier.
+ */
 private fun KeyEvent.copiesOrCutsText(): Boolean {
     val command = isCtrlPressed || isMetaPressed
-    return (command && (key == Key.C || key == Key.X || key == Key.Insert)) || (isShiftPressed && key == Key.Delete)
+    return (command && (key == Key.C || key == Key.X || key == Key.Insert)) ||
+        (isShiftPressed && key == Key.Delete) ||
+        key == Key.Copy ||
+        key == Key.Cut
 }
 
 /** The eye at the end of the field: shows the passphrase in clear, or masks it again. */

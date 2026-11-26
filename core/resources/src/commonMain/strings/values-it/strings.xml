@@ -112,7 +112,7 @@
     <string name="editor_lock">Blocca la modifica</string>
 
     <string name="empty_notes">Ancora nessuna nota</string>
-    <string name="empty_notes_desc">Tocca Nuova nota per scrivere la prima.</string>
+    <string name="empty_notes_desc">Seleziona Nuova nota per scrivere la prima.</string>
     <string name="empty_trash_desc">Le note eliminate restano qui finché non le ripristini o le elimini per sempre.</string>
 
     <string name="enter_url">Inserisci un link</string>
@@ -124,7 +124,7 @@
 
     <string name="falied_content">Impossibile caricare il contenuto</string>
 
-    <string name="faq_background_a">Encly salva le modifiche e, dopo il ritardo scelto in Impostazioni → Sicurezza (15 secondi per impostazione predefinita), chiude il database crittografato e cancella la chiave di sessione. Spegnere lo schermo o bloccare il telefono lo fa subito. Poi sblocchi di nuovo.</string>
+    <string name="faq_background_a">Encly salva le modifiche e, dopo il ritardo scelto in Impostazioni → Sicurezza (15 secondi per impostazione predefinita), chiude il database crittografato e cancella la chiave di sessione. Spegnere lo schermo o bloccare il dispositivo lo fa subito. Poi sblocchi di nuovo.</string>
     <string name="faq_background_q">Cosa succede quando esco dall\'app?</string>
     <string name="faq_biometrics_a">Usa l\'interruttore della biometria in Impostazioni → Sicurezza. Creare o rimuovere lo slot biometrico richiede un\'autenticazione biometrica forte.</string>
     <string name="faq_biometrics_q">Come attivo o disattivo la biometria?</string>
@@ -136,7 +136,7 @@
     <string name="faq_forgot_pin_q">Cosa succede se dimentico il PIN?</string>
     <string name="faq_language_a">Apri Impostazioni → Lingua e scegli una delle lingue disponibili, oppure «Predefinita di sistema» per usare la lingua del dispositivo. La modifica si applica subito.</string>
     <string name="faq_language_q">Come cambio la lingua?</string>
-    <string name="faq_new_note_a">Tocca «Nuova nota» nella schermata principale. La barra sopra la tastiera aggiunge titoli, checklist, elenchi puntati e numerati, citazioni, link e separatori.</string>
+    <string name="faq_new_note_a">Seleziona «Nuova nota» nella schermata principale. La barra sopra la tastiera aggiunge titoli, checklist, elenchi puntati e numerati, citazioni, link e separatori.</string>
     <string name="faq_new_note_q">Come creo una nuova nota?</string>
     <string name="faq_recovery_phrase_a">È una chiave di riserva di 12 parole. Sblocca la cassaforte se dimentichi il PIN ed è l’unica chiave dei tuoi file di backup. La crei durante la configurazione, o più tardi in Impostazioni → Sicurezza se l’hai saltata. Conservala su carta, offline.</string>
     <string name="faq_recovery_phrase_q">A cosa serve la frase di recupero?</string>
@@ -249,7 +249,7 @@
     <string name="key_store_unavailable">Sblocca il portachiavi di sistema e riprova</string>
 
 
-    <string name="press_to_edit">Tocca per iniziare a scrivere…</string>
+    <string name="press_to_edit">Seleziona per iniziare a scrivere…</string>
 
     <string name="priority_high">Alta</string>
     <string name="priority_low">Bassa</string>
@@ -316,7 +316,7 @@
     <string name="tag_reorder_failed">Impossibile salvare l\'ordine delle etichette. Riprova.</string>
     <string name="tag_update_failed">Impossibile aggiornare l\'etichetta. Riprova.</string>
 
-    <string name="tap_again_to_delete">Tocca di nuovo per eliminare</string>
+    <string name="tap_again_to_delete">Seleziona di nuovo per eliminare</string>
 
     <string name="task_add">Nuova attività</string>
     <string name="task_clear_completed_failed">Impossibile cancellare le attività completate. Riprova.</string>
@@ -369,7 +369,7 @@
     <string name="backup_settings_subtitle">Backup crittografato, importazione e Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Crittografato con la tua frase di recupero</string>
-    <string name="backup_intro_body">Un backup contiene tutte le tue note, attività ed etichette, crittografate con la tua frase di recupero di 12 parole. Encly non lo carica da nessuna parte: scegli tu dove salvare il file. Su un nuovo telefono, le stesse 12 parole lo ripristinano.</string>
+    <string name="backup_intro_body">Un backup contiene tutte le tue note, attività ed etichette, crittografate con la tua frase di recupero di 12 parole. Encly non lo carica da nessuna parte: scegli tu dove salvare il file. Su un nuovo dispositivo, le stesse 12 parole lo ripristinano.</string>
     <string name="backup_last_export">Ultima esportazione: %1$s</string>
     <string name="backup_never_exported">Nessun backup ancora esportato</string>
     <string name="backup_export">Esporta backup</string>
@@ -456,7 +456,7 @@
     <string name="pin_unlock_with_fingerprint">Sblocca con l\'impronta</string>
     <string name="onboarding_step_of">Passo %1$d di %2$d</string>
     <string name="onboarding_welcome_headline">Un taccuino che solo tu puoi aprire.</string>
-    <string name="onboarding_welcome_sub">Note e attività, cifrate su questo telefono. La configurazione richiede circa un minuto.</string>
+    <string name="onboarding_welcome_sub">Note e attività, cifrate su questo dispositivo. La configurazione richiede circa un minuto.</string>
     <string name="onboarding_fact_account_title">Nessun account</string>
     <string name="onboarding_fact_account_desc">Nessuna registrazione, nessuna email, nessun reset della password.</string>
     <string name="onboarding_fact_offline_title">Funziona offline</string>
@@ -476,7 +476,7 @@
     <string name="onboarding_recovery_pin_desc">La frase sblocca la cassaforte e ti permette di impostare un nuovo PIN.</string>
     <string name="onboarding_recovery_backups_title">Apre i tuoi backup</string>
     <string name="onboarding_recovery_backups_desc">I file di backup cifrati si leggono solo con queste parole.</string>
-    <string name="onboarding_recovery_phone_title">Nuovo telefono</string>
+    <string name="onboarding_recovery_phone_title">Nuovo dispositivo</string>
     <string name="onboarding_recovery_phone_desc">File di backup più frase ripristinano ogni nota, attività ed etichetta.</string>
     <string name="onboarding_recovery_warning">Nessuno può recuperarla per te, nemmeno noi. Se perdi sia il PIN sia la frase, le note sono perse.</string>
     <string name="onboarding_recovery_create">Crea la mia frase</string>
@@ -511,9 +511,9 @@
     <string name="onboarding_restore_label">Ripristina, poi imposta un PIN</string>
     <string name="onboarding_restore_intro">Scegli il file di backup di Encly, poi inserisci le 12 parole con cui è stato creato.</string>
     <string name="onboarding_restore_file_section">1 · File di backup</string>
-    <string name="onboarding_restore_tap_other">Tocca per scegliere un altro file</string>
+    <string name="onboarding_restore_tap_other">Scegli un altro file</string>
     <string name="onboarding_restore_phrase_section">2 · Frase di recupero</string>
-    <string name="onboarding_restore_phrase_helper">Queste parole diventano anche la frase di recupero di questo telefono.</string>
+    <string name="onboarding_restore_phrase_helper">Queste parole diventano anche la frase di recupero di questo dispositivo.</string>
     <string name="notes_title">Note</string>
     <string name="lock_now">Blocca ora</string>
     <string name="search_placeholder">Cerca nei titoli e nel testo</string>
@@ -528,7 +528,7 @@
     </plurals>
     <string name="home_tasks_none_open">Attività · nessuna aperta</string>
     <string name="task_empty_title">Ancora nessuna attività</string>
-    <string name="task_empty_desc">Tocca Nuova attività per aggiungere la prima.</string>
+    <string name="task_empty_desc">Seleziona Nuova attività per aggiungere la prima.</string>
     <string name="task_all_done_title">Tutto fatto</string>
     <string name="task_done_section">Completate · %1$d</string>
     <string name="task_section_in_work">In corso · %1$d</string>
@@ -548,12 +548,12 @@
     <string name="licenses_title">Licenze open source</string>
     <string name="licenses_row_desc">Le librerie e i font usati da Encly</string>
     <string name="licenses_heading">Costruito sull’open source</string>
-    <string name="licenses_intro">Encly è fatto con queste librerie e questi font. Toccane uno per leggerne la licenza.</string>
+    <string name="licenses_intro">Encly è fatto con queste librerie e questi font. Selezionane uno per leggerne la licenza.</string>
     <string name="licenses_libraries">Librerie</string>
     <string name="licenses_fonts">Font</string>
     <string name="tags_empty_title">Ancora nessun tag</string>
     <string name="tags_empty_desc">I tag raggruppano le note. Creane uno qui sopra, poi sceglilo per una nota tenendola premuta.</string>
-    <string name="tags_hint">Tocca un tag per rinominarlo, nasconderlo o eliminarlo. Trascina la maniglia per riordinare.</string>
+    <string name="tags_hint">Seleziona un tag per rinominarlo, nasconderlo o eliminarlo. Trascina la maniglia per riordinare.</string>
     <string name="tag_add">Aggiungi tag</string>
     <string name="tag_name_label">Nome</string>
     <string name="tag_show_in_list">Mostra nell’elenco delle note</string>
@@ -795,6 +795,8 @@
     <string name="security_encryption_pin_plain_nobio">Le tue note sono cifrate. Il tuo PIN le sblocca.</string>
     <string name="security_encryption_seed_plain_nobio">Le tue note sono cifrate. Il tuo PIN le sblocca, e la frase di recupero se dimentichi il PIN.</string>
     <string name="lock_pin_key_lost_desktop">Il tuo PIN non può più sbloccare Encly su questo computer: il segreto nel portachiavi di sistema manca o è stato reimpostato. Usa la frase di recupero, poi imposta un nuovo PIN.</string>
+    <string name="error_keystore_unavailable_desktop">Il portachiavi di sistema non ha risposto. Riprova; se l\'errore persiste, riavvialo oppure esci e rientra nella sessione.</string>
+    <string name="loss_message_desktop">Sembra che i dati crittografati o le chiavi di crittografia (incluso il segreto nel portachiavi di sistema) siano stati modificati o danneggiati, quindi il recupero non è possibile.\n\nPer continuare a usare l\'app devi reimpostarla e cancellare i dati danneggiati su questo computer. Tutte le note e le impostazioni salvate verranno eliminate definitivamente.</string>
     <string name="security_protection_slots_desc_nobio">PIN e frase di recupero aprono ciascuno il proprio slot cifrato.</string>
     <string name="duress_pin_real_vault_nobio">La tua vera cassaforte resta bloccata e intatta. A differenza del PIN di cancellazione, il PIN di coercizione non cancella nulla. La frase di recupero apre sempre la cassaforte vera.</string>
     <string name="security_protection_pin_title_device">Un PIN legato a questo dispositivo</string>
@@ -831,7 +833,7 @@
     <string name="onboarding_passphrase_again_body">Così sappiamo che è quella che volevi.</string>
     <string name="onboarding_recovery_passphrase_title">Passphrase dimenticata?</string>
     <string name="onboarding_recovery_passphrase_desc">La frase di recupero sblocca la cassaforte e ti permette di impostare una nuova passphrase.</string>
-    <string name="onboarding_recovery_warning_passphrase">Nessuno può recuperarla per te, nemmeno noi. Se perdi sia la passphrase sia la frase di recupero, le note sono perse.</string>
+    <string name="onboarding_recovery_warning_passphrase">Nessuno può recuperarla per te, nemmeno noi. La tua passphrase funziona insieme a un segreto nel portachiavi di sistema di questo computer. Se quel portachiavi viene reimpostato o sostituito, passi a un nuovo account di sistema oppure la tua cartella home viene spostata o ripristinata senza di esso, solo la frase di recupero potrà ancora aprire le tue note. Se perdi anche quella, le note sono perse.</string>
     <string name="onboarding_recovery_skip_passphrase">Salta: solo passphrase, niente backup</string>
     <string name="onboarding_ready_passphrase_title">Passphrase impostata</string>
     <string name="onboarding_ready_passphrase_desc">Richiesta a ogni apertura di Encly</string>

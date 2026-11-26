@@ -16,6 +16,7 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlin.concurrent.Volatile
 
 /** The shortest PIN: the lockout and the device-bound key make 6 digits the floor. */
 public const val MIN_PIN_LENGTH: Int = 6
@@ -75,6 +76,13 @@ public sealed interface PinUnlock {
     public data object KeyStoreUnavailable : PinUnlock
 
     /**
+     * The store of the device-bound PIN key answered but holds no key, where that does not prove it is gone (a desktop
+     * keyring that may be another one, or closed): nothing was counted, the vault is intact. Trying again, the recovery
+     * phrase, or in the end a wipe, are the user's choices. Android never reports it.
+     */
+    public data object KeyStoreNotFound : PinUnlock
+
+    /**
      * The device's key store failed on this attempt (a Keystore error that may pass), or the password stretch could
      * not be made for lack of memory ([SecretStretchException]); nothing was counted. The key is not gone and the
      * database was never touched: trying again may work.
@@ -83,6 +91,27 @@ public sealed interface PinUnlock {
 
     /** The attempt could not be made (a storage failure); nothing was counted. */
     public data object Failed : PinUnlock
+}
+
+/** What a check of the open vault's secret ([AuthenticationManager.verifyPinAuthResult]) found. */
+public enum class PinCheck {
+    /** The secret is right. */
+    OK,
+
+    /** Wrong, malformed, refused during a lockout, or the attempt could not be recorded; the caller counts a miss. */
+    WRONG,
+
+    /** The store of the device-bound key is locked or not running; nothing was counted. */
+    KEY_STORE_UNAVAILABLE,
+
+    /** The store of the device-bound key holds no key but may be another one; nothing was counted. */
+    KEY_NOT_FOUND,
+
+    /** The device's key store failed on this attempt, or the stretch lacked memory; nothing was counted. */
+    KEY_STORE_FAILED,
+
+    /** The device-bound key is gone for good; nothing was counted. */
+    KEY_LOST,
 }
 
 /** The outcome of setting a wipe PIN. */
@@ -189,6 +218,33 @@ public class AuthenticationManager(
     private val attemptLock = SynchronizedObject()
 
     /**
+     * What the last attempt, check or setting that found the device key store unusable said was missing, or null when
+     * the last one did not meet that. For the screen that shows [PinUnlock.KeyStoreUnavailable] or
+     * [PinChange.KEY_STORE_UNAVAILABLE]: say what to do about it.
+     */
+    @Volatile
+    public var keyStoreProblem: KeyStoreProblem? = null
+        private set
+
+    /** Whether the device key store can be asked to get ready before a vault depends on it; see [prepareKeyStore]. */
+    public val keyStoreMayNeedPreparing: Boolean get() = factor.missingKeyMayReturn
+
+    /**
+     * Makes the device key store ready (running, unlocked, with a place for the key), prompting where the system
+     * does, before a vault is made around a key in it; null when it is, else what is missing. Nothing is created.
+     */
+    public fun prepareKeyStore(): KeyStoreProblem? = try {
+        factor.prepare()
+        keyStoreProblem = null
+        null
+    } catch (e: PinFactorException) {
+        (e.problem ?: KeyStoreProblem.OTHER).also { keyStoreProblem = it }
+    }
+
+    /** Ends a prompt the device key store waits on the user for; see [PinHardwareFactor.abandonPending]. */
+    public fun abandonKeyStorePrompt(): Unit = factor.abandonPending()
+
+    /**
      * Creates (or replaces) the PIN slot around [dek]. [pin] stays the caller's to wipe.
      *
      * A replaced slot keeps its salt, so a wipe PIN set earlier keeps working. The wipe slot is
@@ -217,7 +273,14 @@ public class AuthenticationManager(
         val keys = try {
             // A key made here (deleted by the system, not just invalidated) is a reset too: the
             // wipe slot was sealed with the one that is gone.
-            keyReset = factor.ensureKey(keySlot)
+            // A vault with no secret slot yet is a new one: it gets a new device secret, never an old one that was
+            // left behind (a keyring item an erase could not delete), so the erased vault's secret opens nothing here.
+            keyReset = if (kept == null) {
+                factor.reset(keySlot)
+                true
+            } else {
+                factor.ensureKey(keySlot)
+            }
             try {
                 derivePinKeys(secret, header, keySlot)
             } catch (e: PinFactorException) {
@@ -229,6 +292,7 @@ public class AuthenticationManager(
             }
         } catch (e: PinFactorException) {
             SensitiveDataCleaner.clear(header.salt)
+            keyStoreProblem = problemOf(e)
             return if (e.unavailable) PinChange.KEY_STORE_UNAVAILABLE else PinChange.FAILED
         } catch (_: SecretStretchException) {
             // The stretch could not be made (memory): nothing was derived or counted. But a device key replaced on the
@@ -293,20 +357,35 @@ public class AuthenticationManager(
      * matches, so a decoy session can not be used to test guesses of the real PIN. The wipe PIN
      * only wipes from the lock screen: here it is a wrong PIN.
      */
-    public fun verifyPinAuth(pin: CharArray, decoy: Boolean = false): Boolean {
+    public fun verifyPinAuth(pin: CharArray, decoy: Boolean = false): Boolean =
+        verifyPinAuthResult(pin, decoy) == PinCheck.OK
+
+    /**
+     * [verifyPinAuth], telling what a refusal was: a wrong secret ([PinCheck.WRONG]) or a device key store that did not
+     * answer, which says nothing about the secret. Counted exactly as [verifyPinAuth] counts.
+     */
+    public fun verifyPinAuthResult(pin: CharArray, decoy: Boolean = false): PinCheck {
         val result = attempt(pin, if (decoy) Purpose.VERIFY_DECOY else Purpose.VERIFY)
         return when (result) {
             is PinUnlock.Success -> {
                 SensitiveDataCleaner.clear(result.dek)
-                true
+                PinCheck.OK
             }
 
             is PinUnlock.Decoy -> {
                 SensitiveDataCleaner.clear(result.dek)
-                true
+                PinCheck.OK
             }
 
-            else -> false
+            PinUnlock.KeyStoreUnavailable -> PinCheck.KEY_STORE_UNAVAILABLE
+
+            PinUnlock.KeyStoreNotFound -> PinCheck.KEY_NOT_FOUND
+
+            PinUnlock.KeyStoreFailed -> PinCheck.KEY_STORE_FAILED
+
+            PinUnlock.KeyLost -> PinCheck.KEY_LOST
+
+            else -> PinCheck.WRONG
         }
     }
 
@@ -323,8 +402,24 @@ public class AuthenticationManager(
         SensitiveDataCleaner.clear(factor.mac(activeKeySlot(), KEY_PROBE))
         false
     } catch (e: PinFactorException) {
-        e.lost
+        // A key that is not found counts as gone here: the PIN cannot be kept on the strength of a key nobody sees.
+        e.lost || e.notFound
     }
+
+    /** What a device key store that did not answer ([e]) makes of an attempt, remembering what it was missing. */
+    private fun refusalOf(e: PinFactorException): PinUnlock {
+        keyStoreProblem = problemOf(e)
+        return when {
+            e.lost -> PinUnlock.KeyLost
+            e.notFound -> PinUnlock.KeyStoreNotFound
+            e.unavailable -> PinUnlock.KeyStoreUnavailable
+            else -> PinUnlock.KeyStoreFailed
+        }
+    }
+
+    /** What [e] says the key store is missing: null unless the store is unavailable, "other" when it does not say. */
+    private fun problemOf(e: PinFactorException): KeyStoreProblem? =
+        if (e.unavailable) e.problem ?: KeyStoreProblem.OTHER else null
 
     /** One counted attempt; see [unlockWithPin] and [verifyPinAuth]. */
     @Suppress("ReturnCount") // Fail-closed gates: lockout, missing slot, unrecorded attempt.
@@ -347,11 +442,7 @@ public class AuthenticationManager(
                 } catch (e: PinFactorException) {
                     // Not a guess: the hardware never answered. Give the attempt back.
                     refundAttempt(previous)
-                    return@withCanonical when {
-                        e.lost -> PinUnlock.KeyLost
-                        e.unavailable -> PinUnlock.KeyStoreUnavailable
-                        else -> PinUnlock.KeyStoreFailed
-                    }
+                    return@withCanonical refusalOf(e)
                 } catch (_: SecretStretchException) {
                     // Not a guess either: the stretch could not run. Give the attempt back; trying again may work.
                     refundAttempt(previous)
@@ -644,8 +735,14 @@ public class AuthenticationManager(
      * Whether [typed] may be chosen as the vault's secret, the wipe secret or the duress secret, and if not why.
      * Nothing is derived or counted. [typed] stays the caller's to wipe.
      */
-    public fun checkNewSecret(typed: CharArray): SecretRule =
-        withCanonical(typed, SecretRule.INVALID) { secret -> policy.mayBeSet(secret) }
+    public fun checkNewSecret(typed: CharArray): SecretRule {
+        val secret = policy.canonicalForSetting(typed) ?: return SecretRule.INVALID
+        try {
+            return policy.mayBeSet(secret)
+        } finally {
+            SensitiveDataCleaner.clear(secret)
+        }
+    }
 
     /** A fresh secret of this kind for the user to take, or null when this kind has none to offer (a PIN). */
     public fun suggestSecret(): CharArray? = policy.suggest()
@@ -1048,10 +1145,14 @@ public class AuthenticationManager(
     }
 
     /** [withCanonical] for a secret that is being chosen: [refused] also when the policy says it may not be set. */
-    private inline fun <T> withSettableSecret(typed: CharArray, refused: T, block: (CharArray) -> T): T =
-        withCanonical(typed, refused) { secret ->
-            if (policy.mayBeSet(secret) == SecretRule.OK) block(secret) else refused
+    private inline fun <T> withSettableSecret(typed: CharArray, refused: T, block: (CharArray) -> T): T {
+        val secret = policy.canonicalForSetting(typed) ?: return refused
+        try {
+            return if (policy.mayBeSet(secret) == SecretRule.OK) block(secret) else refused
+        } finally {
+            SensitiveDataCleaner.clear(secret)
         }
+    }
 
     /**
      * One KDF run for both slots. [PinFactorException] (the device factor) and [SecretStretchException] (the stretch)

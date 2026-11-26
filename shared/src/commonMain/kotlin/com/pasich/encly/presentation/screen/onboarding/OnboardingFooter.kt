@@ -15,6 +15,7 @@ import com.pasich.encly.core.resources.onboarding_recovery_skip
 import com.pasich.encly.core.resources.onboarding_verify_confirm
 import com.pasich.encly.core.resources.onboarding_verify_show_again
 import com.pasich.encly.core.resources.restore
+import com.pasich.encly.core.resources.vault_unreadable_retry
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.hostString
@@ -38,8 +39,10 @@ internal fun footerSpec(
     val busy = state.isLoading
     return when (state.step) {
         OnboardingStep.WELCOME -> FooterSpec(
-            Res.string.onboarding_get_started,
+            // The keyring was not ready: the same button asks again.
+            if (state.keyStoreProblem != null) Res.string.vault_unreadable_retry else Res.string.onboarding_get_started,
             actions.onGetStarted,
+            loading = busy,
             secondary = Res.string.onboarding_have_backup,
             onSecondary = actions.onStartRestore,
         )

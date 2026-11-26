@@ -39,6 +39,48 @@ public interface PinHardwareFactor {
 
     /** Deletes the key in [slot], if any. Never throws. */
     public fun delete(slot: PinKeySlot)
+
+    /**
+     * Whether the store of the keys is not known to be gone for good when a key is not found in it: a desktop keyring
+     * can be another one than the one the key was made in (another provider is running, a keyring that is closed, a
+     * moved data folder), so "not found" there is a state to retry and not the end ([PinFactorException.notFound]).
+     * False on Android and iOS, where a missing key is a lost key.
+     */
+    public val missingKeyMayReturn: Boolean get() = false
+
+    /**
+     * Makes the store ready for [ensureKey] before anything depends on it: starts, unlocks or creates what it needs,
+     * asking the user through the system's own prompt where there is one. Nothing is created in it. Fails with a
+     * [PinFactorException] whose [PinFactorException.problem] says what is missing. Nothing to do by default (Android
+     * and iOS keep their keys in hardware that is always there).
+     */
+    @Throws(PinFactorException::class)
+    public fun prepare(): Unit = Unit
+
+    /**
+     * Ends what [prepare], [ensureKey], [reset] or [mac] is waiting for on the user (a system prompt): the wait fails
+     * at once with [KeyStoreProblem.DISMISSED]. Called when the vault is locked, so a prompt left open does not outlive
+     * the lock. Safe to call from any thread, at any time; nothing by default.
+     */
+    public fun abandonPending(): Unit = Unit
+}
+
+/** What a key store that is not usable right now is missing; see [PinFactorException.problem]. */
+public enum class KeyStoreProblem {
+    /** No store is running at all (no Secret Service on the session bus). */
+    NOT_RUNNING,
+
+    /** The store is there but locked, and could not be unlocked. */
+    LOCKED,
+
+    /** The store has no default place to keep the key in, and one could not be made. */
+    NO_DEFAULT,
+
+    /** The user dismissed the system prompt, or it was left open until it timed out or the vault was locked. */
+    DISMISSED,
+
+    /** The store failed for another reason. */
+    OTHER,
 }
 
 /**
@@ -47,11 +89,17 @@ public interface PinHardwareFactor {
  * (or the biometric slot) still unlocks. Otherwise the failure may be transient.
  *
  * [unavailable] (only with `lost = false`) means the store that holds the key is not usable right now but is
- * expected to come back once the user acts, e.g. a locked desktop keyring. The attempt that met it is not a guess,
- * and the screen can say what to do. Android never sets it.
+ * expected to come back once the user acts, e.g. a locked desktop keyring; [problem] says what is missing. The attempt
+ * that met it is not a guess, and the screen can say what to do. Android never sets it.
+ *
+ * [notFound] (only with `lost = false`) means the store answered but holds no key, on a platform where that does not
+ * prove the key is gone ([PinHardwareFactor.missingKeyMayReturn]): the vault is intact, and trying again, the recovery
+ * phrase or, last of all, a wipe are the user's choices. Android never sets it.
  */
 public class PinFactorException(
     public val lost: Boolean,
     cause: Throwable? = null,
     public val unavailable: Boolean = false,
+    public val notFound: Boolean = false,
+    public val problem: KeyStoreProblem? = null,
 ) : Exception(cause)

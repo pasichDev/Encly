@@ -6,6 +6,7 @@ import androidx.lifecycle.LifecycleRegistry
 import com.pasich.encly.core.platform.MainThreadTimer
 import com.pasich.encly.core.security.AutoLockPolicy
 import com.pasich.encly.core.security.DeviceLockWatcher
+import org.freedesktop.dbus.errors.ServiceUnknown
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -73,14 +74,25 @@ class SleepDetector(private val clocks: () -> Clocks?, private val minSleepMilli
  * What Linux can be asked about the session being locked, each source `null` when it is not there: logind's
  * `LockedHint` of the session (kept right by most lockers: swaylock, hyprlock, i3lock through xss-lock and the
  * desktops' own), and whether a desktop screen saver is active. [isLocked]: locked when any source says so; a source
- * that throws answers "not locked" there. [state] keeps what [isLocked] cannot say: a source that threw, with no other
+ * that throws answers "not locked" there. [state] keeps what [isLocked] cannot say: a source that failed, with no other
  * saying "locked", leaves the state unknown (null), which the caller must not read as "unlocked".
+ *
+ * A source that is not there is not a failure, and the bus cannot be asked about it by reading it: dbus-java's
+ * `getDBusOwnerName` (`GetNameOwner`) answers a name nobody owns with the D-Bus error `NameHasNoOwner`, which it
+ * throws as a plain `DBusExecutionException` with no trace of the error's name left (`getType()` is the class's), so
+ * no handler can tell it from a real failure. Most systems have only one of the four screen savers and some none
+ * (sway, i3, Hyprland), so reading that as "unknown" would leave the state unknown for good. A source is therefore
+ * asked whether its name has an owner first, with `NameHasOwner`, which answers (see [screenSaverSource]); only a
+ * source that is there and then fails (a timeout, an error of its own) is unknown. A service that stops while it is
+ * read ([ServiceUnknown]) is gone too.
  */
 class LinuxLiveLock(private val lockedHint: () -> Boolean?, private val screenSaversActive: List<() -> Boolean?>) {
     /** What a source says: false when it is not there, null when reading it failed. */
     @Suppress("TooGenericExceptionCaught")
     private fun read(source: () -> Boolean?): Boolean? = try {
         source() ?: false
+    } catch (_: ServiceUnknown) {
+        false
     } catch (_: Exception) {
         null
     }
@@ -99,6 +111,15 @@ class LinuxLiveLock(private val lockedHint: () -> Boolean?, private val screenSa
             else -> false
         }
     }
+}
+
+/**
+ * A screen saver as a source of [LinuxLiveLock]: [hasOwner] (`NameHasOwner` of its bus name, a question that always
+ * has an answer) first, and [active] (`GetActive`) only when someone owns the name: asking a name nobody owns raises
+ * an error the library does not name, and could start the service. Null (not there) when nobody owns it.
+ */
+fun screenSaverSource(hasOwner: () -> Boolean, active: () -> Boolean): () -> Boolean? = {
+    if (hasOwner()) active() else null
 }
 
 /**
@@ -153,11 +174,17 @@ class PollingLockSignals(
  */
 class DesktopDeviceLockWatcher(
     private val signals: OsLockSignals,
+    /** Milliseconds on a clock that only runs forward; read only to bound a lock nothing can confirm. */
+    private val clock: () -> Long = { System.nanoTime() / NANOS_PER_MILLI },
     private val dispatch: (() -> Unit) -> Unit = { SwingUtilities.invokeLater(it) },
 ) : DeviceLockWatcher,
     AutoCloseable {
     @Volatile
     private var locked = false
+
+    // The OS could not be asked while the last report said "locked": how many questions in a row, and since when.
+    private var unconfirmedReads = 0
+    private var unconfirmedSince = 0L
 
     private val screenOffListeners = CopyOnWriteArrayList<() -> Unit>()
     private val lockListeners = CopyOnWriteArrayList<() -> Unit>()
@@ -172,6 +199,8 @@ class DesktopDeviceLockWatcher(
     private fun onSignal(nowLocked: Boolean) {
         val wasLocked = locked
         locked = nowLocked
+        // A new report is new evidence: what was stale before it is not counted against it.
+        resetUnconfirmed()
         // A source that can be asked is not trusted to say when a lock ended, so its second report of a lock is not
         // swallowed as a repeat of one that is long over: that would leave the vault open behind the lock screen.
         if (nowLocked && (!wasLocked || signals.asksTheOs)) {
@@ -186,7 +215,46 @@ class DesktopDeviceLockWatcher(
     // it cannot answer this time (a timeout, an error: null) the state is unknown and the last report stands, so a
     // slow bus never turns a known "locked" into "unlocked". Unknown is not forced to "locked" here: a read that fails
     // every time would then refuse every unlock for good.
-    override fun isDeviceLocked(): Boolean = signals.liveLocked() ?: locked
+    //
+    // But a "locked" that only a signal ever set, with the OS never able to confirm it, would refuse every unlock for
+    // good (a bus that answers nothing, a locker that never reports its end). It is dropped once [STALE_READS]
+    // questions in a row went unanswered over at least [STALE_MILLIS]. That cannot leave the vault open behind a real
+    // lock screen: the vault is closed by the lock signal itself, not by this flag, which only decides whether an
+    // unlock that was typed into Encly's own window may complete; behind a real lock screen nothing can be typed
+    // there. A later report of a lock starts the count again.
+    override fun isDeviceLocked(): Boolean {
+        val live = signals.liveLocked()
+        if (live != null || !locked) {
+            resetUnconfirmed()
+            return live ?: false
+        }
+        val now = clock()
+        synchronized(this) {
+            if (unconfirmedReads == 0) unconfirmedSince = now
+            unconfirmedReads++
+            if (unconfirmedReads >= STALE_READS && now - unconfirmedSince >= STALE_MILLIS) {
+                locked = false
+                resetUnconfirmed()
+            }
+        }
+        return locked
+    }
+
+    @Synchronized
+    private fun resetUnconfirmed() {
+        unconfirmedReads = 0
+        unconfirmedSince = 0L
+    }
+
+    private companion object {
+        const val NANOS_PER_MILLI = 1_000_000L
+
+        /** Unanswered questions, in a row, after which a "locked" nothing confirms is dropped... */
+        const val STALE_READS = 3
+
+        /** ...if they also span at least this long (a user's retry, not a burst of checks of one attempt). */
+        const val STALE_MILLIS = 30_000L
+    }
 
     override fun watchScreenOff(onScreenOff: () -> Unit): () -> Unit {
         screenOffListeners += onScreenOff

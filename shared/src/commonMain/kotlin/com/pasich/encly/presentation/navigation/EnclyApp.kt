@@ -132,9 +132,7 @@ fun EnclyApp(
     val shielded = (locked || locking) && (
         visibleEntries.isEmpty() || visibleEntries.any { it.destination.route != NavRoutes.LockRoute.name }
         )
-    LaunchedEffect(locked) {
-        if (locked) navController.showLockScreen()
-    }
+    LockAndEraseEffect(navController, sessionLockManager, locked, onLock = { navController.showLockScreen() })
 
     CompositionLocalProvider(LocalAppCommands provides router) {
         EnclyShortcutHost(

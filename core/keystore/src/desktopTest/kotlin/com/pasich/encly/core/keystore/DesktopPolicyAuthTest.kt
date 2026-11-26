@@ -4,7 +4,9 @@ import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AuthenticationManager
 import com.pasich.encly.core.security.DuressPinChange
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.PinKeySlot
 import com.pasich.encly.core.security.PinUnlock
 import com.pasich.encly.core.security.RecoveryFollowUp
@@ -113,6 +115,56 @@ class DesktopPolicyAuthTest {
     }
 
     @Test
+    fun aCheckOfTheOpenVaultsPasswordSaysWhatItFoundNotJustWrong() {
+        set()
+        assertEquals(PinCheck.OK, auth.verifyPinAuthResult(PASSWORD.toCharArray()))
+        assertEquals(PinCheck.WRONG, auth.verifyPinAuthResult("another correct horse".toCharArray()))
+        val failures = store.getInt("lockout.failures", 0)
+
+        fixture.secrets.readFailure = SecretStoreException(
+            lost = false,
+            message = "locked",
+            cause = SecretStoreUnavailableException("locked"),
+            problem = KeyStoreProblem.LOCKED,
+        )
+        assertEquals(PinCheck.KEY_STORE_UNAVAILABLE, auth.verifyPinAuthResult(PASSWORD.toCharArray()))
+        assertEquals(KeyStoreProblem.LOCKED, auth.keyStoreProblem)
+        fixture.secrets.readFailure = SecretStoreException(lost = false, message = "I/O")
+        assertEquals(PinCheck.KEY_STORE_FAILED, auth.verifyPinAuthResult(PASSWORD.toCharArray()))
+        fixture.secrets.readFailure = SecretStoreException(lost = true, message = "does not decrypt")
+        assertEquals(PinCheck.KEY_LOST, auth.verifyPinAuthResult(PASSWORD.toCharArray()))
+        fixture.secrets.readFailure = null
+        fixture.secrets.missingMeansLost = false
+        fixture.secrets.delete(PinKeySlot.A)
+        assertEquals(PinCheck.KEY_NOT_FOUND, auth.verifyPinAuthResult(PASSWORD.toCharArray()))
+        assertEquals(PinUnlock.KeyStoreNotFound, unlock(PASSWORD))
+
+        assertEquals(failures, store.getInt("lockout.failures", 0), "none of them was counted as a wrong guess")
+        failEngine = true
+        fixture.secrets.put(PinKeySlot.A, ByteArray(32))
+        assertEquals(PinCheck.KEY_STORE_FAILED, auth.verifyPinAuthResult(PASSWORD.toCharArray()))
+    }
+
+    @Test
+    fun aKeyringThatMayBeAnotherOneSendsARecoveryUnlockToANewPassphrase() {
+        set()
+        fixture.secrets.missingMeansLost = false
+        fixture.secrets.delete(PinKeySlot.A)
+
+        assertEquals(RecoveryFollowUp.MUST_SET_PIN, auth.recoveryFollowUp())
+    }
+
+    @Test
+    fun aPassphraseOverWhatUnlockTakesIsTooLongToSetAndStillNoSecretToUnlockWith() {
+        set()
+        val long = "ab".repeat(150)
+
+        assertEquals(SecretRule.TOO_LONG, auth.checkNewSecret(long.toCharArray()))
+        assertEquals(PinUnlock.WrongPin, unlock(long))
+        assertFalse(auth.configurePin(long.toCharArray(), dek))
+    }
+
+    @Test
     fun theUiAsksTheKindTheRuleAndASuggestion() {
         assertEquals(SecretKind.PASSWORD, auth.secretKind)
         assertEquals(768, auth.maxTypedUnits)
@@ -120,7 +172,11 @@ class DesktopPolicyAuthTest {
         assertEquals(SecretRule.TOO_SHORT, auth.checkNewSecret("short".toCharArray()))
         assertEquals(SecretRule.TOO_SIMPLE, auth.checkNewSecret("123456789012".toCharArray()))
         assertEquals(SecretRule.TOO_LONG, auth.checkNewSecret("ab".repeat(65).toCharArray()))
-        assertEquals(SecretRule.INVALID, auth.checkNewSecret("a".repeat(300).toCharArray()))
+        // Over what unlock takes but within what is typed: "too long", not "cannot be used" (it was INVALID before).
+        assertEquals(SecretRule.TOO_LONG, auth.checkNewSecret("a".repeat(300).toCharArray()))
+        assertEquals(SecretRule.TOO_LONG, auth.checkNewSecret("a".repeat(768).toCharArray()))
+        assertEquals(SecretRule.INVALID, auth.checkNewSecret("a".repeat(769).toCharArray()))
+        assertEquals(SecretRule.INVALID, auth.checkNewSecret(CharArray(0)))
         assertEquals(SecretRule.INVALID, auth.checkNewSecret("x\uDC00y".toCharArray()))
         val suggestion = assertNotNull(auth.suggestSecret())
         assertEquals(SecretRule.OK, auth.checkNewSecret(suggestion))

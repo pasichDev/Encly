@@ -4,6 +4,7 @@ import com.pasich.encly.core.backup.BackupError
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.common.suspendRunCatching
 import com.pasich.encly.core.security.BiometricHost
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinChange
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
@@ -76,6 +77,18 @@ class OnboardingUseCase(
     }
 
     fun biometricAvailable(): Boolean = securityManager.biometricAvailable()
+
+    /** Whether the key store needs [prepareKeyStore] before a vault depends on it (a desktop keyring). */
+    fun keyStoreMayNeedPreparing(): Boolean = securityManager.keyStoreMayNeedPreparing()
+
+    /**
+     * Gets the key store ready (running, unlocked, with a default keyring), prompting where the system does: null when
+     * it is, else what is missing. Blocks while the user answers: off the main thread.
+     */
+    fun prepareKeyStore(): KeyStoreProblem? = securityManager.prepareKeyStore()
+
+    /** What the last failed [configurePin] found missing in the key store, for its message. */
+    fun keyStoreProblem(): KeyStoreProblem? = securityManager.keyStoreProblem()
 
     /** Adds the biometric slot to the vault just created; shows the system prompt. */
     fun enrollBiometric(host: BiometricHost, onResult: (Boolean) -> Unit) =

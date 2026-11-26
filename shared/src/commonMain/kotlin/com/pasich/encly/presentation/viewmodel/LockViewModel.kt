@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.security.AuthStrategy
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecretKind
@@ -36,8 +37,11 @@ import kotlinx.coroutines.withContext
  * BACKGROUNDED: the credential was right, but the app left the foreground before the vault
  * finished opening, so SessionLockManager closed it again. The lock screen stays; no error.
  * KEY_LOST: the device-bound PIN key is gone; only the recovery phrase (or fingerprint) unlocks.
- * KEY_STORE_UNAVAILABLE: the store of that key is locked or not running (a desktop keyring); nothing was counted,
- * the PIN works again once the user has unlocked it. Android never reports it.
+ * KEY_STORE_UNAVAILABLE: the store of that key is locked or in another way not usable (a desktop keyring); nothing was
+ * counted, the PIN works again once the user has unlocked it. KEY_STORE_NOT_RUNNING (no keyring runs at all),
+ * KEY_STORE_NO_DEFAULT (it has no default collection) and KEY_STORE_DISMISSED (its prompt was not answered) say which.
+ * KEY_NOT_FOUND: the keyring answered but holds no key, which may only be another keyring; the vault is intact.
+ * Android never reports any of them.
  * KEY_STORE_FAILED: the device's key store did not answer this time; nothing was counted and the database is fine.
  * DEVICE_LOCKED: the credential was right, but the operating system reports the screen as locked, so the vault was
  * closed again; the lock screen says so.
@@ -48,6 +52,10 @@ enum class PinUnlockResult {
     LOCKED_OUT,
     KEY_LOST,
     KEY_STORE_UNAVAILABLE,
+    KEY_STORE_NOT_RUNNING,
+    KEY_STORE_NO_DEFAULT,
+    KEY_STORE_DISMISSED,
+    KEY_NOT_FOUND,
     KEY_STORE_FAILED,
     DB_ERROR,
     BACKGROUNDED,
@@ -128,14 +136,15 @@ class LockViewModel(
 
     /** Unlocks with [pin] (a passphrase is sent the same way), which is wiped. */
     fun authenticatePin(pin: CharArray, onResult: (PinUnlockResult) -> Unit) {
-        launchUnlock(onResult) {
+        launchUnlock(pin, onResult) {
             val result = withContext(Dispatchers.Default) {
                 when (securityManager.unlockWithPin(pin)) {
                     VaultUnlockResult.SUCCESS -> PinUnlockResult.SUCCESS
                     VaultUnlockResult.INVALID_CREDENTIAL -> PinUnlockResult.WRONG_PIN
                     VaultUnlockResult.LOCKED_OUT -> PinUnlockResult.LOCKED_OUT
                     VaultUnlockResult.PIN_KEY_LOST -> PinUnlockResult.KEY_LOST
-                    VaultUnlockResult.KEY_STORE_UNAVAILABLE -> PinUnlockResult.KEY_STORE_UNAVAILABLE
+                    VaultUnlockResult.KEY_STORE_UNAVAILABLE -> keyStoreUnavailable()
+                    VaultUnlockResult.KEY_NOT_FOUND -> PinUnlockResult.KEY_NOT_FOUND
                     VaultUnlockResult.KEY_STORE_FAILED -> PinUnlockResult.KEY_STORE_FAILED
                     VaultUnlockResult.DB_ERROR -> PinUnlockResult.DB_ERROR
                 }
@@ -151,12 +160,38 @@ class LockViewModel(
         }
     }
 
+    /** The unlock result for a key store that is not usable, by what [SecurityManager.keyStoreProblem] says. */
+    private fun keyStoreUnavailable(): PinUnlockResult = when (securityManager.keyStoreProblem()) {
+        KeyStoreProblem.NOT_RUNNING -> PinUnlockResult.KEY_STORE_NOT_RUNNING
+        KeyStoreProblem.NO_DEFAULT -> PinUnlockResult.KEY_STORE_NO_DEFAULT
+        KeyStoreProblem.DISMISSED -> PinUnlockResult.KEY_STORE_DISMISSED
+        KeyStoreProblem.LOCKED, KeyStoreProblem.OTHER, null -> PinUnlockResult.KEY_STORE_UNAVAILABLE
+    }
+
+    /**
+     * Whether the vault has a recovery phrase but no secret slot this platform can check (a development vault of the
+     * PIN era under the passphrase policy): typing a passphrase can never work, only the recovery phrase can.
+     */
+    fun secretSlotUnusable(): Boolean = secretKind == SecretKind.PASSWORD &&
+        strategy() == AuthStrategy.RECOVERY_DATA &&
+        recoveryAvailable()
+
+    /**
+     * Erases the whole vault from the lock screen, the last resort when its key cannot be found: every other window
+     * drops what it shows too ([SessionLockManager.onVaultErased]). False when the erase was refused.
+     */
+    fun wipeVault(): Boolean {
+        val erased = securityManager.wipeAndReset()
+        if (erased) sessionLockManager.onVaultErased()
+        return erased
+    }
+
     /** "Keep my PIN" after a recovery-phrase unlock that left the choice; see [RecoveryStage.CHOOSE]. */
     fun keepAfterRecovery(): Boolean = securityManager.keepUnlockMethodsAfterRecovery()
 
     /** Unlocks with the recovery words (lower case, single spaces); [chars] is wiped afterwards. */
     fun authenticateSeed(chars: CharArray, onResult: (SeedUnlockResult) -> Unit) {
-        launchUnlock(onResult) {
+        launchUnlock(chars, onResult) {
             val result = withContext(Dispatchers.Default) {
                 try {
                     when (securityManager.unlockWithSeed(chars)) {
@@ -194,7 +229,7 @@ class LockViewModel(
                     onResult(false)
                     return@requestBiometricKey
                 }
-                launchUnlock(onResult) {
+                launchUnlock(null, onResult) {
                     val ok = withContext(platformIoDispatcher) {
                         try {
                             securityManager.unlockWithRawKey(dek)
@@ -214,7 +249,7 @@ class LockViewModel(
      * ViewModel has no screen left to navigate into the vault, so it is closed again
      * ([SessionLockManager.onUnlockAbandoned]) instead of staying open in the background.
      */
-    private fun <T> launchUnlock(onResult: (T) -> Unit, unlock: suspend UnlockScope.() -> T) {
+    private fun <T> launchUnlock(secret: CharArray?, onResult: (T) -> Unit, unlock: suspend UnlockScope.() -> T) {
         // Read where the unlock starts: a lock that comes in while the key is being checked is then not lost.
         val lockRequests = sessionLockManager.lockRequests()
         val job = viewModelScope.launch {
@@ -226,7 +261,11 @@ class LockViewModel(
             _busy.value = false
             onResult(result)
         }
-        job.invokeOnCompletion { _busy.value = false }
+        job.invokeOnCompletion {
+            _busy.value = false
+            // A launch cancelled before its body began never reaches the wipe inside it: the secret goes here.
+            secret?.let(SensitiveDataCleaner::clear)
+        }
     }
 
     /** What an unlock body can see: whether its ViewModel is still alive. */

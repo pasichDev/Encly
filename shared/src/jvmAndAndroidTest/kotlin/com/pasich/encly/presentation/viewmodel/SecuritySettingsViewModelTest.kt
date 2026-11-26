@@ -4,7 +4,13 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.biometric_enroll_failed
+import com.pasich.encly.core.resources.error_keystore_unavailable
+import com.pasich.encly.core.resources.key_not_found_title
 import com.pasich.encly.core.resources.key_store_unavailable
+import com.pasich.encly.core.resources.keyring_no_default
+import com.pasich.encly.core.resources.keyring_not_running
+import com.pasich.encly.core.resources.keyring_prompt_dismissed
+import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.AuthSettings
@@ -12,8 +18,10 @@ import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.WipePinChange
@@ -120,8 +128,8 @@ class SecuritySettingsViewModelTest {
     @Test
     fun aWrongCurrentPinIsReportedAndARightOneIsNot() = runTest {
         viewModel.uiState.first { it.loaded }
-        `when`(security.verifyPin("111111".toCharArray())).thenReturn(false)
-        `when`(security.verifyPin("222222".toCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult("111111".toCharArray())).thenReturn(PinCheck.WRONG)
+        `when`(security.verifyPinResult("222222".toCharArray())).thenReturn(PinCheck.OK)
 
         assertFalse(checkCurrent("111111"))
         assertEquals(UiText.of(Res.string.pin_current_wrong), viewModel.uiState.value.error)
@@ -129,6 +137,44 @@ class SecuritySettingsViewModelTest {
         viewModel.clearError()
         assertTrue(checkCurrent("222222"))
         assertNull(viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun aKeyStoreThatDidNotAnswerIsNeverReportedAsAWrongSecret() = runTest {
+        viewModel.uiState.first { it.loaded }
+        val cases = listOf(
+            Triple(PinCheck.KEY_STORE_UNAVAILABLE, KeyStoreProblem.NOT_RUNNING, Res.string.keyring_not_running),
+            Triple(PinCheck.KEY_STORE_UNAVAILABLE, KeyStoreProblem.LOCKED, Res.string.key_store_unavailable),
+            Triple(PinCheck.KEY_STORE_UNAVAILABLE, KeyStoreProblem.NO_DEFAULT, Res.string.keyring_no_default),
+            Triple(PinCheck.KEY_STORE_UNAVAILABLE, KeyStoreProblem.DISMISSED, Res.string.keyring_prompt_dismissed),
+            Triple(PinCheck.KEY_STORE_UNAVAILABLE, null, Res.string.key_store_unavailable),
+            Triple(PinCheck.KEY_NOT_FOUND, null, Res.string.key_not_found_title),
+            Triple(PinCheck.KEY_STORE_FAILED, null, Res.string.error_keystore_unavailable),
+            Triple(PinCheck.KEY_LOST, null, Res.string.lock_pin_key_lost),
+        )
+        for ((check, problem, message) in cases) {
+            viewModel.clearError()
+            `when`(security.verifyPinResult("555555".toCharArray())).thenReturn(check)
+            `when`(security.keyStoreProblem()).thenReturn(problem)
+
+            val result = CompletableDeferred<PinCheck>()
+            viewModel.verifyCurrentPin("555555".toCharArray()) { result.complete(it) }
+
+            assertEquals(check, result.await())
+            assertEquals(UiText.of(message), viewModel.uiState.value.error)
+            assertEquals(problem, viewModel.keyStoreProblem())
+        }
+    }
+
+    @Test
+    fun aKeyStoreThatIsNotUsableSaysWhatIsMissingWhenThePinIsChanged() = runTest {
+        viewModel.uiState.first { it.loaded }
+        `when`(security.changePin("333333".toCharArray())).thenReturn(PinChange.KEY_STORE_UNAVAILABLE)
+        `when`(security.keyStoreProblem()).thenReturn(KeyStoreProblem.NOT_RUNNING)
+
+        assertFalse(activate("333333"))
+
+        assertEquals(UiText.of(Res.string.keyring_not_running), viewModel.uiState.value.error)
     }
 
     @Test
@@ -194,7 +240,7 @@ class SecuritySettingsViewModelTest {
     @Test
     fun theCheckedAndTheNewPinAreWipedAfterUse() = runTest {
         viewModel.uiState.first { it.loaded }
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.changePin(anyCharArray())).thenReturn(PinChange.FAILED)
 
         val current = "111111".toCharArray()
@@ -380,9 +426,9 @@ class SecuritySettingsViewModelTest {
     private suspend fun checkCurrent(pin: String): Boolean = checkCurrent(pin.toCharArray())
 
     private suspend fun checkCurrent(pin: CharArray): Boolean {
-        val result = CompletableDeferred<Boolean>()
+        val result = CompletableDeferred<PinCheck>()
         viewModel.verifyCurrentPin(pin) { result.complete(it) }
-        return result.await()
+        return result.await() == PinCheck.OK
     }
 
     private suspend fun activate(pin: String): Boolean = activate(pin.toCharArray())
