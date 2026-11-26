@@ -3,17 +3,17 @@
 # KSP releases use their own version scheme; keep the Kotlin/KSP pair compatible.
 
 [versions]
-agp = "9.5.1"
+agp = "9.5.3"
 kotlin = "2.4.21"
 ksp = "2.3.14"
 metro = "1.6.0"
 detekt = "1.23.8"
 kover = "0.9.11"
 # 2.3.0 fails the docs build on Linux CI: it warns about `@Composable` in the iOS sources there.
-dokka = "2.2.0"
+dokka = "2.3.0"
 # Compose Multiplatform, used by the :editor module; the app keeps the androidx BOM below.
 composeMultiplatform = "1.12.2"
-spotless = "8.11.0"
+spotless = "8.12.0"
 # ktlint and the Compose detekt rules are tool artifacts, not app dependencies (see build.gradle.kts).
 ktlint = "1.8.0"
 # 0.4.x is the line built against detekt 1.23.x; 0.5+ needs detekt 2.x.
@@ -59,7 +59,7 @@ androidxTestCore = "1.7.0"
 androidxTestRunner = "1.7.0"
 androidxTestExtJunit = "1.3.0"
 mockito = "5.24.0"
-robolectric = "4.18"
+robolectric = "4.18.1"
 
 [libraries]
 # Gradle plugins on the classpath of build-logic (the convention plugins apply them).
