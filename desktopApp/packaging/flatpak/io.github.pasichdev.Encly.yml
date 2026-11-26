@@ -23,7 +23,7 @@ finish-args:
   - --share=ipc
   # Skiko (Compose's renderer) draws with OpenGL.
   - --device=dri
-  # The device-bound half of the PIN key, in the Secret Service (:core:keystore).
+  # The device-bound half of the vault key, in the Secret Service (:core:keystore).
   - --talk-name=org.freedesktop.secrets
   # Lock when the session locks: the screen savers' ActiveChanged signal on the session bus ...
   - --talk-name=org.freedesktop.ScreenSaver

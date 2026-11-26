@@ -1,6 +1,9 @@
 # Privacy Policy
 
-_Effective: 2026-11-18 · Applies to Encly 2.0.0 and later (Android, package `com.pasich.encly`)._
+_Effective: 2026-11-26 · Applies to Encly 2.0.0 and later on Android (package `com.pasich.encly`) and to Encly 3.1.0 and later on Linux (`.deb` and Flatpak `io.github.pasichdev.Encly`). The Windows and macOS builds are not published and are not covered._
+
+Everything below describes the Android app unless a section says otherwise; what is true on Linux is in
+[Encly for Linux](#encly-for-linux).
 
 Encly is an offline notes and tasks app. This policy explains what happens to your data.
 The short version: **everything stays on your device, encrypted, and nobody (including the
@@ -157,10 +160,59 @@ in a readable format first.
 
 ## Deleting your data
 
-Uninstalling Encly, or clearing its storage in Android settings, permanently deletes all of
+On Linux, removing the package (`apt remove`) or uninstalling the Flatpak does **not** delete your data: neither runs
+any clean-up of the data folder or of the keyring item, and `flatpak uninstall` keeps `~/.var/app/io.github.pasichdev.Encly`
+unless you add `--delete-data`. To delete it, use **Settings → Security → Erase all data** before you uninstall (it
+removes the databases and the key slots, and asks your keyring to delete its secret; if the keyring is locked or not
+running, the erase still succeeds and the item stays, without a message), or afterwards delete the folder named above
+and, in your keyring program (Passwords and Keys, KWalletManager, KeePassXC), the item whose attribute `application` is
+`com.pasich.encly`. An encrypted backup that you exported
+stays where you saved it.
+
+On Android, uninstalling Encly, or clearing its storage in Android settings, permanently deletes all of
 it, and so does **Settings → Security → Erase all data** (the decoy vault too, if you have one).
 There is no copy anywhere else, apart from encrypted backups you exported yourself. If you did not
 keep a recovery seed, a forgotten PIN also means the data cannot be recovered.
+
+## Encly for Linux
+
+Encly 3.1.0 is also released for Linux, as a `.deb` and a Flatpak bundle from
+[GitHub Releases](https://github.com/pasichDev/Encly/releases/latest). The promises above hold there too: it
+collects nothing, and nobody (including the developer) receives any of your data. What differs from Android:
+
+- **No network, no accounts, no analytics.** There is no account, server, analytics, telemetry, crash reporting,
+  advertising, tracking or update check. The Flatpak is built without network access (no `--share=network`) and without
+  file-system access; the `.deb` is not sandboxed, but the app opens no network connection either. The only things that
+  leave the app are links that you tap (to your default browser or mail program, `https`, `http` and `mailto` only), and
+  the files you export yourself.
+- **Where your data lives.** In one folder that only your user can enter: `~/.local/share/encly` (or
+  `$XDG_DATA_HOME/encly`) for the `.deb`, `~/.var/app/io.github.pasichdev.Encly/data/encly` for the Flatpak, which is
+  a separate vault. In it: the encrypted database files (SQLCipher, AES-256), `vault_state_v3.bin` with the encrypted key
+  envelopes, the salt, the lockout counters and, if you set a duress passphrase, the second database for the decoy vault
+  (`vault_b.db`), a small settings file (onboarding done, auto-lock delay, language, window size and place), your
+  appearance and editor settings, a cache folder, and two local files that stop a second Encly from opening the same vault
+  (`.instance.lock` and `.instance.sock`; the socket is for your user only and never networked). Your passphrase and
+  your recovery words are never stored.
+- **A secret in your system keyring.** The device half of your vault key, 32 random bytes, is kept in the Secret
+  Service of your desktop (GNOME Keyring, KWallet or KeePassXC), as an item with the attributes
+  `application = com.pasich.encly`, `purpose = pin-factor-v1` and `vault` (the path of the data folder, so each vault
+  has its own). It is not in Encly's folder. It crosses the session bus
+  encrypted, and it never leaves your computer. A copy of the vault files alone cannot be opened without it, and a vault moved to another path, or copied
+  between the `.deb` and the Flatpak, finds no item: only its recovery phrase opens it.
+- **What Encly talks to on D-Bus.** Everything below happens on your own machine, over the local session or system bus,
+  and none of it reaches the network: the Secret Service (to store and read that secret); the screen saver and
+  `systemd-logind` signals (to lock the vault when your session locks or the computer sleeps); and the desktop portal's
+  file chooser (`xdg-desktop-portal`, to open and save the backup, import and export files that you pick).
+- **Clipboard.** Encly puts something on the clipboard only when you copy it yourself. It clears it after about a minute
+  if it is still Encly's text (it leaves alone anything you copied since), when the vault locks and when Encly quits. On
+  Linux the copy is marked with the `x-kde-passwordManagerHint` target, which Klipper and CopyQ honour; other clipboard
+  managers may keep a copy that Encly cannot reach.
+- **Exports and printing.** Backups, Markdown and PDF files go only where you choose, and are created readable by your user only when the file does not exist yet (a file that the save dialog or the portal already created keeps its permissions).
+  A Markdown or PDF file is not encrypted, and printing hands the note's text to the system's print spooler, which may
+  keep temporary copies; Encly warns you before each of these and asks for your passphrase again.
+- **The same as on Android:** the duress passphrase and the decoy vault (see "Duress PIN and decoy vault", with a
+  passphrase for the PIN), the encrypted backup file and its recovery phrase, the Markdown export, and the notes import
+  from other apps, which reads only the files you pick.
 
 ## Children
 

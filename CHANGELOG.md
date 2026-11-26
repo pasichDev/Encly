@@ -13,15 +13,21 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ### Added
 
-- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- Encly for Windows and macOS (an MSI and a DMG; in the repository, not published): the same vault, notes and windows as on Linux, unlocked with a passphrase, with the device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
 
 ## [3.1.0] - 2026-11-26
 
 versionCode 30100.
 
+### Added
+
+- Encly for Linux (x86-64), as a `.deb` and a Flatpak bundle on [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest), checked against the release's `SHA256SUMS` and its build provenance attestations. It has the notes, tags, tasks, encrypted backups and import of the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print. The device key sits in your system's keyring (GNOME Keyring, KWallet, KeePassXC), which has to be running, and the Flatpak has no network and no file-system permission ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- On Linux the vault opens with a passphrase instead of a PIN: 12 to 128 characters, not only digits, stretched with Argon2id (64 MiB) and mixed with the secret in your keyring. Encly can suggest five random words. The wipe passphrase and the duress passphrase follow the same rule, the lock screen is one field that never shows how long the passphrase is, and your recovery phrase unlocks the vault if the passphrase or the keyring's secret is lost. Backups and the recovery phrase are the same as on the phone, so a backup from a phone restores on Linux and back. A computer's vault is only as strong as its passphrase, so make it long; the details and limits are in [SECURITY.md](https://github.com/pasichDev/Encly/blob/main/SECURITY.md#desktop) ([#106](https://github.com/pasichDev/Encly/issues/106)).
+
 ### Security
 
+- After you unlock with the recovery phrase, the new PIN (or the choice to keep the old one) can no longer be skipped with a keyboard shortcut from a hardware keyboard.
 - Someone who only knows your duress PIN can no longer set the clock forward to make the next real unlock delete old notes from your trash early: the decoy vault now has its own trash timer. Turning the duress PIN off or setting a new one now checks that the old decoy database is really deleted and fails otherwise. Changing PINs inside the decoy vault is refused after the same pause as in the real vault. The vault no longer opens when the screen switches off and on while the PIN is still being checked.
 
 ### Changed

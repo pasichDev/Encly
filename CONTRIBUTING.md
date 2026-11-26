@@ -30,11 +30,11 @@ By taking part you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 3. Open the project in Android Studio or use `./gradlew`. Pick the `fdroidDebug` variant for
    day-to-day work.
 4. Encly is a Kotlin Multiplatform project; the module map is in
-   [README → Project structure](README.md#project-structure). Only Android is released. The
-   desktop app (Windows, macOS, Linux) is the `:desktopApp` module: `./gradlew :desktopApp:run`, and
-   `:desktopApp:desktopTest` for its headless tests (see [desktopApp/README.md](desktopApp/README.md)).
-   The iOS app is built from Xcode on a Mac ([iosApp/README.md](iosApp/README.md)). Neither is
-   published or supported yet.
+   [README → Project structure](README.md#project-structure). Android and Linux are released. The
+   desktop app (Linux, and Windows and macOS, which are not published) is the `:desktopApp` module:
+   `./gradlew :desktopApp:run`, and `:desktopApp:desktopTest` for its headless tests (see
+   [desktopApp/README.md](desktopApp/README.md)). The iOS app is built from Xcode on a Mac
+   ([iosApp/README.md](iosApp/README.md)); it is not published or supported yet.
 
 ## Before you open a pull request
 
@@ -258,8 +258,8 @@ upload this key instead of letting Google generate one).
    `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` for **every** locale folder
    (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`, `ar`);
    `StoreMetadataTest` checks they exist and fit. The iOS and desktop apps read their own notes from
-   `fastlane/metadata/{ios,desktop}/<locale>/changelogs/<versionCode>.txt`; they matter only once
-   those platforms ship.
+   `fastlane/metadata/{ios,desktop}/<locale>/changelogs/<versionCode>.txt`; the desktop notes
+   are those of the Linux release, the iOS ones matter once iOS ships.
    Add the version to `<releases>` in `desktopApp/packaging/flatpak/io.github.pasichdev.Encly.metainfo.xml`
    too; the Flatpak build in CI refuses a version that is not listed there.
 4. Test the release APK on a device. If a dependency or the app added or dropped a permission, the
@@ -274,7 +274,7 @@ upload this key instead of letting Google generate one).
    the Flatpak bundle) and installs them on a clean runner to check them. Then one job creates the
    GitHub Release as a draft, uploads the APKs, the R8 mapping files and the Linux packages, writes
    one `SHA256SUMS` over all of them (signed as `SHA256SUMS.asc` when the GPG secrets are set),
-   attests the build provenance of every file, writes the notes ("Verify what you download") and
+   attests the build provenance of every APK, mapping file and Linux package, writes the notes ("Verify what you download") and
    publishes the draft. The Linux files are unsigned and the Windows and macOS installers are not
    released from here. If the Linux build or its check fails, the Release is published with the
    Android files alone; add the Linux files afterwards by running the **Release** workflow by hand

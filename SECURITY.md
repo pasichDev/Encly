@@ -1,21 +1,29 @@
 # Security
 
 Encly is a local encrypted notes application. This document describes the security model of
-Encly 3.0 (vault format v3), its trust boundaries, and known limitations.
+Encly 3.1 (vault format v3), its trust boundaries, and known limitations.
+
+The secret that unlocks the vault depends on the platform. On Android and iOS it is a numeric **PIN**. On a computer
+(Linux in 3.1.0, as a `.deb` and a Flatpak bundle; Windows and macOS are in the repository but not published) it is a **passphrase**, stretched with Argon2id. Where this document says PIN, wipe PIN or duress PIN
+without naming a platform, it describes the phones; on a computer read passphrase, wipe passphrase and duress
+passphrase, with the rules and formats of [Desktop](#desktop). There is no biometric unlock on a computer.
 
 ## Key hierarchy
 
-Encly does **not** derive the SQLCipher passphrase directly from a PIN or seed.
+Encly does **not** derive the SQLCipher key directly from a PIN, a passphrase or a seed.
 
 - A fresh vault generates a random 256-bit **DEK**.
 - SQLCipher uses that DEK as a **raw key** (`x'<64 hex>'`): the DEK is already uniformly
-  random, so SQLCipher's own PBKDF2 over a passphrase is skipped. `cipher_memory_security` is
+  random, so SQLCipher's own PBKDF2 key derivation is skipped. `cipher_memory_security` is
   switched on (best effort) so SQLCipher wipes the memory it frees.
 - Unlock factors each protect their own AES-GCM envelope containing the same DEK.
 
 ```
 DEK (random 256 bit) ── SQLCipher raw key
 ├─ PIN slot       AES-GCM(kek_pin)       kek_pin = HKDF(PBKDF2(pin, salt, 600k) ‖ HMAC_keystore(salt ‖ pin))
+│                                        (Android, iOS; slot version 3)
+├─ passphrase slot AES-GCM(kek_pw)       kek_pw = HKDF(Argon2id(pw, salt, 64 MiB, 3) ‖ HMAC_secretstore(salt ‖ pw))
+│                                        (computers, in place of the PIN slot; slot version 4, see "Desktop")
 ├─ biometric slot AES-GCM(keystore key)  auth-per-use, BIOMETRIC_STRONG CryptoObject
 ├─ recovery slot  AES-GCM(kek_rec)       kek_rec = HKDF(SHA-256(normalized 12 words), "encly/recovery/kek/v3")
 ├─ backup-key slot AES-GCM(HKDF(DEK))    holds backupRoot = HKDF(SHA-256(words), "encly/backup/root/v1")
@@ -23,17 +31,25 @@ DEK (random 256 bit) ── SQLCipher raw key
 
 decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.db)
 └─ duress slot    AES-GCM(kek_duress)    kek_duress = HKDF(same PIN KDF run, "encly/pin/decoy/v3")
+                                         (computers: the same passphrase KDF run, "encly/secret/decoy/v4")
 ```
 
+A vault has one secret slot: the PIN slot on a phone, the passphrase slot on a computer. Both live in the entry
+`pin.slot`; only the bytes differ.
+
 ### PIN slot
+
+This section is about the PIN of Android and iOS.
 
 - The PIN is 6 to 12 digits, the user's choice. Shorter PINs are not offered: the lockout and the
   device-bound half below limit how many guesses anyone gets, and 6 digits is the shortest that
   stays safe under those limits. The length is not stored anywhere: the KDF below is the same for
   every length, so a PIN made when the PIN was fixed at 6 digits derives exactly the keys it did
   (the golden tests pin that), and an attacker who copies the slot learns nothing about the length.
-  **The lock screen does not auto-submit and does not show how long the PIN is**: the dots start
-  at six rings and grow with each digit typed, and an *Unlock* button sends what was typed. A
+  **The lock screen does not auto-submit and does not show how long the PIN is**: the row shows
+  one filled dot per digit typed and no empty rings (it is empty before the first digit, and keeps its height so the
+  layout does not move), the dots of a failed attempt stay in the error colour until the next digit is typed, and an
+  *Unlock* button sends what was typed. A
   stored length (to submit at it) would leak it, and would also make the wipe PIN and the duress
   PIN, which may have another length than the PIN, impossible to enter. The wipe PIN and the
   duress PIN follow the same 6 to 12 digit rule and the same KDF run, so nothing in the store or
@@ -76,58 +92,6 @@ decoy DEK (random 256 bit) ── SQLCipher raw key of the decoy vault (vault_b.
   `pin.password.notice`). No release reads or writes them. A vault file that has them opens with its PIN
   as before; the entries are ignored and dropped by the next PIN write or erase.
 
-#### Desktop
-
-The desktop build (in development) computes the same device-bound half, `HMAC-SHA256(deviceSecret, salt ‖ PIN)`,
-with a different key store. The `deviceSecret` is 32 random bytes from `SecureRandom`, created once per OS user
-(and once per PIN key slot) and kept **only** in the operating system's secret store of that user. Encly's own
-files never hold it unprotected, and it is never logged.
-
-| OS | Where the secret lives |
-|---|---|
-| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\pasichdev\Encly\` (the data folder, not the install folder `%LOCALAPPDATA%\Programs\Encly`, so an upgrade or uninstall of the app does not touch it; local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
-| macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
-| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1`. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the PIN cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure, not a lost key: the lock screen, the PIN setup in onboarding and the PIN change in Settings say "Unlock your system keyring and try again", and the PIN attempt that met it is not counted. Encly does not ask the keyring to unlock itself. |
-
-The second PIN key slot (used after a wipe-PIN unlock) keeps its own secret under the same names with a `-b` suffix.
-
-On Windows the DPAPI blob and the vault are in the local profile (`%LOCALAPPDATA%`), never the roaming one. In a domain,
-DPAPI master keys can be recovered with the domain's backup key, so domain administrators can obtain the secret of a
-domain user; that is part of the desktop trust boundary below. On macOS the data folder is excluded from Time Machine
-(the sticky `com.apple.metadata:com_apple_backup_excludeItem` attribute, set at every start).
-
-A secret that is missing or can no longer be read is the same state as a lost Keystore key above: the PIN no
-longer unlocks and the recovery phrase is needed. A store that is only locked or not running is a temporary
-failure, not a lost key.
-
-Difference from Android: this key is **software-bound to the OS user account, not hardware-bound**. It does not
-sit in a StrongBox or TEE, and the secret store releases it to any process running as the same user (macOS may
-ask the user on the first read by another program; DPAPI and the Secret Service do not). A copied vault slot is
-still useless on its own, since the secret never leaves the user's account, but malware running as the user, or
-anyone who has the user's OS login (a DPAPI master key follows the Windows password, the login keyring the
-session password), can obtain it and then guess PINs off the machine against PBKDF2 alone. Full-disk
-encryption and a strong OS login are part of the desktop trust boundary. Secure Enclave and TPM-bound keys are
-not used yet; they would need a signed app (Apple) or extra platform work.
-
-**The desktop process.** The app starts its JVM with `-XX:+DisableAttachMechanism`, so another process of the same user
-cannot attach to it (the Attach API: `jcmd`, a debugger, an agent) and run code inside the process that the macOS
-Keychain item trusts. The packaged runtime does not contain `java.instrument`, so an agent named in
-`JAVA_TOOL_OPTIONS` cannot be loaded either. What this does not stop: the environment variable can still add other JVM
-options, and code running as the same user can read the process in other ways, so it remains part of the desktop trust
-boundary above (it can act as Encly). The signed macOS app keeps the `disable-library-validation` entitlement: JNA,
-Skiko and the SQLCipher driver extract their native libraries at run time into a cache, where they are not signed
-with the team ID. Shipping them signed inside the `.app` (and loading them from there only) is the way to drop it; it
-is not done yet.
-
-**Quit, lock and clipboard.** Cmd+Q, the Dock's Quit and a logout on macOS end the app the same way the menu's Exit
-does (the editors are saved, the vault is locked and the clipboard is emptied of Encly's clip). A clip of Encly's that is
-still on the clipboard is also cleared when the vault locks, not only after 60 seconds. On Windows and macOS a copy is
-marked so that clipboard history, cloud sync and Universal Clipboard leave it out. On Linux it carries the
-`x-kde-passwordManagerHint` target, which Klipper and CopyQ honour; GPaste and other clipboard managers may still keep
-a copy that the wipe cannot reach. A plaintext export (Markdown, PDF) and a backup file that Encly creates on macOS or
-Linux are readable by their owner only (`0600`); a file that the save dialog had already created keeps its permissions.
-Once written, the file is outside Encly's control.
-
 #### iOS
 
 The device-bound half is computed by the **Secure Enclave** once per PIN guess, but not as an HMAC: the Enclave
@@ -164,12 +128,231 @@ PIN mixed in after the agreement gives a per-slot constant that one capture turn
 - Not verified on hardware by the test suite: the Enclave key itself (the Simulator cannot run it). The
   construction is tested with software P-256 keys against values computed independently with CryptoKit.
 
+### Desktop
+
+Linux is the desktop platform released in 3.1.0 (a `.deb` and a Flatpak bundle). Windows and macOS are in the
+repository and not published. On a computer the vault is unlocked with a **passphrase**, not a PIN, and the passphrase
+is stretched with **Argon2id** instead of PBKDF2. Android and iOS are unchanged: the PIN, PBKDF2-HMAC-SHA256 with
+600,000 iterations and slot version 3 stay byte for byte as described above.
+
+Everything else keeps its name and its place. The state file is still `vault_state_v3.bin` (vault format v3), and the
+entries are still `pin.slot`, `pin.wipe.slot`, `pin.decoy.slot`, `pin.key_slot`, `decoy.key`, `lockout.*` and
+`pin.strikes`, and the secret-store items keep their names (`pin-factor-v1`). Only the bytes inside the
+three secret-derived slots are different: they are **slot version 4**. The recovery slot, the backup-key slot and
+`decoy.key` are the same as on a phone.
+
+#### The passphrase
+
+- **To set** (the passphrase, the wipe passphrase and the duress passphrase): text of 12 to 128 code points after
+  normalisation to Unicode NFC (an emoji counts once), not only digits (digits of any script), with at least 5 distinct
+  code points. Text with an unpaired surrogate is refused. NFC means that the same text typed with precomposed or
+  decomposed letters, which keyboards and systems differ on, gives the same key.
+- **To unlock:** anything from 1 to 256 UTF-16 units is accepted and checked, so tightening the rule for setting a
+  passphrase can never lock anyone out. What is outside that range is a wrong attempt, counted like any other.
+- **Suggest a passphrase** is offered wherever a new passphrase is chosen (onboarding, the new passphrase that a recovery-phrase unlock asks for, *Change passphrase*, the wipe passphrase and the duress passphrase). It gives five words drawn independently and uniformly from the
+  2048-word BIP39 English list by the system's random generator (rejection sampling, so no word is likelier than
+  another): 55 bits. The words are not the recovery phrase and are shown as such.
+- **The lock screen** is one masked field and an *Unlock* button (Enter also sends it). There is no auto-submit and no
+  length is stored or shown, so the same field takes the passphrase, the wipe passphrase and the duress passphrase and
+  nothing in the store or on screen tells which of the three it is. An eye shows what is typed, a hint shows while Caps
+  Lock is on, and what is typed is emptied from the field when it is sent. A masked field refuses copy and cut; when the
+  text is shown, the copy and cut keys are swallowed too, and the field has no context menu, so the passphrase does not
+  reach a clipboard that Encly cannot clear.
+- **One KDF run, three slots.** Exactly as for the PIN: every attempt is counted before the derivation, runs Argon2id
+  and the device-secret HMAC once, derives the three KEKs and always tries all three AES-GCM opens. The wipe passphrase
+  and the duress passphrase follow the same rule as the passphrase and are refused when they equal another one (a
+  refusal costs a miss, as for the PIN).
+- **A stretch that cannot run** (the 64 MiB the derivation needs could not be allocated) is not a guess: the attempt is
+  given back, nothing is counted and the lock screen reports a failure of the key storage, as when the keyring does not
+  answer. Trying again may work.
+
+#### Derivation and slot format
+
+```
+pw   = UTF-8(NFC(passphrase))
+sw   = Argon2id(pw, salt, m = 64 MiB, t = 3, p = 1) → 32 bytes          (version 1.3, RFC 9106)
+hw   = HMAC-SHA256(deviceSecret, "encly/secret/hw/v4" ‖ salt ‖ pw)
+ikm  = sw ‖ hw
+kek  = HKDF-SHA256(ikm, salt, "encly/secret/kek/v4")                    (the passphrase slot)
+wkek = HKDF-SHA256(ikm, salt, "encly/secret/wipe/v4")                   (the wipe slot)
+dkek = HKDF-SHA256(ikm, salt, "encly/secret/decoy/v4")                  (the duress slot)
+```
+
+Argon2id comes from Bouncy Castle (`bcprov-jdk18on` 1.86, MIT licence), which is a dependency of the desktop build only
+and is not on the Android or iOS classpath. Nothing of the v3 handling is reused: the v3 code truncates each character to
+a byte, which would make every non-ASCII passphrase weaker than it looks.
+
+The passphrase slot (`pin.slot`) is 85 bytes:
+
+| Offset | Size | Field |
+|---:|---:|---|
+| 0 | 1 | version = `0x04` |
+| 1 | 1 | KDF id: `0x02` = Argon2id (`0x01` = PBKDF2 is set aside for the PIN and never written in version 4) |
+| 2 | 1 | factor id: `0x01` = HMAC-SHA256 under a key of the OS secret store |
+| 3 | 4 | Argon2 memory in KiB, unsigned big-endian |
+| 7 | 1 | Argon2 passes |
+| 8 | 1 | Argon2 lanes |
+| 9 | 16 | salt |
+| 25 | 12 | AES-GCM IV |
+| 37 | 48 | AES-256-GCM(kek, IV)(DEK) with its 16-byte tag |
+
+The AAD is `"encly/secret/slot/v4" ‖ bytes[0..25)`, so the version, the ids, the costs and the salt are all authenticated.
+The wipe slot (`pin.wipe.slot`) and the duress slot (`pin.decoy.slot`) are `0x04 ‖ IV(12) ‖ ciphertext(48)`, 61 bytes as
+on a phone, with the AAD `"encly/secret/wipe-slot/v4"` or `"encly/secret/decoy-slot/v4"` followed by the passphrase
+slot's first 25 bytes. Without a wipe or duress passphrase they hold random bytes whose first byte is `0x04`. The three
+entries have the same sizes either way, and the wipe and the duress slot have no salt of their own. A new slot is written with m = 65,536 KiB, t = 3,
+p = 1.
+
+A slot's header is attacker-controlled input and is checked before anything is allocated or stretched: version 4, KDF id
+2, factor id 1, memory from 64 MiB to 1 GiB, 3 to 10 passes, exactly 1 lane. A slot that is not accepted does not exist
+for the attempt: it is no counted guess, and nothing is derived or sent to the secret store. Under the PIN it is the
+other way round, exactly as before: a `pin.slot` that cannot be read still costs an attempt (the policy says which, in
+`UnlockSecretPolicy.chargesForUnusableSlot`). A passphrase change keeps the slot's salt, so a wipe or duress passphrase
+set earlier keeps working, but only while the kept slot has the same format and costs as the one written now; otherwise
+both are turned off, like after a reset device secret, and Settings says so.
+
+**A version 3 slot on a computer.** Only development builds ever wrote one on a computer, and there is no migration. Such a
+slot is not usable: with a recovery phrase the user unlocks by the phrase and must set a passphrase (which writes a
+version 4 slot); without one, the vault goes to the damaged-vault screen. Conversely, the PIN policy of a phone reads only version 3 slots.
+
+**Backups.** The backup key and the recovery KEK come from the 12 recovery words alone (`SHA-256` of the words, then
+HKDF): the unlock secret takes no part. A backup made on a phone restores on a computer, and the reverse. The passphrase
+is not a backup passphrase either: backups still have none (see [Encrypted backups](#encrypted-backups)).
+
+#### The device secret
+
+The device-bound half is `hw` above: an HMAC under a `deviceSecret` of 32 random bytes from `SecureRandom`, created once
+per OS user (and once per key slot) and kept **only** in the operating system's secret store of that user. Encly's own
+files never hold it unprotected, and it is never logged. It is a mandatory second factor: without it the passphrase alone
+opens nothing, and a copy of the vault files alone cannot be attacked.
+
+| OS | Where the secret lives |
+|---|---|
+| Windows | Encrypted with DPAPI (`CryptProtectData`, current-user scope, no UI, Encly-specific entropy). The encrypted blob is a file in `%LOCALAPPDATA%\pasichdev\Encly\` (the data folder, not the install folder `%LOCALAPPDATA%\Programs\Encly`, so an upgrade or uninstall of the app does not touch it; local to the machine, not the roaming profile that is copied to profile servers); only the same Windows user can decrypt it. |
+| macOS | A generic password in the user's login Keychain (service `com.pasich.encly`, account `pin-factor-v1`), through Security.framework. |
+| Linux | An item of the default collection of the freedesktop Secret Service (GNOME Keyring, KWallet, KeePassXC), attributes `application = com.pasich.encly`, `purpose = pin-factor-v1` (`pin-factor-v1-b` for the second key slot) and `vault` = the absolute path of the data folder, so the secret is per OS user, per key slot and per data directory. The secret crosses the session bus encrypted (`dh-ietf1024-sha256-aes128-cbc-pkcs7`: Diffie-Hellman in the 1024-bit Oakley group 2, an AES-128 key from HKDF-SHA256, AES-CBC), never as `plain`; a service that cannot do the exchange is reported as unavailable. Without a running Secret Service (a headless session) the passphrase cannot be used; there is no fallback to a file. A locked or missing default keyring is a temporary failure, not a lost key: the lock screen, the passphrase setup in onboarding and the passphrase change in Settings say "Unlock your system keyring and try again", and the attempt that met it is not counted. Encly calls `Unlock` on the collection and accepts only an answer that needs no prompt: when the service wants to ask the user (a prompt), Encly reports the keyring as unavailable and shows no prompt of its own. |
+
+The second key slot (used after a wipe-passphrase unlock) keeps its own secret under the same names with a `-b` suffix.
+
+On Windows the DPAPI blob and the vault are in the local profile (`%LOCALAPPDATA%`), never the roaming one. In a domain,
+DPAPI master keys can be recovered with the domain's backup key, so domain administrators can obtain the secret of a
+domain user; that is part of the desktop trust boundary below. On macOS the data folder is excluded from Time Machine
+(the sticky `com.apple.metadata:com_apple_backup_excludeItem` attribute, set at every start).
+
+A secret that is missing or can no longer be read (a reset or replaced keyring, a new OS account, a profile restored
+elsewhere) is the same state as a lost Keystore key above: the passphrase no longer unlocks, the lock screen says so, and
+the recovery phrase is needed; after it a new passphrase is set (and a new device secret is made). Without a recovery
+phrase the vault cannot be opened. A store that is only locked or not running is a temporary failure, not a lost key.
+
+Because the Linux secret is tied to the data directory, a vault that is moved to another path, opened with a changed
+`XDG_DATA_HOME`, or copied between the `.deb` and the Flatpak (their data folders differ) finds no item and behaves like
+a lost key: only the recovery phrase opens it, and a new passphrase makes a new secret for the new place.
+
+**Erase all data** deletes the device secret from the store, but the deletion never reports a failure: with the keyring
+locked or not running, the erase succeeds and the item stays, without telling the user. It is only the device half, which
+is useless without the deleted vault, but to remove it, delete the item whose `application` attribute is
+`com.pasich.encly` (and `vault` the old data folder) in your keyring program (Passwords and Keys, KWalletManager,
+KeePassXC).
+
+This key is **software-bound to the OS user account, not hardware-bound**. It does not sit in a StrongBox, a TEE or a
+Secure Enclave, and the secret store releases it to any process running as the same user (macOS may ask the user on the
+first read by another program; DPAPI and the Secret Service do not). Secure Enclave, TPM and FIDO2 keys are not used: the
+slot header has a factor id so that one could be added without a new format, and only id 1 is written or accepted.
+
+#### What the passphrase protects, and what it does not
+
+On a computer **the vault is as strong as the passphrase.** What Argon2id adds is cost per guess: against one RTX 4090,
+public benchmarks put PBKDF2-HMAC-SHA256 at 600,000 iterations at about 14,800 guesses per second (derived from hashcat
+6.2.6, 8.87 MH/s at 999 iterations) and Argon2id with 64 MiB and 3 passes at about 1,700 (hashcat 7.0.0 release notes),
+roughly nine times fewer. That is a multiplier on the cost of each guess and no more: it does not make a weak passphrase
+safe, and a PIN-sized secret would not be saved by it. On an Apple M2 one derivation takes about 0.17 s; slower computers
+were not measured. A suggested passphrase of five words has 55 bits.
+
+What the passphrase changes is the attacker who gets the vault files **and** the device secret once, while the vault is
+locked: an infostealer, a stolen or seized computer whose OS login is known, a backup of the home directory that includes
+the keyring. That attacker has no lockout and no app to go through, and has to guess the passphrase offline against
+Argon2id: with a long passphrase that is out of reach, with a short or common one it is not. With only the vault files, or
+only the keyring, nothing can be tested.
+
+What no passphrase stops:
+
+- malware running as the user while the vault is open (it can read the open database and the process's memory, and act as
+  Encly), or at any time (it can read the secret store and the files);
+- a keylogger. The Flatpak and the `.deb` both run the bundled Java runtime through X11 (XWayland on a Wayland session),
+  where any client of the session can read keystrokes, so the sandbox does not help against one;
+- screen capture: Linux has no call to exclude a window from it;
+- a screen locker that the session does not report: the app sees logind's `Lock`, `PrepareForSleep` and `LockedHint` and
+  the `ActiveChanged` of the four screen savers it knows (freedesktop, GNOME, Cinnamon, MATE). A locker that reports to
+  none of them (xscreensaver, a bare i3lock or slock without xss-lock) is not detected, and then only the focus and idle
+  locks apply;
+- a replaced Encly binary or a replaced runtime;
+- swap and hibernation images, which can hold the passphrase or the open vault's memory, unless the disk is encrypted;
+- root, and anyone who has the OS login together with the files.
+
+**Lockout.** The lockout (see the PIN slot above) and the strikes work as on a phone, on the OS uptime and the boot id
+instead of `elapsedRealtime`. On a computer they only throttle guessing through the app's own lock screen. An attacker
+who holds the files never runs the app, so the lockout is not what protects the vault there: the passphrase is.
+
+**Wipe passphrase and duress passphrase** work as the wipe PIN and the duress PIN below, with the same single derivation
+and three slot checks, the version 4 slots and the rule above. The wipe passphrase's crypto-erase is weaker than on
+Android. It deletes the device secret and makes a new one under the other key slot, but a secret store gives no
+guarantee that a deleted item is gone, and an attacker who copied the device secret before the wipe still holds it. With
+a copy of the old vault files and of that secret, the old passphrase still opens the old copies. The old files are
+unlinked, not overwritten, as on Android.
+
+#### Memory
+
+- The typed passphrase passes through the text field's state and the platform's input-method buffers. They cannot be
+  wiped the way the PIN's `CharArray` is. Encly keeps the text only while the form is up, never in saved state, and
+  hands a `CharArray` that it wipes to the check.
+- Text with a character from U+0300 up (a combining mark, Cyrillic, Greek, CJK, an emoji) goes through the JDK's
+  normaliser, which works on immutable `String`s that stay in memory until the garbage collector takes them. A passphrase
+  of characters below U+0300 (ASCII and Western European letters) is already in NFC and never becomes a `String` here.
+- Every array that Encly itself makes from the passphrase is wiped before the call returns, and Argon2's memory matrix is
+  wiped after each run (it uses a block pool of its own). What is not reachable is Bouncy Castle's working blocks and its
+  Blake2b state, which stay for the garbage collector, as do the JCA `Mac`'s internal copies and the native calls'.
+
+#### The desktop process
+
+The app starts its JVM with `-XX:+DisableAttachMechanism`, so another process of the same user
+cannot attach to it (the Attach API: `jcmd`, a debugger, an agent) and run code inside the process that the macOS
+Keychain item trusts. The packaged runtime does not contain `java.instrument`, so an agent named in
+`JAVA_TOOL_OPTIONS` cannot be loaded either. What this does not stop: the environment variable can still add other JVM
+options, and code running as the same user can read the process in other ways, so it remains part of the desktop trust
+boundary above (it can act as Encly). On macOS the app's code signing (not published) uses the `disable-library-validation` entitlement: JNA,
+Skiko and the SQLCipher driver extract their native libraries at run time into a cache, where they are not signed
+with the team ID. Shipping them signed inside the `.app` (and loading them from there only) would let it be dropped;
+the code does not do that.
+
+**Quit, lock and clipboard.** Cmd+Q, the Dock's Quit and a logout on macOS end the app the same way the menu's Exit
+does (the editors are saved, the vault is locked and the clipboard is emptied of Encly's clip). A clip of Encly's that is
+still on the clipboard is also cleared when the vault locks, not only after 60 seconds. On Windows and macOS a copy is
+marked so that clipboard history, cloud sync and Universal Clipboard leave it out. On Linux it carries the
+`x-kde-passwordManagerHint` target, which Klipper and CopyQ honour; GPaste and other clipboard managers may still keep
+a copy that the wipe cannot reach. A plaintext export (Markdown, PDF) and a backup file that Encly creates on macOS or
+Linux are readable by their owner only (`0600`); a file that the save dialog had already created keeps its permissions.
+Once written, the file is outside Encly's control.
+
+**Locking on Linux.** The vault locks on every lock that the session reports (logind's `Lock`, `PrepareForSleep` and
+`LockedHint`, and the `ActiveChanged` of the freedesktop, GNOME, Cinnamon and MATE screen savers), including every later one after a locker that
+never says it has ended (swaylock, or i3lock through xss-lock). logind is asked for the state rather than trusted to
+report its end, so a later lock is never swallowed as a repeat of one that is long over.
+
+**A forced new secret.** While an unlock by the recovery phrase still owes a new passphrase (or the choice to keep the old
+one), the app cannot be taken past that screen from another window, and menu and keyboard commands other than Lock are
+refused, so the new passphrase cannot be skipped by opening a second window.
+
 ### Wipe PIN
 
 An optional second PIN (Settings → Security → Wipe PIN; set, replace or turn off, each after
 the real PIN). Typed on the lock screen, it erases the vault without a visible sign and opens
 Encly as an empty vault, not onboarding. It is meant for coercion on the spot ("open the app
 and show me"), not against a forensic examination.
+
+On a computer this is the **wipe passphrase**: the same design with the passphrase rule instead of 6 to 12 digits,
+Argon2id instead of PBKDF2, the slot version 4 formats and the `encly/secret/*/v4` HKDF infos (see
+[Desktop](#desktop)). Its crypto-erase is weaker there, because the device secret can be copied before the wipe. The
+rest of this section describes the PIN.
 
 - **Recognising it without showing it is set.** Every vault with a PIN slot has a
   `pin.wipe.slot` of the same length: `version ‖ IV ‖ AES-GCM_wkek(random marker)`, with
@@ -264,6 +447,10 @@ vault with its own random DEK and its own SQLCipher database (`vault_b.db`, with
 `-shm`), empty the first time. Its notes, tags and tasks persist across re-locks and restarts.
 The real vault stays closed and is not changed. Unlike the wipe PIN, it erases nothing. It is
 meant for "open the app and show me", not against a forensic examination.
+
+On a computer this is the **duress passphrase**: the same design with the passphrase rule instead of 6 to 12 digits,
+Argon2id instead of PBKDF2, and the slot version 4 formats and `encly/secret/decoy/v4` info (see
+[Desktop](#desktop)); `decoy.key` is unchanged. The rest of this section describes the PIN.
 
 - **Key material.** The duress slot (`pin.decoy.slot`) is
   `version ‖ IV ‖ AES-GCM_dkek(decoy DEK)`, `dkek = HKDF(sw ‖ hw, salt, info =
@@ -417,8 +604,13 @@ Onboarding offers an optional BIP39 recovery slot.
   slot is missing, the key is lost or a lockout runs is a new PIN required before going on. *Keep* changes nothing in the store and
   ends the session's permission to reset the PIN without the current one; the recovery phrase is
   the proof of ownership either way, and the lockout is left alone (a new PIN ends it).
+- **On a computer** the same applies with the passphrase. A new passphrase is also required when the vault's slot is not
+  a usable version 4 slot (a version 3 slot from a development build, see [Desktop](#desktop)), and the app cannot be
+  taken past that screen from another window or by a menu or keyboard command other than Lock. The recovery KEK takes
+  only the 12 words: the passphrase and the device secret play no part in it, so the phrase is also what opens the vault
+  after the OS secret store was reset.
 
-Choosing "PIN only, no backups" during onboarding intentionally creates no recovery slot. One
+Choosing "PIN only, no backups" during onboarding (on a computer, "passphrase only, no backups") intentionally creates no recovery slot. One
 can be added later from an unlocked session (Settings → Security, or Settings → Backup before
 the first export, after re-entering the PIN): the live DEK is wrapped under a newly generated
 seed that the user writes down and confirms.
@@ -490,7 +682,9 @@ fileKey    = HKDF-SHA256(ikm = backupRoot, salt = <32 random bytes per file>, in
   asking for the words, and the same 12 words re-derive `backupRoot` on a fresh install.
 - A fast KDF is enough: a BIP39 phrase carries 128 bits of entropy, so brute force is
   infeasible regardless of the KDF cost.
-- **No backup passphrase.** A user-chosen passphrase would be the weakest link of a file that can
+- **No backup passphrase.** (This is a password for the backup file; the passphrase that unlocks the vault on a
+  computer is not one, and a backup is sealed with the recovery words alone on every platform, so a backup made on a phone
+  restores on a computer and the reverse.) A user-chosen passphrase would be the weakest link of a file that can
   end up anywhere (cloud drives, e-mail) and could be attacked offline forever; a PBKDF2/Argon2
   work factor only slows that down linearly. It would also be a second secret to lose. Instead,
   exporting from a vault without a recovery seed first creates one: Encly shows 12 new words,
@@ -665,7 +859,8 @@ generic Markdown/TXT (Obsidian, Markor).
 
 A phone left unlocked for a moment must not be able to weaken the protection of the vault. These
 changes on Settings → Security ask for the PIN first (or a Class 3 biometric confirmation when
-biometric unlock is on), through the same re-authentication as export and import:
+biometric unlock is on), through the same re-authentication as export and import (on a computer it asks for the
+passphrase, and there is no biometric option):
 
 - lengthening the auto-lock delay;
 - turning strict keyboard privacy off;
@@ -719,7 +914,8 @@ the recovery phrase and the same re-authentication.
 - An unlock whose screen is gone by the time the key derivation finishes (or that finishes in
   the background) closes the vault again. A re-lock during the unlock animation cancels it.
 - The PIN typed on the lock screen is kept in a `CharArray` that is wiped after the attempt
-  (never a `String`); unlock DEK copies are wiped after use. While open, the database accepts a
+  (never a `String`; a passphrase typed on a computer passes through a text field and cannot be handled that way, see
+  [Desktop](#desktop)); unlock DEK copies are wiped after use. While open, the database accepts a
   second unlock call only with the same key, compared in constant time.
 - `FLAG_SECURE` is applied before the first Activity frame and is on by default. Since 3.0 the
   user can allow screenshots until the app next locks (Settings → Security, after the PIN or a
@@ -856,14 +1052,15 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
 - casual physical access after Encly has re-locked;
 - lock-screen / notification leakage (the app posts no notifications);
 - screenshots, screen recording, and recent-app snapshots through `FLAG_SECURE`;
-- bypassing biometric UI without successfully using the auth-bound Keystore Cipher.
+- bypassing biometric UI without successfully using the auth-bound Keystore Cipher;
+- on a computer: a copy of the vault files taken without the user's OS secret store (see [Desktop](#desktop)).
 
 ### Important limitations
 
 - A rooted or fully compromised OS can observe process memory, UI input, or execute code
   in the app's security context. Encly cannot provide a trustworthy boundary against a
   hostile kernel / system image.
-- A numeric PIN has finite entropy (10^6 to 10^12 values, by its length). Off the device, a copied PIN slot is useless
+- On phones, a numeric PIN has finite entropy (10^6 to 10^12 values, by its length). Off the device, a copied PIN slot is useless
   without the Keystore factor. **On** a rooted device that is unlocked, an attacker can drive
   the Keystore key from the app's own security context: guesses then run at the secure
   hardware's HMAC speed (StrongBox is much slower than the TEE), the PBKDF2 half can be
@@ -875,7 +1072,14 @@ The app requests no `INTERNET` permission and performs no analytics or sync.
   keystore, not by PBKDF2 (which adds only about 19 bits, the size of a 6-digit PIN): a longer PIN (8 to 12
   digits are supported) is the better choice, most of all on a device without a hardware-backed
   Keystore.
-- The lockout is enforced by the app, not by the secure hardware.
+- The lockout is enforced by the app, not by the secure hardware. On a computer it only throttles guessing through the
+  lock screen: someone who holds the files never runs the app.
+- On a computer the vault is as strong as the passphrase. The device secret is software-bound to the OS user account, so
+  anyone who gets the files and the secret once (an infostealer, a seized computer whose OS login is known, a
+  home-directory backup that includes the keyring) can guess the passphrase offline, and Argon2id only makes each
+  guess about nine times dearer than PBKDF2 would. Malware in the user's session, a keylogger (the bundled runtime draws
+  through X11, where any client of the session can read keystrokes), screen capture, a replaced binary, swap and
+  hibernation images and root are not stopped by any passphrase. See [Desktop](#desktop).
 - The wipe PIN (see "Wipe PIN") and the duress PIN (see "Duress PIN") defend against being
   forced to unlock on the spot, not against a forensic examination or a rooted phone.
 - The recovery seed restores the local vault (recovery slot) and opens encrypted backups. On a
@@ -906,16 +1110,23 @@ published in the README. Android refuses to update an install with an APK signed
 certificate, so a mismatch shows up as a failed update rather than a silent replacement; never
 uninstall to "fix" it without an exported backup, because uninstalling deletes the vault.
 
+The Linux packages (the `.deb` and the Flatpak bundle, on GitHub Releases only) are **not code-signed**. They are
+vouched for by `SHA256SUMS`, which is GPG-signed as `SHA256SUMS.asc` only when the maintainer's key is configured for the
+release, and by a build provenance attestation on every package file (the two checksum files themselves are not
+attested). To verify: `sha256sum -c --ignore-missing SHA256SUMS`, and `gh attestation verify <file> --repo
+pasichDev/Encly` (see the [README](README.md#verify-a-release)). A package that does not match is not an official build.
+
 ## Supported versions
 
 | Version | Storage format | Security fixes |
 |---|---|---|
+| 3.1.x | v3 vault, as 3.0.x; on a computer (Linux) the secret slot is version 4: a passphrase stretched with Argon2id | ✅ yes |
 | 3.0.x | v3 vault (random DEK in PIN / biometric / recovery slots; Keystore-bound PIN KEK; slot file) | ✅ yes |
 | 2.x | v3 vault, the same format | ❌ no; update in place to 3.0 (nothing to migrate) |
 | 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, uninstall and install 3.0 |
 
 Reports should include the exact app version (About screen), where it was installed from, and
-the Android version.
+the Android version or the Linux distribution and package (`.deb` or Flatpak).
 
 ## Reporting a vulnerability
 
@@ -925,7 +1136,8 @@ exploit details.
 - Preferred: [GitHub private vulnerability reporting](https://github.com/pasichDev/Encly/security/advisories/new).
 - Email: **pasichdev@outlook.com** (subject starting with `[Encly security]`).
 
-Include the app version, Android version and device, the steps to reproduce, and the impact you
-expect. **Never send real seed words, PINs or note content**; a test vault is enough.
+Include the app version, the Android version and device (or the Linux distribution, desktop environment and package
+type, `.deb` or Flatpak), the steps to reproduce, and the impact you
+expect. **Never send real seed words, PINs, passphrases or note content**; a test vault is enough.
 Please allow reasonable time for a fix before public disclosure. Reporters are credited in the
 release notes unless they prefer otherwise.

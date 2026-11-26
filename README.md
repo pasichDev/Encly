@@ -60,17 +60,18 @@ the `play` build has no in-app donation link, by Google Play policy.
 ## Features
 
 - 🔒 **Encrypted at rest** — Room on SQLCipher with a random 256-bit database key.
-- 🔐 **Mandatory lock** — a PIN of 6 to 12 digits bound to the phone's Android Keystore, plus optional
-  Class 3 biometric unlock.
+- 🔐 **Mandatory lock** — on Android, a PIN of 6 to 12 digits bound to the phone's Android Keystore, plus optional
+  Class 3 biometric unlock. On Linux, a passphrase of 12 to 128 characters, stretched with Argon2id and mixed with a
+  secret kept in the system keyring.
 - ⏱️ **Auto-lock** — the database closes and its key is wiped after you leave the app
   (immediately up to 30 minutes, 15 s by default) and at once when the screen turns off.
-- 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN.
+- 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN or passphrase.
 - 💾 **Encrypted backups** — one file, sealed with the recovery phrase, saved wherever you choose.
 - 📝 **Markdown export** — one note as `.md`, or everything as a `.zip`, after a warning that the
-  file is not encrypted and a PIN check. Saved through the system save dialog, never shared.
+  file is not encrypted and a PIN (or passphrase) check. Saved through the system save dialog, never shared.
 - 📌 **Organize** — pin, archive and colour notes, with configurable swipe actions on the cards.
-- 🚨 **Wipe PIN and duress PIN** — optional PINs that erase the vault or open a decoy one, for
-  when you are forced to unlock.
+- 🚨 **Wipe PIN and duress PIN** — optional PINs (on Linux, passphrases) that erase the vault or open a decoy
+  one, for when you are forced to unlock.
 - 🧩 **Block editor** — text, headings, quotes, checklists, nested lists, tables, code blocks,
   links, separators; select across blocks, find in note, and a toolbar you arrange yourself.
 - 🏷️ **Tags & tasks** — local organization: several tags per note, tasks with priorities and
@@ -132,7 +133,7 @@ Download from [GitHub Releases](https://github.com/pasichDev/Encly/releases/late
 file (below) before installing.
 
 ```bash
-sudo apt install ./encly_*.deb             # Debian, Ubuntu and derivatives
+sudo apt install ./encly_*.deb             # Debian 12+, Ubuntu 22.04+ and derivatives
 flatpak install --user ./encly-*.flatpak   # any distribution with Flatpak
 ```
 
@@ -165,6 +166,14 @@ Any other certificate means the APK is not an official Encly build.
 
 The release workflow refuses to publish an APK that is not signed with this certificate.
 
+**Linux.** The `.deb` and the Flatpak bundle are listed in the same `SHA256SUMS`, so
+`sha256sum -c --ignore-missing SHA256SUMS` checks them too. They are **not code-signed**: what vouches for them is
+the checksum and a build provenance attestation on every package file of the release, which you can check with
+
+```bash
+gh attestation verify <file> --repo pasichDev/Encly
+```
+
 ## Upgrading
 
 - **From 2.x:** update in place. The vault format is v3, as it has been since 2.0, and 3.0
@@ -184,7 +193,11 @@ SQLCipher key directly from a seed or PIN:
 3. The mandatory PIN is processed with **PBKDF2-HMAC-SHA256 (600k)** and a random salt,
    and mixed (HKDF) with an HMAC from a non-exportable **Android Keystore** key (StrongBox
    when the phone has one), so PIN guesses can only run on this device. The resulting KEK
-   wraps the DEK using **AES-256-GCM**. Encly does not store a PIN hash.
+   wraps the DEK using **AES-256-GCM**. Encly does not store a PIN hash. On Linux the secret is a passphrase
+   instead: it is stretched with **Argon2id** (64 MiB, 3 passes) and mixed the same way with a device secret
+   that lives in the system keyring (the Secret Service), which is bound to your user account, not to
+   hardware. There the vault is as strong as the passphrase, so make it long; details and limits in
+   [SECURITY.md](SECURITY.md#desktop).
 4. If biometrics are enabled, the same DEK gets a second AES-GCM slot protected by an
    auth-per-use AndroidKeyStore key. Unwrapping requires
    `BiometricPrompt.CryptoObject` with `BIOMETRIC_STRONG`.
@@ -196,7 +209,8 @@ SQLCipher key directly from a seed or PIN:
    DEK copy is zeroized. The next entry must unwrap the DEK again.
 
 Skipping the recovery phrase leaves the vault with **no recovery seed** and no backups.
-Losing the PIN in that case makes the encrypted database unrecoverable.
+Losing the PIN (or, on Linux, the passphrase or the keyring's secret) in that case makes the encrypted
+database unrecoverable.
 
 **Erase all data** (Settings → Security, in the danger zone: hold the button for 5 s, confirm,
 then enter the PIN or use the fingerprint) deletes the database, every key slot and Encly's
@@ -218,7 +232,8 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and t
 ## Tech stack
 
 Kotlin Multiplatform · Compose Multiplatform · Material 3 · Metro · Room (KMP) · SQLCipher
-through the Sealite driver · Coroutines · kotlinx.serialization · BIP39 (own implementation)
+through the Sealite driver · Coroutines · kotlinx.serialization · BIP39 (own implementation) · Argon2id on the
+desktop (Bouncy Castle)
 
 Clean architecture: `presentation` → `domain` → `data`, with `core/security`
 coordinating the key vault.
@@ -233,11 +248,11 @@ is a thin host around it. Details in [docs/architecture.md](docs/architecture.md
 | `app` | The Android app and its release flavors (`fdroid`, `play`): `MainActivity`, the Metro graph, Keystore and biometric adapters. |
 | `shared` | Domain, data, screens, navigation and ViewModels, in common code; the desktop and iOS hosts' parts live here too. |
 | `editor` | The block editor, independent of the app. |
-| `core:common`, `core:crypto`, `core:security` | Shared helpers; AES-GCM, HKDF, PBKDF2 and BIP39; the vault, PIN slots, lockout, auto-lock and the backup format. |
+| `core:common`, `core:crypto`, `core:security` | Shared helpers; AES-GCM, HKDF, PBKDF2 and BIP39; the vault, the unlock-secret policy and its PIN and passphrase slots, lockout, auto-lock and the backup format. |
 | `core:database` | Room and the encrypted database (SQLCipher through Sealite), with the exported schemas. |
-| `core:keystore` | The desktop's OS secret store for the PIN's device key. |
+| `core:keystore` | The desktop's OS secret store for the vault's device key, and the desktop's unlock secret (a passphrase stretched with Argon2id). |
 | `core:resources` | Every user-visible string (`src/commonMain/strings/values*/`) and the translations. |
-| `desktopApp`, `iosApp` | The desktop (Windows, macOS, Linux) and iOS hosts. Not released. |
+| `desktopApp`, `iosApp` | The desktop (Linux released; Windows and macOS not published) and iOS (not released) hosts. |
 | `build-logic` | Gradle convention plugins. |
 
 ## Build
@@ -285,7 +300,7 @@ links, no baseline profile) and `play`.
 Outputs: `app/build/outputs/apk/<flavor>/<buildType>/`, and the bundle in
 `app/build/outputs/bundle/playRelease/`. Releasing: [CONTRIBUTING.md → Releasing](CONTRIBUTING.md#releasing).
 
-The desktop and iOS targets build too, but only Android is released: `./gradlew :desktopApp:run`
+The desktop and iOS targets build too; only Android and Linux are released: `./gradlew :desktopApp:run`
 starts the desktop app ([desktopApp/README.md](desktopApp/README.md)), and the iOS app is built
 from Xcode on a Mac ([iosApp/README.md](iosApp/README.md)).
 
@@ -331,7 +346,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
 - [iOS app](iosApp/README.md) (not released yet)
-- [Desktop app](desktopApp/README.md) (Windows, macOS, Linux: run, package, data location, security notes; not released yet)
+- [Desktop app](desktopApp/README.md) (Linux released; Windows and macOS not published: run, package, data location, security notes)
 
 ## Contributing
 
