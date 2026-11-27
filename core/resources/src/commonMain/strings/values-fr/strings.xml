@@ -62,6 +62,7 @@
     <string name="selection_close">Effacer la sélection</string>
     <string name="selection_copy">Copier</string>
     <string name="selection_cut">Couper</string>
+    <string name="selection_paste">Coller</string>
     <string name="selection_delete">Supprimer les blocs sélectionnés</string>
     <string name="select_all">Tout sélectionner</string>
     <string name="selection_copied">Copié</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Verrouiller la modification</string>
 
     <string name="empty_notes">Pas encore de notes</string>
-    <string name="empty_notes_desc">Sélectionnez Nouvelle note pour écrire la première.</string>
+    <string name="empty_notes_desc">Touchez Nouvelle note pour écrire la première.</string>
     <string name="empty_trash_desc">Les notes supprimées restent ici jusqu’à ce que vous les restauriez ou les supprimiez définitivement.</string>
 
     <string name="enter_url">Saisissez un lien</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">Et si j\'oublie mon code PIN ?</string>
     <string name="faq_language_a">Ouvrez Paramètres → Langue et choisissez l\'une des langues disponibles, ou « Langue du système » pour suivre votre appareil. Le changement s\'applique immédiatement.</string>
     <string name="faq_language_q">Comment changer la langue ?</string>
-    <string name="faq_new_note_a">Sélectionnez « Nouvelle note » sur l’écran d’accueil. La barre au-dessus du clavier ajoute des titres, des listes de contrôle, des listes à puces et numérotées, des citations, des liens et des séparateurs.</string>
+    <string name="faq_new_note_a">Touchez « Nouvelle note » sur l’écran d’accueil. La barre au-dessus du clavier ajoute des titres, des listes de contrôle, des listes à puces et numérotées, des citations, des liens et des séparateurs.</string>
     <string name="faq_new_note_q">Comment créer une nouvelle note ?</string>
     <string name="faq_recovery_phrase_a">C’est une clé de secours de 12 mots. Elle déverrouille le coffre si vous oubliez votre code PIN et c’est la seule clé de vos fichiers de sauvegarde. Vous la créez lors de la configuration, ou plus tard dans Paramètres → Sécurité si vous l’avez ignorée. Gardez-la sur papier, hors ligne.</string>
     <string name="faq_recovery_phrase_q">À quoi sert la phrase de récupération ?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Déverrouillez le trousseau de clés du système et réessayez</string>
 
 
-    <string name="press_to_edit">Sélectionnez pour commencer à écrire…</string>
+    <string name="press_to_edit">Appuyez pour commencer à écrire…</string>
 
     <string name="priority_high">Haute</string>
     <string name="priority_low">Basse</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">Impossible d\'enregistrer l\'ordre des libellés. Veuillez réessayer.</string>
     <string name="tag_update_failed">Impossible de mettre à jour le libellé. Veuillez réessayer.</string>
 
-    <string name="tap_again_to_delete">Sélectionnez à nouveau pour supprimer</string>
+    <string name="tap_again_to_delete">Appuyez à nouveau pour supprimer</string>
 
     <string name="task_add">Nouvelle tâche</string>
     <string name="task_clear_completed_failed">Impossible d\'effacer les tâches terminées. Veuillez réessayer.</string>
@@ -528,7 +529,7 @@
     </plurals>
     <string name="home_tasks_none_open">Tâches · aucune en cours</string>
     <string name="task_empty_title">Pas encore de tâches</string>
-    <string name="task_empty_desc">Sélectionnez Nouvelle tâche pour ajouter la première.</string>
+    <string name="task_empty_desc">Touchez Nouvelle tâche pour ajouter la première.</string>
     <string name="task_all_done_title">Tout est fait</string>
     <string name="task_done_section">Terminées · %1$d</string>
     <string name="task_section_in_work">En cours · %1$d</string>
@@ -548,12 +549,12 @@
     <string name="licenses_title">Licences open source</string>
     <string name="licenses_row_desc">Les bibliothèques et polices utilisées par Encly</string>
     <string name="licenses_heading">Construit sur l’open source</string>
-    <string name="licenses_intro">Encly repose sur ces bibliothèques et polices. Sélectionnez-en une pour lire sa licence.</string>
+    <string name="licenses_intro">Encly repose sur ces bibliothèques et polices. Touchez-en une pour lire sa licence.</string>
     <string name="licenses_libraries">Bibliothèques</string>
     <string name="licenses_fonts">Polices</string>
     <string name="tags_empty_title">Pas encore d’étiquettes</string>
     <string name="tags_empty_desc">Les étiquettes regroupent vos notes. Créez-en une ci-dessus, puis choisissez-la pour une note par un appui long.</string>
-    <string name="tags_hint">Sélectionnez une étiquette pour la renommer, la masquer ou la supprimer. Faites glisser la poignée pour réordonner.</string>
+    <string name="tags_hint">Touchez une étiquette pour la renommer, la masquer ou la supprimer. Faites glisser la poignée pour réordonner.</string>
     <string name="tag_add">Ajouter l’étiquette</string>
     <string name="tag_name_label">Nom</string>
     <string name="tag_show_in_list">Afficher dans la liste des notes</string>

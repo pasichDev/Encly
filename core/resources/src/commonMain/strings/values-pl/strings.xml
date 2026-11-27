@@ -62,6 +62,7 @@
     <string name="selection_close">Wyczyść zaznaczenie</string>
     <string name="selection_copy">Kopiuj</string>
     <string name="selection_cut">Wytnij</string>
+    <string name="selection_paste">Wklej</string>
     <string name="selection_delete">Usuń zaznaczone bloki</string>
     <string name="select_all">Zaznacz wszystko</string>
     <string name="selection_copied">Skopiowano</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Zablokuj edycję</string>
 
     <string name="empty_notes">Nie ma jeszcze notatek</string>
-    <string name="empty_notes_desc">Wybierz Nowa notatka, aby napisać pierwszą.</string>
+    <string name="empty_notes_desc">Stuknij Nowa notatka, aby napisać pierwszą.</string>
     <string name="empty_trash_desc">Usunięte notatki czekają tu, aż je przywrócisz lub usuniesz na zawsze.</string>
 
     <string name="enter_url">Wpisz link</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">Co jeśli zapomnę PIN-u?</string>
     <string name="faq_language_a">Otwórz Ustawienia → Język i wybierz jeden z dostępnych języków albo „Domyślny systemu”, aby używać języka urządzenia. Zmiana działa od razu.</string>
     <string name="faq_language_q">Jak zmienić język?</string>
-    <string name="faq_new_note_a">Wybierz „Nowa notatka” na ekranie głównym. Pasek nad klawiaturą dodaje nagłówki, listy kontrolne, listy punktowane i numerowane, cytaty, linki i separatory.</string>
+    <string name="faq_new_note_a">Stuknij „Nowa notatka” na ekranie głównym. Pasek nad klawiaturą dodaje nagłówki, listy kontrolne, listy punktowane i numerowane, cytaty, linki i separatory.</string>
     <string name="faq_new_note_q">Jak utworzyć nową notatkę?</string>
     <string name="faq_recovery_phrase_a">To zapasowy klucz z 12 słów. Odblokowuje sejf, jeśli zapomnisz PIN-u, i jest jedynym kluczem do twoich kopii zapasowych. Tworzysz go podczas konfiguracji albo później w Ustawienia → Bezpieczeństwo, jeśli go pominięto. Przechowuj go na papierze, offline.</string>
     <string name="faq_recovery_phrase_q">Do czego służy fraza odzyskiwania?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Odblokuj systemowy pęk kluczy i spróbuj ponownie</string>
 
 
-    <string name="press_to_edit">Wybierz, aby zacząć edycję…</string>
+    <string name="press_to_edit">Stuknij, aby zacząć edycję…</string>
 
     <string name="priority_high">Wysoki</string>
     <string name="priority_low">Niski</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">Nie udało się zapisać kolejności etykiet. Spróbuj ponownie.</string>
     <string name="tag_update_failed">Nie udało się zaktualizować etykiety. Spróbuj ponownie.</string>
 
-    <string name="tap_again_to_delete">Wybierz ponownie, aby usunąć</string>
+    <string name="tap_again_to_delete">Stuknij ponownie, aby usunąć</string>
 
     <string name="task_add">Nowe zadanie</string>
     <string name="task_clear_completed_failed">Nie udało się wyczyścić wykonanych zadań. Spróbuj ponownie.</string>
@@ -532,7 +533,7 @@
     </plurals>
     <string name="home_tasks_none_open">Zadania · brak otwartych</string>
     <string name="task_empty_title">Nie ma jeszcze zadań</string>
-    <string name="task_empty_desc">Wybierz Nowe zadanie, aby dodać pierwsze.</string>
+    <string name="task_empty_desc">Stuknij Nowe zadanie, aby dodać pierwsze.</string>
     <string name="task_all_done_title">Wszystko zrobione</string>
     <string name="task_done_section">Zrobione · %1$d</string>
     <string name="task_section_in_work">W toku · %1$d</string>
@@ -552,12 +553,12 @@
     <string name="licenses_title">Licencje open source</string>
     <string name="licenses_row_desc">Biblioteki i czcionki, których używa Encly</string>
     <string name="licenses_heading">Zbudowane na open source</string>
-    <string name="licenses_intro">Encly powstał dzięki tym bibliotekom i czcionkom. Wybierz, aby przeczytać licencję.</string>
+    <string name="licenses_intro">Encly powstał dzięki tym bibliotekom i czcionkom. Stuknij, aby przeczytać licencję.</string>
     <string name="licenses_libraries">Biblioteki</string>
     <string name="licenses_fonts">Czcionki</string>
     <string name="tags_empty_title">Nie ma jeszcze tagów</string>
     <string name="tags_empty_desc">Tagi grupują notatki. Utwórz tag powyżej, a potem wybierz go dla notatki, przytrzymując ją.</string>
-    <string name="tags_hint">Wybierz tag, aby zmienić nazwę, ukryć lub usunąć. Przeciągnij uchwyt, aby zmienić kolejność.</string>
+    <string name="tags_hint">Stuknij tag, aby zmienić nazwę, ukryć lub usunąć. Przeciągnij uchwyt, aby zmienić kolejność.</string>
     <string name="tag_add">Dodaj tag</string>
     <string name="tag_name_label">Nazwa</string>
     <string name="tag_show_in_list">Pokazuj na liście notatek</string>

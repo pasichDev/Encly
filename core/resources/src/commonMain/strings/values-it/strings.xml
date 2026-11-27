@@ -62,6 +62,7 @@
     <string name="selection_close">Annulla selezione</string>
     <string name="selection_copy">Copia</string>
     <string name="selection_cut">Taglia</string>
+    <string name="selection_paste">Incolla</string>
     <string name="selection_delete">Elimina i blocchi selezionati</string>
     <string name="select_all">Seleziona tutto</string>
     <string name="selection_copied">Copiato</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Blocca la modifica</string>
 
     <string name="empty_notes">Ancora nessuna nota</string>
-    <string name="empty_notes_desc">Seleziona Nuova nota per scrivere la prima.</string>
+    <string name="empty_notes_desc">Tocca Nuova nota per scrivere la prima.</string>
     <string name="empty_trash_desc">Le note eliminate restano qui finché non le ripristini o le elimini per sempre.</string>
 
     <string name="enter_url">Inserisci un link</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">Cosa succede se dimentico il PIN?</string>
     <string name="faq_language_a">Apri Impostazioni → Lingua e scegli una delle lingue disponibili, oppure «Predefinita di sistema» per usare la lingua del dispositivo. La modifica si applica subito.</string>
     <string name="faq_language_q">Come cambio la lingua?</string>
-    <string name="faq_new_note_a">Seleziona «Nuova nota» nella schermata principale. La barra sopra la tastiera aggiunge titoli, checklist, elenchi puntati e numerati, citazioni, link e separatori.</string>
+    <string name="faq_new_note_a">Tocca «Nuova nota» nella schermata principale. La barra sopra la tastiera aggiunge titoli, checklist, elenchi puntati e numerati, citazioni, link e separatori.</string>
     <string name="faq_new_note_q">Come creo una nuova nota?</string>
     <string name="faq_recovery_phrase_a">È una chiave di riserva di 12 parole. Sblocca la cassaforte se dimentichi il PIN ed è l’unica chiave dei tuoi file di backup. La crei durante la configurazione, o più tardi in Impostazioni → Sicurezza se l’hai saltata. Conservala su carta, offline.</string>
     <string name="faq_recovery_phrase_q">A cosa serve la frase di recupero?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Sblocca il portachiavi di sistema e riprova</string>
 
 
-    <string name="press_to_edit">Seleziona per iniziare a scrivere…</string>
+    <string name="press_to_edit">Tocca per iniziare a scrivere…</string>
 
     <string name="priority_high">Alta</string>
     <string name="priority_low">Bassa</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">Impossibile salvare l\'ordine delle etichette. Riprova.</string>
     <string name="tag_update_failed">Impossibile aggiornare l\'etichetta. Riprova.</string>
 
-    <string name="tap_again_to_delete">Seleziona di nuovo per eliminare</string>
+    <string name="tap_again_to_delete">Tocca di nuovo per eliminare</string>
 
     <string name="task_add">Nuova attività</string>
     <string name="task_clear_completed_failed">Impossibile cancellare le attività completate. Riprova.</string>
@@ -528,7 +529,7 @@
     </plurals>
     <string name="home_tasks_none_open">Attività · nessuna aperta</string>
     <string name="task_empty_title">Ancora nessuna attività</string>
-    <string name="task_empty_desc">Seleziona Nuova attività per aggiungere la prima.</string>
+    <string name="task_empty_desc">Tocca Nuova attività per aggiungere la prima.</string>
     <string name="task_all_done_title">Tutto fatto</string>
     <string name="task_done_section">Completate · %1$d</string>
     <string name="task_section_in_work">In corso · %1$d</string>
@@ -548,12 +549,12 @@
     <string name="licenses_title">Licenze open source</string>
     <string name="licenses_row_desc">Le librerie e i font usati da Encly</string>
     <string name="licenses_heading">Costruito sull’open source</string>
-    <string name="licenses_intro">Encly è fatto con queste librerie e questi font. Selezionane uno per leggerne la licenza.</string>
+    <string name="licenses_intro">Encly è fatto con queste librerie e questi font. Toccane uno per leggerne la licenza.</string>
     <string name="licenses_libraries">Librerie</string>
     <string name="licenses_fonts">Font</string>
     <string name="tags_empty_title">Ancora nessun tag</string>
     <string name="tags_empty_desc">I tag raggruppano le note. Creane uno qui sopra, poi sceglilo per una nota tenendola premuta.</string>
-    <string name="tags_hint">Seleziona un tag per rinominarlo, nasconderlo o eliminarlo. Trascina la maniglia per riordinare.</string>
+    <string name="tags_hint">Tocca un tag per rinominarlo, nasconderlo o eliminarlo. Trascina la maniglia per riordinare.</string>
     <string name="tag_add">Aggiungi tag</string>
     <string name="tag_name_label">Nome</string>
     <string name="tag_show_in_list">Mostra nell’elenco delle note</string>

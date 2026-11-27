@@ -62,6 +62,7 @@
     <string name="selection_close">Selectie wissen</string>
     <string name="selection_copy">Kopiëren</string>
     <string name="selection_cut">Knippen</string>
+    <string name="selection_paste">Plakken</string>
     <string name="selection_delete">Geselecteerde blokken verwijderen</string>
     <string name="select_all">Alles selecteren</string>
     <string name="selection_copied">Gekopieerd</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Bewerken vergrendelen</string>
 
     <string name="empty_notes">Nog geen notities</string>
-    <string name="empty_notes_desc">Selecteer Nieuwe notitie om je eerste te schrijven.</string>
+    <string name="empty_notes_desc">Tik op Nieuwe notitie om je eerste te schrijven.</string>
     <string name="empty_trash_desc">Verwijderde notities blijven hier tot je ze herstelt of definitief verwijdert.</string>
 
     <string name="enter_url">Voer een link in</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">Wat als ik mijn pincode vergeet?</string>
     <string name="faq_language_a">Open Instellingen → Taal en kies een van de beschikbare talen, of \'Systeemstandaard\' om de taal van je apparaat te volgen. De wijziging gaat meteen in.</string>
     <string name="faq_language_q">Hoe wijzig ik de taal?</string>
-    <string name="faq_new_note_a">Selecteer op het startscherm ‘Nieuwe notitie’. De balk boven het toetsenbord voegt koppen, checklists, opsommingen, genummerde lijsten, citaten, links en scheidingslijnen toe.</string>
+    <string name="faq_new_note_a">Tik op het startscherm op ‘Nieuwe notitie’. De balk boven het toetsenbord voegt koppen, checklists, opsommingen, genummerde lijsten, citaten, links en scheidingslijnen toe.</string>
     <string name="faq_new_note_q">Hoe maak ik een nieuwe notitie?</string>
     <string name="faq_recovery_phrase_a">Het is een reservesleutel van 12 woorden. Hij ontgrendelt de kluis als je je pincode vergeet en is de enige sleutel tot je back-upbestanden. Je maakt hem tijdens het instellen, of later via Instellingen → Beveiliging als je hem hebt overgeslagen. Bewaar hem op papier, offline.</string>
     <string name="faq_recovery_phrase_q">Waarvoor is de herstelzin?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Ontgrendel de sleutelhanger van het systeem en probeer het opnieuw</string>
 
 
-    <string name="press_to_edit">Selecteer om te beginnen met bewerken…</string>
+    <string name="press_to_edit">Tik om te beginnen met bewerken…</string>
 
     <string name="priority_high">Hoog</string>
     <string name="priority_low">Laag</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">Kan de volgorde van de labels niet opslaan. Probeer het opnieuw.</string>
     <string name="tag_update_failed">Kan het label niet bijwerken. Probeer het opnieuw.</string>
 
-    <string name="tap_again_to_delete">Selecteer nogmaals om te verwijderen</string>
+    <string name="tap_again_to_delete">Tik nogmaals om te verwijderen</string>
 
     <string name="task_add">Nieuwe taak</string>
     <string name="task_clear_completed_failed">Kan de voltooide taken niet wissen. Probeer het opnieuw.</string>
@@ -524,7 +525,7 @@
     </plurals>
     <string name="home_tasks_none_open">Taken · geen open</string>
     <string name="task_empty_title">Nog geen taken</string>
-    <string name="task_empty_desc">Selecteer Nieuwe taak om je eerste toe te voegen.</string>
+    <string name="task_empty_desc">Tik op Nieuwe taak om je eerste toe te voegen.</string>
     <string name="task_all_done_title">Alles klaar</string>
     <string name="task_done_section">Klaar · %1$d</string>
     <string name="task_section_in_work">Bezig · %1$d</string>
@@ -544,12 +545,12 @@
     <string name="licenses_title">Opensourcelicenties</string>
     <string name="licenses_row_desc">De bibliotheken en lettertypen die Encly gebruikt</string>
     <string name="licenses_heading">Gebouwd op open source</string>
-    <string name="licenses_intro">Encly is gemaakt met deze bibliotheken en lettertypen. Selecteer er een om de licentie te lezen.</string>
+    <string name="licenses_intro">Encly is gemaakt met deze bibliotheken en lettertypen. Tik erop om de licentie te lezen.</string>
     <string name="licenses_libraries">Bibliotheken</string>
     <string name="licenses_fonts">Lettertypen</string>
     <string name="tags_empty_title">Nog geen tags</string>
     <string name="tags_empty_desc">Tags groeperen je notities. Maak er hierboven een aan en kies hem voor een notitie via lang indrukken.</string>
-    <string name="tags_hint">Selecteer een tag om hem te hernoemen, verbergen of verwijderen. Sleep de greep om te ordenen.</string>
+    <string name="tags_hint">Tik op een tag om hem te hernoemen, verbergen of verwijderen. Sleep de greep om te ordenen.</string>
     <string name="tag_add">Tag toevoegen</string>
     <string name="tag_name_label">Naam</string>
     <string name="tag_show_in_list">Tonen in de notitielijst</string>

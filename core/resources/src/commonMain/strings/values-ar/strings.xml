@@ -721,6 +721,7 @@
     <string name="selection_copy">نسخ</string>
     <string name="selection_count">الكتل المحددة: %1$d</string>
     <string name="selection_cut">قص</string>
+    <string name="selection_paste">لصق</string>
     <string name="selection_delete">حذف الكتل المحددة</string>
     <string name="faq_pin_length_q">ما طول رمز PIN المسموح به؟</string>
     <string name="faq_pin_length_a">من 6 إلى 12 رقمًا بحسب اختيارك. لا تُعرض رموز أقصر: فالقفل المؤقت ومفتاح الجهاز يحدّان من عدد المحاولات، و6 أرقام هي أقصر طول يبقى آمنًا مع هذه الحدود. لا يحتفظ Encly بطول رمزك ولا يعرضه قبل أن تكتب. تظهر النقاط واحدة لكل رقم، لذا يستطيع من يراقبك عدّها. تضغط «فتح القفل» عند الانتهاء، والأمر نفسه ينطبق على رمز المسح ورمز الإكراه. تبقى الرموز التي عيّنتها سابقًا تعمل كما هي.</string>

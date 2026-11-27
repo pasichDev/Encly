@@ -62,6 +62,7 @@
     <string name="selection_close">Auswahl aufheben</string>
     <string name="selection_copy">Kopieren</string>
     <string name="selection_cut">Ausschneiden</string>
+    <string name="selection_paste">Einfügen</string>
     <string name="selection_delete">Ausgewählte Blöcke löschen</string>
     <string name="select_all">Alles auswählen</string>
     <string name="selection_copied">Kopiert</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Bearbeitung sperren</string>
 
     <string name="empty_notes">Noch keine Notizen</string>
-    <string name="empty_notes_desc">Wähle „Neue Notiz“, um die erste zu schreiben.</string>
+    <string name="empty_notes_desc">Tippe auf „Neue Notiz“, um die erste zu schreiben.</string>
     <string name="empty_trash_desc">Gelöschte Notizen bleiben hier, bis du sie wiederherstellst oder endgültig löschst.</string>
 
     <string name="enter_url">Link eingeben</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">Was passiert, wenn ich meine PIN vergesse?</string>
     <string name="faq_language_a">Öffne Einstellungen → Sprache und wähle eine der verfügbaren Sprachen oder „Systemstandard“, um der Sprache deines Geräts zu folgen. Die Änderung gilt sofort.</string>
     <string name="faq_language_q">Wie ändere ich die Sprache?</string>
-    <string name="faq_new_note_a">Wähle auf dem Startbildschirm „Neue Notiz“. Die Leiste über der Tastatur fügt Überschriften, Checklisten, Aufzählungen, nummerierte Listen, Zitate, Links und Trennlinien ein.</string>
+    <string name="faq_new_note_a">Tippe auf dem Startbildschirm auf „Neue Notiz“. Die Leiste über der Tastatur fügt Überschriften, Checklisten, Aufzählungen, nummerierte Listen, Zitate, Links und Trennlinien ein.</string>
     <string name="faq_new_note_q">Wie erstelle ich eine neue Notiz?</string>
     <string name="faq_recovery_phrase_a">Sie ist ein Ersatzschlüssel aus 12 Wörtern. Sie entsperrt den Tresor, wenn du deine PIN vergisst, und ist der einzige Schlüssel zu deinen Backup-Dateien. Du erstellst sie bei der Einrichtung oder später unter Einstellungen → Sicherheit, falls du sie übersprungen hast. Bewahre sie auf Papier auf, offline.</string>
     <string name="faq_recovery_phrase_q">Wofür ist die Wiederherstellungsphrase?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Entsperre den System-Schlüsselbund und versuche es erneut</string>
 
 
-    <string name="press_to_edit">Auswählen, um mit dem Bearbeiten zu beginnen…</string>
+    <string name="press_to_edit">Tippe, um mit dem Bearbeiten zu beginnen…</string>
 
     <string name="priority_high">Hoch</string>
     <string name="priority_low">Niedrig</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">Die Reihenfolge der Labels konnte nicht gespeichert werden. Bitte versuche es erneut.</string>
     <string name="tag_update_failed">Das Label konnte nicht aktualisiert werden. Bitte versuche es erneut.</string>
 
-    <string name="tap_again_to_delete">Zum Löschen erneut auswählen</string>
+    <string name="tap_again_to_delete">Zum Löschen erneut tippen</string>
 
     <string name="task_add">Neue Aufgabe</string>
     <string name="task_clear_completed_failed">Erledigte Aufgaben konnten nicht gelöscht werden. Bitte versuche es erneut.</string>
@@ -524,7 +525,7 @@
     </plurals>
     <string name="home_tasks_none_open">Aufgaben · keine offen</string>
     <string name="task_empty_title">Noch keine Aufgaben</string>
-    <string name="task_empty_desc">Wähle „Neue Aufgabe“, um die erste anzulegen.</string>
+    <string name="task_empty_desc">Tippe auf „Neue Aufgabe“, um die erste anzulegen.</string>
     <string name="task_all_done_title">Alles erledigt</string>
     <string name="task_done_section">Erledigt · %1$d</string>
     <string name="task_section_in_work">In Arbeit · %1$d</string>
@@ -544,12 +545,12 @@
     <string name="licenses_title">Open-Source-Lizenzen</string>
     <string name="licenses_row_desc">Bibliotheken und Schriften, die Encly nutzt</string>
     <string name="licenses_heading">Auf Open Source gebaut</string>
-    <string name="licenses_intro">Encly nutzt diese Bibliotheken und Schriften. Wähle einen Eintrag, um die Lizenz zu lesen.</string>
+    <string name="licenses_intro">Encly nutzt diese Bibliotheken und Schriften. Tippe darauf, um die Lizenz zu lesen.</string>
     <string name="licenses_libraries">Bibliotheken</string>
     <string name="licenses_fonts">Schriften</string>
     <string name="tags_empty_title">Noch keine Tags</string>
     <string name="tags_empty_desc">Tags ordnen deine Notizen. Lege oben einen an und wähle ihn dann per langem Druck auf eine Notiz aus.</string>
-    <string name="tags_hint">Wähle einen Tag, um ihn umzubenennen, auszublenden oder zu löschen. Zum Sortieren am Griff ziehen.</string>
+    <string name="tags_hint">Tippe auf einen Tag, um ihn umzubenennen, auszublenden oder zu löschen. Zum Sortieren am Griff ziehen.</string>
     <string name="tag_add">Tag hinzufügen</string>
     <string name="tag_name_label">Name</string>
     <string name="tag_show_in_list">In der Notizliste zeigen</string>

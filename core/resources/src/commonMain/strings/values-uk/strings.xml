@@ -62,6 +62,7 @@
     <string name="selection_close">Зняти виділення</string>
     <string name="selection_copy">Копіювати</string>
     <string name="selection_cut">Вирізати</string>
+    <string name="selection_paste">Вставити</string>
     <string name="selection_delete">Видалити виділені блоки</string>
     <string name="select_all">Виділити все</string>
     <string name="selection_copied">Скопійовано</string>

@@ -79,6 +79,7 @@
     <string name="selection_close">Clear selection</string>
     <string name="selection_copy">Copy</string>
     <string name="selection_cut">Cut</string>
+    <string name="selection_paste">Paste</string>
     <string name="selection_delete">Delete selected blocks</string>
     <string name="select_all">Select all</string>
     <string name="selection_copied">Copied</string>
@@ -129,7 +130,7 @@
     <string name="editor_lock">Lock editing</string>
 
     <string name="empty_notes">No notes yet</string>
-    <string name="empty_notes_desc">Select New note to write your first one.</string>
+    <string name="empty_notes_desc">Tap New note to write your first one.</string>
     <string name="empty_trash_desc">Deleted notes wait here until you restore them or delete them for good.</string>
 
     <string name="enter_url">Enter a link</string>
@@ -153,7 +154,7 @@
     <string name="faq_forgot_pin_q">What if I forget my PIN?</string>
     <string name="faq_language_a">Open Settings → Language and pick one of the available languages, or \"System default\" to follow your device. The change applies right away.</string>
     <string name="faq_language_q">How do I change the language?</string>
-    <string name="faq_new_note_a">Select \"New note\" on the home screen. The toolbar above the keyboard adds headings, checklists, bulleted and numbered lists, quotes, links and separators.</string>
+    <string name="faq_new_note_a">Tap \"New note\" on the home screen. The toolbar above the keyboard adds headings, checklists, bulleted and numbered lists, quotes, links and separators.</string>
     <string name="faq_new_note_q">How do I create a new note?</string>
     <string name="faq_recovery_phrase_a">It is a spare key of 12 words. It unlocks the vault if you forget your PIN, and it is the only key to your backup files. You create it during setup, or later in Settings → Security if you skipped it. Keep it on paper, offline.</string>
     <string name="faq_recovery_phrase_q">What is the recovery phrase for?</string>
@@ -266,7 +267,7 @@
     <string name="key_store_unavailable">Unlock your system keyring and try again</string>
 
 
-    <string name="press_to_edit">Select to start editing…</string>
+    <string name="press_to_edit">Tap to start editing…</string>
 
     <string name="priority_high">High</string>
     <string name="priority_low">Low</string>
@@ -333,7 +334,7 @@
     <string name="tag_reorder_failed">Couldn\'t save the tag order. Please try again.</string>
     <string name="tag_update_failed">Couldn\'t update the tag. Please try again.</string>
 
-    <string name="tap_again_to_delete">Select again to delete</string>
+    <string name="tap_again_to_delete">Tap again to delete</string>
 
     <string name="task_add">New task</string>
     <string name="task_clear_completed_failed">Couldn\'t clear completed tasks. Please try again.</string>
@@ -542,7 +543,7 @@
     </plurals>
     <string name="home_tasks_none_open">Tasks · none open</string>
     <string name="task_empty_title">No tasks yet</string>
-    <string name="task_empty_desc">Select New task to add your first one.</string>
+    <string name="task_empty_desc">Tap New task to add your first one.</string>
     <string name="task_all_done_title">All done</string>
     <string name="task_done_section">Done · %1$d</string>
     <string name="task_section_in_work">In progress · %1$d</string>
@@ -562,12 +563,12 @@
     <string name="licenses_title">Open-source licenses</string>
     <string name="licenses_row_desc">The libraries and fonts Encly uses</string>
     <string name="licenses_heading">Built on open source</string>
-    <string name="licenses_intro">Encly is made with these libraries and fonts. Select one to read its license.</string>
+    <string name="licenses_intro">Encly is made with these libraries and fonts. Tap one to read its license.</string>
     <string name="licenses_libraries">Libraries</string>
     <string name="licenses_fonts">Fonts</string>
     <string name="tags_empty_title">No tags yet</string>
     <string name="tags_empty_desc">Tags group your notes. Create one above, then pick it for a note from its long-press menu.</string>
-    <string name="tags_hint">Select a tag to rename, hide or delete it. Drag the handle to reorder.</string>
+    <string name="tags_hint">Tap a tag to rename, hide or delete it. Drag the handle to reorder.</string>
     <string name="tag_add">Add tag</string>
     <string name="tag_name_label">Name</string>
     <string name="tag_show_in_list">Show in the notes list</string>
@@ -736,7 +737,7 @@
     <string name="table_menu_open">Open table menu</string>
     <string name="settings_editor_toolbar">Editor toolbar</string>
     <string name="settings_editor_toolbar_desc">Choose and order the editing tools</string>
-    <string name="toolbar_hint">Drag the handle to reorder. Select the eye to hide a tool or bring it back. Tools under “More menu” sit behind the chevron.</string>
+    <string name="toolbar_hint">Drag the handle to reorder. Tap the eye to hide a tool or bring it back. Tools under “More menu” sit behind the chevron.</string>
     <string name="toolbar_reset">Reset</string>
     <string name="toolbar_section_main">Toolbar</string>
     <string name="toolbar_section_more">More menu</string>

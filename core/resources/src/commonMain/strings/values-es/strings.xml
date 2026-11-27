@@ -62,6 +62,7 @@
     <string name="selection_close">Quitar selección</string>
     <string name="selection_copy">Copiar</string>
     <string name="selection_cut">Cortar</string>
+    <string name="selection_paste">Pegar</string>
     <string name="selection_delete">Eliminar bloques seleccionados</string>
     <string name="select_all">Seleccionar todo</string>
     <string name="selection_copied">Copiado</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Bloquear la edición</string>
 
     <string name="empty_notes">Aún no hay notas</string>
-    <string name="empty_notes_desc">Selecciona Nueva nota para escribir la primera.</string>
+    <string name="empty_notes_desc">Toca Nueva nota para escribir la primera.</string>
     <string name="empty_trash_desc">Las notas eliminadas esperan aquí hasta que las restaures o las borres para siempre.</string>
 
     <string name="enter_url">Introduce un enlace</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">¿Y si olvido mi PIN?</string>
     <string name="faq_language_a">Abre Ajustes → Idioma y elige uno de los idiomas disponibles, o «Predeterminado del sistema» para usar el idioma del dispositivo. El cambio se aplica al instante.</string>
     <string name="faq_language_q">¿Cómo cambio el idioma?</string>
-    <string name="faq_new_note_a">Selecciona «Nota nueva» en la pantalla principal. La barra sobre el teclado añade encabezados, listas de verificación, listas con viñetas y numeradas, citas, enlaces y separadores.</string>
+    <string name="faq_new_note_a">Toca «Nota nueva» en la pantalla principal. La barra sobre el teclado añade encabezados, listas de verificación, listas con viñetas y numeradas, citas, enlaces y separadores.</string>
     <string name="faq_new_note_q">¿Cómo creo una nota nueva?</string>
     <string name="faq_recovery_phrase_a">Es una llave de repuesto de 12 palabras. Desbloquea la bóveda si olvidas tu PIN y es la única llave de tus copias de seguridad. Se crea durante la configuración, o más tarde en Ajustes → Seguridad si la omitiste. Guárdala en papel, sin conexión.</string>
     <string name="faq_recovery_phrase_q">¿Para qué sirve la frase de recuperación?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Desbloquea el llavero del sistema e inténtalo de nuevo</string>
 
 
-    <string name="press_to_edit">Selecciona para empezar a editar…</string>
+    <string name="press_to_edit">Toca para empezar a editar…</string>
 
     <string name="priority_high">Alta</string>
     <string name="priority_low">Baja</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">No se pudo guardar el orden de las etiquetas. Inténtalo de nuevo.</string>
     <string name="tag_update_failed">No se pudo actualizar la etiqueta. Inténtalo de nuevo.</string>
 
-    <string name="tap_again_to_delete">Selecciona de nuevo para eliminar</string>
+    <string name="tap_again_to_delete">Toca de nuevo para eliminar</string>
 
     <string name="task_add">Nueva tarea</string>
     <string name="task_clear_completed_failed">No se pudieron borrar las tareas completadas. Inténtalo de nuevo.</string>
@@ -528,7 +529,7 @@
     </plurals>
     <string name="home_tasks_none_open">Tareas · ninguna pendiente</string>
     <string name="task_empty_title">Aún no hay tareas</string>
-    <string name="task_empty_desc">Selecciona Nueva tarea para añadir la primera.</string>
+    <string name="task_empty_desc">Toca Nueva tarea para añadir la primera.</string>
     <string name="task_all_done_title">Todo hecho</string>
     <string name="task_done_section">Hechas · %1$d</string>
     <string name="task_section_in_work">En curso · %1$d</string>
@@ -548,12 +549,12 @@
     <string name="licenses_title">Licencias de código abierto</string>
     <string name="licenses_row_desc">Las bibliotecas y fuentes que usa Encly</string>
     <string name="licenses_heading">Hecho con código abierto</string>
-    <string name="licenses_intro">Encly se hace con estas bibliotecas y fuentes. Selecciona una para leer su licencia.</string>
+    <string name="licenses_intro">Encly se hace con estas bibliotecas y fuentes. Toca una para leer su licencia.</string>
     <string name="licenses_libraries">Bibliotecas</string>
     <string name="licenses_fonts">Fuentes</string>
     <string name="tags_empty_title">Aún no hay etiquetas</string>
     <string name="tags_empty_desc">Las etiquetas agrupan tus notas. Crea una arriba y elígela para una nota con una pulsación larga.</string>
-    <string name="tags_hint">Selecciona una etiqueta para renombrarla, ocultarla o borrarla. Arrastra el asa para reordenar.</string>
+    <string name="tags_hint">Toca una etiqueta para renombrarla, ocultarla o borrarla. Arrastra el asa para reordenar.</string>
     <string name="tag_add">Añadir etiqueta</string>
     <string name="tag_name_label">Nombre</string>
     <string name="tag_show_in_list">Mostrar en la lista de notas</string>

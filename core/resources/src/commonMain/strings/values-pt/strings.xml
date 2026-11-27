@@ -62,6 +62,7 @@
     <string name="selection_close">Limpar seleção</string>
     <string name="selection_copy">Copiar</string>
     <string name="selection_cut">Cortar</string>
+    <string name="selection_paste">Colar</string>
     <string name="selection_delete">Excluir blocos selecionados</string>
     <string name="select_all">Selecionar tudo</string>
     <string name="selection_copied">Copiado</string>
@@ -112,7 +113,7 @@
     <string name="editor_lock">Bloquear edição</string>
 
     <string name="empty_notes">Ainda não há notas</string>
-    <string name="empty_notes_desc">Selecione Nova nota para escrever a primeira.</string>
+    <string name="empty_notes_desc">Toque em Nova nota para escrever a primeira.</string>
     <string name="empty_trash_desc">As notas eliminadas ficam aqui até as restaurar ou eliminar de vez.</string>
 
     <string name="enter_url">Digite um link</string>
@@ -136,7 +137,7 @@
     <string name="faq_forgot_pin_q">E se eu esquecer meu PIN?</string>
     <string name="faq_language_a">Abra Configurações → Idioma e escolha um dos idiomas disponíveis, ou \"Padrão do sistema\" para seguir o idioma do dispositivo. A alteração é aplicada na hora.</string>
     <string name="faq_language_q">Como altero o idioma?</string>
-    <string name="faq_new_note_a">Selecione \"Nova nota\" na tela inicial. A barra acima do teclado adiciona títulos, listas de verificação, listas com marcadores e numeradas, citações, links e separadores.</string>
+    <string name="faq_new_note_a">Toque em \"Nova nota\" na tela inicial. A barra acima do teclado adiciona títulos, listas de verificação, listas com marcadores e numeradas, citações, links e separadores.</string>
     <string name="faq_new_note_q">Como crio uma nova nota?</string>
     <string name="faq_recovery_phrase_a">É uma chave reserva de 12 palavras. Ela desbloqueia o cofre se você esquecer o PIN e é a única chave dos seus arquivos de backup. Você a cria durante a configuração, ou depois em Configurações → Segurança se tiver pulado. Guarde-a no papel, offline.</string>
     <string name="faq_recovery_phrase_q">Para que serve a frase de recuperação?</string>
@@ -249,7 +250,7 @@
     <string name="key_store_unavailable">Desbloqueie o chaveiro do sistema e tente novamente</string>
 
 
-    <string name="press_to_edit">Selecione para começar a editar…</string>
+    <string name="press_to_edit">Toque para começar a editar…</string>
 
     <string name="priority_high">Alta</string>
     <string name="priority_low">Baixa</string>
@@ -316,7 +317,7 @@
     <string name="tag_reorder_failed">Não foi possível salvar a ordem das etiquetas. Tente novamente.</string>
     <string name="tag_update_failed">Não foi possível atualizar a etiqueta. Tente novamente.</string>
 
-    <string name="tap_again_to_delete">Selecione de novo para excluir</string>
+    <string name="tap_again_to_delete">Toque de novo para excluir</string>
 
     <string name="task_add">Nova tarefa</string>
     <string name="task_clear_completed_failed">Não foi possível limpar as tarefas concluídas. Tente novamente.</string>
@@ -528,7 +529,7 @@
     </plurals>
     <string name="home_tasks_none_open">Tarefas · nenhuma aberta</string>
     <string name="task_empty_title">Ainda não há tarefas</string>
-    <string name="task_empty_desc">Selecione Nova tarefa para adicionar a primeira.</string>
+    <string name="task_empty_desc">Toque em Nova tarefa para adicionar a primeira.</string>
     <string name="task_all_done_title">Tudo feito</string>
     <string name="task_done_section">Concluídas · %1$d</string>
     <string name="task_section_in_work">Em curso · %1$d</string>
@@ -548,12 +549,12 @@
     <string name="licenses_title">Licenças de código aberto</string>
     <string name="licenses_row_desc">As bibliotecas e tipos de letra que o Encly usa</string>
     <string name="licenses_heading">Feito com código aberto</string>
-    <string name="licenses_intro">O Encly é feito com estas bibliotecas e tipos de letra. Selecione uma para ler a licença.</string>
+    <string name="licenses_intro">O Encly é feito com estas bibliotecas e tipos de letra. Toque numa para ler a licença.</string>
     <string name="licenses_libraries">Bibliotecas</string>
     <string name="licenses_fonts">Tipos de letra</string>
     <string name="tags_empty_title">Ainda não há etiquetas</string>
     <string name="tags_empty_desc">As etiquetas agrupam as notas. Crie uma acima e escolha-a para uma nota com um toque longo.</string>
-    <string name="tags_hint">Selecione uma etiqueta para a renomear, ocultar ou eliminar. Arraste a pega para reordenar.</string>
+    <string name="tags_hint">Toque numa etiqueta para a renomear, ocultar ou eliminar. Arraste a pega para reordenar.</string>
     <string name="tag_add">Adicionar etiqueta</string>
     <string name="tag_name_label">Nome</string>
     <string name="tag_show_in_list">Mostrar na lista de notas</string>
