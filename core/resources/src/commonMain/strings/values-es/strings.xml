@@ -26,7 +26,7 @@
 
     <string name="auth_method_pin_desc">De 6 a 12 dígitos. Toca para cambiar el PIN.</string>
     <string name="auth_method_pin_title">PIN</string>
-    <string name="auth_title">Autenticación</string>
+    <string name="auth_title">Autorización</string>
 
     <string name="back">Atrás</string>
 
@@ -59,7 +59,7 @@
     <string name="list_item_indent">Aumentar sangría del elemento</string>
     <string name="list_item_outdent">Reducir sangría del elemento</string>
     <string name="selection_count">Bloques seleccionados: %1$d</string>
-    <string name="selection_close">Quitar selección</string>
+    <string name="selection_close">Vaciar selección</string>
     <string name="selection_copy">Copiar</string>
     <string name="selection_cut">Cortar</string>
     <string name="selection_paste">Pegar</string>
@@ -729,7 +729,7 @@
     <string name="toolbar_hint">Arrastra el asa para reordenar. El ojo oculta una herramienta o la devuelve. Las herramientas de «Más opciones» quedan tras la flecha.</string>
     <string name="toolbar_reset">Restablecer</string>
     <string name="toolbar_section_main">Barra</string>
-    <string name="toolbar_section_more">Más opciones</string>
+    <string name="toolbar_section_more">Más menú</string>
     <string name="toolbar_section_hidden">Ocultas</string>
     <string name="toolbar_tool_hide">Ocultar herramienta</string>
     <string name="toolbar_tool_show">Mostrar herramienta</string>
