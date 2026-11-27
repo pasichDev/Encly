@@ -1,8 +1,14 @@
 name: Release
 
-# Pushing a tag vX.Y.Z releases Encly: both Android flavors as signed APKs and the Linux packages of the desktop
-# app (a .deb and a Flatpak bundle), on one GitHub Release with one SHA256SUMS. A tag never publishes unsigned
-# APKs: the run fails before building when a signing secret or the certificate pin is missing.
+# Pushing a tag vX.Y.Z releases Encly for Android: both flavors as signed APKs on a GitHub Release with a
+# SHA256SUMS. A tag never publishes unsigned APKs: the run fails before building when a signing secret or the
+# certificate pin is missing.
+#
+# The Linux packages of the desktop app (a .deb and a Flatpak bundle) are NOT built by a pushed tag: the desktop app
+# is not released yet. The Linux jobs run only on a manual run of this workflow (Actions -> Release -> Run workflow,
+# with an existing tag) AND only when the repository variable LINUX_RELEASE_ENABLED is 'true' (it is not set), so a
+# stray click cannot put the unreleased desktop app on a Release. To release Linux with every tag again, remove the
+# `if:` of linux-deb and linux-flatpak.
 #
 #   verify-tag     the tag is the version in version.properties and its commit is on main. Every other job needs it.
 #   android-build  both flavors, built UNSIGNED by Gradle (which never sees the keystore), signed by a separate step
@@ -18,11 +24,12 @@ name: Release
 #                  SHA256SUMS.asc when the GPG secrets exist), attests the build provenance of every file, writes the
 #                  notes, and only then publishes the draft.
 #
-# The Linux files are an addition: if linux-deb, linux-flatpak or linux-verify fails, github-release still runs and publishes
-# the Android files alone (see its `if:`); the Linux files are then added to that Release later with a manual run
-# of this workflow (Actions -> Release -> Run workflow, with the tag), which runs only the Linux jobs and
-# github-release in "add" mode. That run never builds Android and never touches Google Play: publish-play.yml
-# is a separate workflow with its own tag trigger and is not changed by anything here.
+# The Linux files are an addition: when the Linux jobs did not run or did not pass, github-release still runs and
+# publishes the Android files alone (see its `if:`). A manual run of this workflow (Actions -> Release -> Run workflow,
+# with the tag) runs only the Linux jobs and github-release in "add" mode, and only while the repository variable
+# LINUX_RELEASE_ENABLED is 'true': without it the run builds nothing and changes nothing. That run never builds Android
+# and never touches Google Play: publish-play.yml is a separate workflow with its own tag trigger and is not changed
+# by anything here.
 # The Windows MSI and the macOS DMG are never released from here (they are unsigned).
 # The Linux packages are not code-signed; they are trusted through SHA256SUMS(.asc) and the attestations.
 #
@@ -242,9 +249,11 @@ jobs:
   linux-deb:
     name: linux .deb
     needs: verify-tag
+    # Not on a pushed tag: the desktop app is not released yet (see the top of this file).
+    if: github.event_name == 'workflow_dispatch' && vars.LINUX_RELEASE_ENABLED == 'true'
     runs-on: ubuntu-22.04
-    # Shorter than the Android build: github-release waits for the Linux jobs (see its `if:`), so a hang here
-    # holds the Android release back by at most this long plus linux-verify's.
+    # Shorter than the Android build: when Linux is built with a tag again, github-release waits for these jobs (see
+    # its `if:`), so a hang here holds the Android release back by at most this long plus linux-verify's.
     timeout-minutes: 45
     permissions:
       contents: read
@@ -307,6 +316,7 @@ jobs:
   linux-flatpak:
     name: linux flatpak
     needs: verify-tag
+    if: github.event_name == 'workflow_dispatch' && vars.LINUX_RELEASE_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -593,7 +603,8 @@ jobs:
             echo 'Download `SHA256SUMS` next to the files and run `sha256sum --check --ignore-missing SHA256SUMS`.'
             echo 'When `SHA256SUMS.asc` is present it is the GPG signature of that file.'
             echo
-            echo 'Every APK, mapping file and Linux package of this release has an attested build provenance'
+            if [ "$HAS_LINUX" = true ]; then subjects='APK, mapping file and Linux package'; else subjects='APK and mapping file'; fi
+            echo "Every $subjects of this release has an attested build provenance"
             echo '(`SHA256SUMS` is covered by its GPG signature `SHA256SUMS.asc`, not by an attestation):'
             echo
             echo '```'

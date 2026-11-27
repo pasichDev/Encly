@@ -1,6 +1,6 @@
 name: Verify the Linux packages
 
-# Called by android.yml (pull requests, main) and release.yml (a tag), so both run exactly the same checks:
+# Called by android.yml (pull requests, main) and release.yml (a manual run), so both run exactly the same checks:
 # desktopApp/packaging/verify-linux-packages.sh on clean machines. It installs the .deb the way a user does and checks
 # the installed files; the Flatpak bundle is installed and checked on one machine. The window is never opened.
 #
