@@ -200,7 +200,7 @@ public class SessionLockManager(
     /**
      * The whole vault was erased (see [SecurityManager.wipeAndReset]): any unlock still running must not be published
      * (the keys it opens are gone), and every window learns of it through [erasedCount] and starts over with
-     * onboarding, so none keeps showing the erased vault's notes. [locked] is not set: nothing is locked, there is no
+     * onboarding, so none keeps showing the erased vault's notes. [locked] is cleared: nothing is locked, there is no
      * vault, and a new one made in onboarding must not start behind a lock screen. Call on the main thread after a
      * successful erase, from the window that made it.
      */
@@ -209,6 +209,9 @@ public class SessionLockManager(
         lockRequestCount.addAndFetch(1L)
         screenshots.revoke()
         securityManager.abandonKeyStorePrompt()
+        // A lock that raced the erase (the screen went off while it ran) has nothing left to lock: left set, it would
+        // keep the shield over the onboarding of the new vault until the process ends.
+        _locked.value = false
         _erasedCount.update { it + 1L }
     }
 
