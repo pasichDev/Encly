@@ -16,6 +16,7 @@ import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.viewmodel.LockViewModel
@@ -52,6 +53,7 @@ fun RecoveryChoiceScreen(
         title = stringResource(Res.string.recovery_choice_title),
         subtitle = secretString(viewModel.secretKind, Res.string.recovery_choice_body_pin),
         icon = EnclyIcons.Key,
+        inCard = authCardApplies(),
         modifier = modifier,
         footer = {
             EnclyButton(

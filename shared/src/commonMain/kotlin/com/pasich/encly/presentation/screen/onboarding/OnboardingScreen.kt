@@ -51,6 +51,8 @@ import com.pasich.encly.presentation.designsystem.EnclyProgressHeader
 import com.pasich.encly.presentation.designsystem.LabelHeader
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.WelcomeHeader
+import com.pasich.encly.presentation.designsystem.authCardApplies
+import com.pasich.encly.presentation.designsystem.authSurfaceColor
 import com.pasich.encly.presentation.dialogs.LanguageDialog
 import com.pasich.encly.presentation.effects.StepFade
 import com.pasich.encly.presentation.effects.screenFade
@@ -155,10 +157,14 @@ private fun OnboardingScaffold(
     error: String?,
     modifier: Modifier = Modifier,
 ) {
-    Surface(color = MaterialTheme.colorScheme.surface, modifier = modifier.fillMaxSize()) {
+    // On a desktop window the steps stand in a card as high as the step: the button follows the form closely.
+    val card = authCardApplies()
+    Surface(
+        color = authSurfaceColor(card),
+        modifier = if (card) modifier.fillMaxWidth() else modifier.fillMaxSize(),
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = (if (card) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
                 .windowInsetsPadding(WindowInsets.safeDrawing)
                 .imePadding(),
         ) {
@@ -168,7 +174,8 @@ private fun OnboardingScaffold(
                 actions = actions,
                 restorePhrase = fields.restorePhrase,
                 passphrase = fields.passphrase,
-                modifier = Modifier.weight(1f),
+                card = card,
+                modifier = if (card) Modifier.weight(1f, fill = false) else Modifier.weight(1f),
             )
             if (error != null) {
                 Text(
@@ -178,7 +185,10 @@ private fun OnboardingScaffold(
                     modifier = Modifier.padding(horizontal = EnclyTheme.spacing.gutter),
                 )
             }
-            OnboardingFooter(footerSpec(state, actions, fields.restorePhrase, finishing, fields.passphrase))
+            OnboardingFooter(
+                spec = footerSpec(state, actions, fields.restorePhrase, finishing, fields.passphrase),
+                inCard = card,
+            )
         }
     }
 }
@@ -235,6 +245,7 @@ private fun StepContent(
     actions: OnboardingActions,
     restorePhrase: RecoveryPhraseState,
     passphrase: PassphraseInput,
+    card: Boolean,
     modifier: Modifier = Modifier,
 ) {
     AnimatedContent(
@@ -251,9 +262,9 @@ private fun StepContent(
         // The fade is drawn per draw call, not as fadeIn/fadeOut would: those put the step in an offscreen layer.
         val body = Modifier
             .screenFade(this, enter = { StepFade.In }, exit = { StepFade.Out })
-            .fillMaxSize()
+            .then(if (card) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
             .verticalScroll(rememberScrollState())
-            .padding(bottom = EnclyTheme.spacing.l)
+            .padding(bottom = if (card) EnclyTheme.spacing.xs else EnclyTheme.spacing.l)
         when (step) {
             OnboardingStep.WELCOME -> WelcomeStep(body)
 

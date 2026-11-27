@@ -39,12 +39,16 @@ internal class PassphraseStepActions(
     val onSuggest: (() -> Unit)? = null,
 )
 
-/** How a passphrase step is laid out and whether it takes input. */
+/**
+ * How a passphrase step is laid out and whether it takes input. [inCard]: the step stands in the desktop card of an
+ * `AuthPage` and is as high as its content, with its button under the field, not at the window's edge.
+ */
 internal class PassphraseStepStyle(
     val enabled: Boolean = true,
     val busy: Boolean = false,
     val compact: Boolean = true,
     val icon: ImageVector? = null,
+    val inCard: Boolean = false,
 )
 
 /**
@@ -69,6 +73,7 @@ internal fun PassphraseStep(
         icon = style.icon,
         compact = style.compact,
         busy = style.busy,
+        inCard = style.inCard,
         modifier = modifier,
         footer = {
             EnclyButton(

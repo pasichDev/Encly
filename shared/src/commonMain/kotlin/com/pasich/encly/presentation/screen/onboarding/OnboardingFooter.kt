@@ -27,6 +27,7 @@ import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.screen.pincode.PassphraseInput
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
+import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
 internal fun footerSpec(
@@ -96,12 +97,18 @@ internal fun footerSpec(
 
 /**
  * The footer: the primary action, and below it a text action or the same space left empty,
- * so the primary button never moves between steps. Text actions wait while the primary runs.
+ * so the primary button never moves between steps. Text actions wait while the primary runs. In a desktop
+ * card ([inCard]) the footer follows the form and the empty space is not kept.
  */
 @Composable
-internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier) {
+internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier, inCard: Boolean = false) {
     val secondary = spec.secondary
-    PinnedFooter(modifier = modifier, reserveTextRow = secondary == null) {
+    // In the desktop card the footer follows the form, so no row is kept free for a text action that is not there.
+    PinnedFooter(
+        modifier = modifier,
+        reserveTextRow = secondary == null && !inCard,
+        restBottom = if (inCard) EnclyTheme.spacing.m else EnclyTheme.spacing.stepGap,
+    ) {
         EnclyButton(
             text = stringResource(spec.primary),
             onClick = spec.onPrimary,

@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -30,6 +31,7 @@ import com.pasich.encly.presentation.designsystem.EnclyHoldToConfirmButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -50,15 +52,21 @@ internal class KeyNotFoundActions(
 internal fun KeyNotFoundContent(actions: KeyNotFoundActions, modifier: Modifier = Modifier) {
     val spacing = EnclyTheme.spacing
     val currentWipe by rememberUpdatedState(actions.onWipe)
+    // In the desktop card the page is as high as its content, with a short top instead of the phone's.
+    val card = authCardApplies()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(spacing.rowGap),
-        modifier = modifier
-            .fillMaxSize()
+        modifier = (if (card) modifier.fillMaxWidth() else modifier.fillMaxSize())
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
             .navigationBarsPadding()
-            .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.lockTop, bottom = spacing.l),
+            .padding(
+                start = spacing.gutter,
+                end = spacing.gutter,
+                top = if (card) spacing.xl else spacing.lockTop,
+                bottom = spacing.l,
+            ),
     ) {
         EnclyIconTile(icon = EnclyIcons.Key)
         Text(

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -57,6 +58,8 @@ import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTopBar
+import com.pasich.encly.presentation.designsystem.authCardApplies
+import com.pasich.encly.presentation.designsystem.authSurfaceColor
 import com.pasich.encly.presentation.effects.StepFade
 import com.pasich.encly.presentation.effects.screenFade
 import com.pasich.encly.presentation.navigation.NavRoutes
@@ -303,17 +306,15 @@ fun PinCodeConfigScreen(
         pinState.lockoutSeconds = it
     }
 
-    DisposableEffect(pinState) { onDispose { pinState.clear() } }
+    FinishWhenSet(pinState, navController)
 
-    LaunchedEffect(pinState.animationState) {
-        if (pinState.animationState == PinAnimationState.SuccessAnimation) {
-            delay(PIN_SUCCESS_DELAY_MS)
-            navController.finishPinChange(pinState.isReset)
-        }
-    }
-
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+    // A forced reset on a desktop window is drawn in the card of the first-run pages, as high as its step.
+    val card = pinState.isReset && authCardApplies()
+    Surface(
+        modifier = if (card) modifier.fillMaxWidth() else modifier.fillMaxSize(),
+        color = authSurfaceColor(card),
+    ) {
+        Column(modifier = (if (card) Modifier.fillMaxWidth() else Modifier.fillMaxSize()).statusBarsPadding()) {
             // From Settings there is a way back; a forgotten-PIN reset must end with a new PIN.
             if (!pinState.isReset) {
                 EnclyTopBar(
@@ -321,7 +322,12 @@ fun PinCodeConfigScreen(
                     onBack = { navController.popBack() },
                 )
             }
-            Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (card) Modifier.weight(1f, fill = false) else Modifier.weight(1f)),
+                contentAlignment = Alignment.Center,
+            ) {
                 if (pinState.animationState == PinAnimationState.Entering) {
                     AnimatedContent(
                         targetState = pinState.step,
@@ -338,6 +344,7 @@ fun PinCodeConfigScreen(
                                 pinState = pinState,
                                 actions = PinStepActions(
                                     locked = locked,
+                                    inCard = card,
                                     onSubmitPin = { pinState.onPinComplete(securityViewModel) },
                                     onSuggest = { pinState.suggest(securityViewModel) },
                                 ),
@@ -345,15 +352,34 @@ fun PinCodeConfigScreen(
                         }
                     }
                 } else {
-                    SuccessAnimation(pinState.kind)
+                    SuccessAnimation(pinState.kind, card)
                 }
             }
         }
     }
 }
 
+/** Typed digits do not outlive the screen, and a new PIN that was set is shown for a moment before the way on. */
+@Composable
+private fun FinishWhenSet(pinState: PinChangeState, navController: NavHostController) {
+    DisposableEffect(pinState) { onDispose { pinState.clear() } }
+
+    LaunchedEffect(pinState.animationState) {
+        if (pinState.animationState == PinAnimationState.SuccessAnimation) {
+            delay(PIN_SUCCESS_DELAY_MS)
+            navController.finishPinChange(pinState.isReset)
+        }
+    }
+}
+
 /** What a step of the change does: send what is typed, and (for a passphrase) suggest one. */
-private class PinStepActions(val locked: Boolean, val onSubmitPin: () -> Unit, val onSuggest: () -> Unit)
+private class PinStepActions(
+    val locked: Boolean,
+    val onSubmitPin: () -> Unit,
+    val onSuggest: () -> Unit,
+    /** The step stands in the desktop card of the first-run pages. */
+    val inCard: Boolean = false,
+)
 
 /** The page of [step]: the keypad of the PIN steps, or the passphrase field. */
 @Composable
@@ -380,6 +406,7 @@ private fun PinStepContent(step: Int, pinState: PinChangeState, actions: PinStep
         ),
         onInput = pinState::typeDigit,
         onDelete = pinState.input::deleteLast,
+        inCard = actions.inCard,
     )
 }
 
@@ -419,25 +446,21 @@ private fun NavHostController.finishPinChange(isReset: Boolean) {
 @Composable
 private fun pinStepText(step: Int, state: PinChangeState): PinStepText {
     val lockout = state.lockoutSeconds.takeIf { it > 0L && step == 0 }?.let { pinLockoutText(it) }
+    val (title, subtitle) = pinStepTexts(step)
     return PinStepText(
         kind = state.kind,
         ticking = lockout != null,
-        title = pinStepTitle(step),
-        subtitle = if (state.isReset && step == 1) Res.string.pin_reset_subtitle else pinStepSubtitle(step),
+        title = title,
+        subtitle = if (state.isReset && step == 1) Res.string.pin_reset_subtitle else subtitle,
         message = lockout ?: state.errorText?.let { secretString(state.kind, it) },
     )
 }
 
-private fun pinStepTitle(step: Int): StringResource = when (step) {
-    0 -> Res.string.pin_change_current_title
-    1 -> Res.string.pin_create_title
-    else -> Res.string.pin_change_confirm_title
-}
-
-private fun pinStepSubtitle(step: Int): StringResource = when (step) {
-    0 -> Res.string.pin_change_current_subtitle
-    1 -> Res.string.pin_change_new_subtitle
-    else -> Res.string.pin_change_confirm_subtitle
+/** The title and the sub-heading of [step]: the current secret, the new one, its confirmation. */
+private fun pinStepTexts(step: Int): Pair<StringResource, StringResource> = when (step) {
+    0 -> Res.string.pin_change_current_title to Res.string.pin_change_current_subtitle
+    1 -> Res.string.pin_create_title to Res.string.pin_change_new_subtitle
+    else -> Res.string.pin_change_confirm_title to Res.string.pin_change_confirm_subtitle
 }
 
 /** What a PIN step shows: its title and subtitle, and an error or lockout message. */
@@ -492,6 +515,7 @@ private fun PassphraseStepContent(step: Int, pinState: PinChangeState, actions: 
             enabled = pinState.keysEnabled && !actions.locked,
             busy = pinState.busy,
             compact = !pinState.isReset,
+            inCard = actions.inCard,
         ),
     )
 }
@@ -503,6 +527,7 @@ private fun MainPinContent(
     entry: PinEntryState,
     onInput: (Int) -> Unit,
     onDelete: () -> Unit,
+    inCard: Boolean = false,
 ) {
     val message = text.message
     val kind = text.kind
@@ -515,6 +540,7 @@ private fun MainPinContent(
         compact = entry.compact,
         busy = entry.busy,
         bodyAtBottom = true,
+        inCard = inCard,
     ) { fit ->
         PinEntry(
             fit = fit,
@@ -536,7 +562,7 @@ private fun MainPinContent(
 }
 
 @Composable
-private fun SuccessAnimation(kind: SecretKind) {
+private fun SuccessAnimation(kind: SecretKind, inCard: Boolean) {
     val scale = remember { Animatable(0f) }
     val description = secretString(kind, Res.string.pin_changed)
 
@@ -550,8 +576,9 @@ private fun SuccessAnimation(kind: SecretKind) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m, Alignment.CenterVertically),
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = (
+            if (inCard) Modifier.fillMaxWidth().padding(vertical = EnclyTheme.spacing.xxl) else Modifier.fillMaxSize()
+            )
             .semantics(mergeDescendants = true) { contentDescription = description },
     ) {
         EnclyIconTile(icon = EnclyIcons.Check, modifier = Modifier.scale(scale.value))

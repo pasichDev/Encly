@@ -99,6 +99,7 @@ import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.StepHeading
 import com.pasich.encly.presentation.designsystem.UseRow
 import com.pasich.encly.presentation.designsystem.WordGrid
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.presentation.viewmodel.SecurityType
@@ -108,10 +109,12 @@ import org.jetbrains.compose.resources.stringResource
 /** Step 0: what Encly is, in three facts. */
 @Composable
 internal fun WelcomeStep(modifier: Modifier = Modifier) {
+    // The desktop card has its header right above: no phone-sized hero gap.
+    val top = if (authCardApplies()) EnclyTheme.spacing.s else EnclyTheme.spacing.heroTop
     Column(
         modifier = modifier
             .padding(StepPadding)
-            .padding(top = EnclyTheme.spacing.heroTop),
+            .padding(top = top),
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.heroGap),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m)) {
@@ -350,10 +353,11 @@ internal fun VerifyStep(state: OnboardingUiState, onAnswer: (Int, String) -> Uni
 /** Step 4: what was set up. */
 @Composable
 internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) {
+    val top = if (authCardApplies()) EnclyTheme.spacing.m else EnclyTheme.spacing.readyTop
     Column(
         modifier = modifier
             .padding(StepPadding)
-            .padding(top = EnclyTheme.spacing.readyTop),
+            .padding(top = top),
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xl),
     ) {
         StepHeading(

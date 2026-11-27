@@ -85,6 +85,8 @@ data class EnclySpacing(
     val tabMaxWidth: Dp = 200.dp,
     /** Width of a dialog that stands in for a bottom sheet in a wide window. */
     val dialogWidth: Dp = 480.dp,
+    /** Width of the card the first-run, lock and recovery pages are drawn in on a desktop window. */
+    val authCardWidth: Dp = 520.dp,
 )
 
 val LocalSpacing = staticCompositionLocalOf { EnclySpacing() }

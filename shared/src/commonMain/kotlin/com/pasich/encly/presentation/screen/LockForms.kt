@@ -30,6 +30,7 @@ import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseInput
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.screen.pincode.AuthLoading
 import com.pasich.encly.presentation.screen.pincode.PinEntry
 import com.pasich.encly.presentation.screen.pincode.PinEntryActions
@@ -81,7 +82,8 @@ internal fun LockForms(
     actions: LockActions,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    val card = authCardApplies()
+    Box(modifier = if (card) modifier.fillMaxWidth() else modifier.fillMaxSize()) {
         if (form.keyNotFound) {
             KeyNotFoundContent(
                 KeyNotFoundActions(
@@ -100,7 +102,13 @@ internal fun LockForms(
             )
             // Drawn over the phrase form rather than instead of it, so it keeps its state. The PIN
             // form shows the check in place (full dots, breathing logo) and hands over to the reveal.
-            if (busy) AuthLoading(stringResource(Res.string.lock_unlocking))
+            if (busy) {
+                if (card) {
+                    AuthLoading(stringResource(Res.string.lock_unlocking), Modifier.matchParentSize(), inCard = true)
+                } else {
+                    AuthLoading(stringResource(Res.string.lock_unlocking))
+                }
+            }
         } else if (capabilities.secretKind == SecretKind.PASSWORD) {
             PassphraseLockContent(form, capabilities, busy, actions)
         } else {
@@ -130,6 +138,7 @@ private fun PinLockContent(form: LockFormState, capabilities: LockCapabilities, 
         subtitleIsError = form.lockedOut || shownError != null,
         subtitleTicks = form.lockedOut,
         busy = busy,
+        inCard = authCardApplies(),
     ) { fit ->
         PinEntry(
             fit = fit,
@@ -204,6 +213,7 @@ private fun SeedLockContent(
         icon = EnclyIcons.Key,
         // The 12 cells need the room: no 96 dp top, so they stay above the keyboard.
         compact = true,
+        inCard = authCardApplies(),
         // Pinned above the keyboard: typing the phrase must never hide the button.
         footer = {
             EnclyButton(

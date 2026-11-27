@@ -14,6 +14,7 @@ import com.pasich.encly.core.resources.passphrase_label
 import com.pasich.encly.platform.hostString
 import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.screen.pincode.PassphraseStep
 import com.pasich.encly.presentation.screen.pincode.PassphraseStepActions
 import com.pasich.encly.presentation.screen.pincode.PassphraseStepStyle
@@ -64,7 +65,12 @@ internal fun PassphraseLockContent(
         ),
         input = form.passphrase,
         actions = PassphraseStepActions(onSubmit = submit, onEdit = form::onPassphraseEdited),
-        style = PassphraseStepStyle(enabled = !form.lockedOut && !busy, busy = busy, compact = false),
+        style = PassphraseStepStyle(
+            enabled = !form.lockedOut && !busy,
+            busy = busy,
+            compact = false,
+            inCard = authCardApplies(),
+        ),
     ) {
         if (capabilities.recoveryAvailable) {
             EnclyTextButton(

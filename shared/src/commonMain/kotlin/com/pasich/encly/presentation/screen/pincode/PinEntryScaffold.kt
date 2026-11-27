@@ -48,6 +48,7 @@ import com.pasich.encly.presentation.designsystem.PinFit
 import com.pasich.encly.presentation.designsystem.PinKeypad
 import com.pasich.encly.presentation.designsystem.PinnedFooter
 import com.pasich.encly.presentation.designsystem.ProtectFromCapture
+import com.pasich.encly.presentation.designsystem.authSurfaceColor
 import com.pasich.encly.presentation.designsystem.pinFitFor
 import com.pasich.encly.presentation.effects.LocalUnlockReveal
 import com.pasich.encly.ui.theme.EnclyTheme
@@ -57,8 +58,8 @@ import com.pasich.encly.ui.theme.EnclyTheme
  * (PBKDF2 PIN hashing, opening the encrypted database).
  */
 @Composable
-fun AuthLoading(message: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+fun AuthLoading(message: String, modifier: Modifier = Modifier, inCard: Boolean = false) {
+    Surface(modifier = modifier.fillMaxSize(), color = authSurfaceColor(inCard)) {
         Box(modifier = Modifier.fillMaxSize().statusBarsPadding(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -102,42 +103,46 @@ fun PinEntryScaffold(
     compact: Boolean = false,
     busy: Boolean = false,
     bodyAtBottom: Boolean = false,
+    inCard: Boolean = false,
     footer: (@Composable ColumnScope.() -> Unit)? = null,
     body: @Composable ColumnScope.(fit: PinFit) -> Unit,
 ) {
     ProtectFromCapture()
     val spacing = EnclyTheme.spacing
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    val tone = when {
+        !subtitleIsError -> SubtitleTone.Normal
+        subtitleTicks -> SubtitleTone.Error
+        else -> SubtitleTone.AnnouncedError
+    }
+    Surface(
+        modifier = if (inCard) modifier.fillMaxWidth() else modifier.fillMaxSize(),
+        color = authSurfaceColor(inCard),
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = (if (inCard) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
                 // Below the status bar unless a parent (a top bar's Scaffold, a Column that
                 // pads it) already consumed that inset.
                 .statusBarsPadding()
                 .imePadding()
                 .navigationBarsPadding(),
         ) {
-            BoxWithConstraints(modifier = Modifier.weight(1f)) {
-                val fit = remember(maxHeight) { pinFitFor(maxHeight) }
+            BoxWithConstraints(modifier = if (inCard) Modifier.weight(1f, fill = false) else Modifier.weight(1f)) {
+                val fit = remember(maxHeight, inCard) { if (inCard) PinFit.Full else pinFitFor(maxHeight) }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     // At least the screen high, so the header stays on top and the body (the keypad)
-                    // sits on the bottom edge, within a thumb's reach; a short screen scrolls.
+                    // sits on the bottom edge, within a thumb's reach; a short screen scrolls. In a card the
+                    // page is as high as its content, and the action under it follows the form closely.
                     verticalArrangement = if (bodyAtBottom) Arrangement.SpaceBetween else Arrangement.Top,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = maxHeight)
+                        .then(if (inCard) Modifier else Modifier.heightIn(min = maxHeight))
                         .verticalScroll(rememberScrollState())
                         .padding(
-                            top = lerp(spacing.xs, if (compact) spacing.l else spacing.lockTop, fit.fraction),
+                            top = lerp(spacing.xs, if (compact || inCard) spacing.l else spacing.lockTop, fit.fraction),
                             bottom = lerp(spacing.xs, spacing.l, fit.fraction),
                         ),
                 ) {
-                    val tone = when {
-                        !subtitleIsError -> SubtitleTone.Normal
-                        subtitleTicks -> SubtitleTone.Error
-                        else -> SubtitleTone.AnnouncedError
-                    }
                     PinEntryHeader(HeaderText(title, subtitle, tone), icon, busy, fit)
                     body(fit)
                 }
