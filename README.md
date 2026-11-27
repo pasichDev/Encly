@@ -6,13 +6,12 @@
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-7F52FF?logo=kotlin&logoColor=white)](#project-structure)
 [![Translation status](https://hosted.weblate.org/widget/encly/svg-badge.svg)](https://hosted.weblate.org/engage/encly/)
 
-**Offline encrypted notes and tasks for Android and Linux.**
+**Offline encrypted notes and tasks for Android.**
 
 Encly keeps notes and tasks encrypted on-device. There is no account, sync, telemetry,
 notification pipeline, share sheet, or network access. Access is protected by a mandatory app
-PIN (a passphrase on the computer) and, on the phone, optionally by strong biometrics. The only
-ways data leaves the device are an encrypted backup and, only when you ask for it, a readable
-Markdown export that is not encrypted.
+PIN and, optionally, strong biometrics. The only ways data leaves the phone are an encrypted
+backup and, only when you ask for it, a readable Markdown export that is not encrypted.
 
 [![Support Encly on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/pasichdev)
 
@@ -31,7 +30,7 @@ All eight, with captions in every store language, are in
 ## Platforms
 
 [![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?logo=android&logoColor=white)](#install)
-[![Linux](https://img.shields.io/badge/Linux-.deb%20%C2%B7%20Flatpak-FCC624?logo=linux&logoColor=black)](#install)
+[![Linux](https://img.shields.io/badge/Linux-in%20development-lightgrey?logo=linux&logoColor=white)](https://github.com/pasichDev/Encly/issues/85)
 [![Windows](https://img.shields.io/badge/Windows-in%20development-lightgrey)](https://github.com/pasichDev/Encly/issues/106)
 [![macOS](https://img.shields.io/badge/macOS-in%20development-lightgrey?logo=apple&logoColor=white)](https://github.com/pasichDev/Encly/issues/106)
 [![iOS](https://img.shields.io/badge/iOS-in%20development-lightgrey?logo=apple&logoColor=white)](https://github.com/pasichDev/Encly/issues/107)
@@ -39,7 +38,7 @@ All eight, with captions in every store language, are in
 | Platform | Status | Where |
 |---|---|---|
 | **Android** 8.0+ (API 26) | released | [Google Play](https://play.google.com/store/apps/details?id=com.pasich.encly), [F-Droid](https://f-droid.org/packages/com.pasich.encly/), [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest) |
-| **Linux** (x86-64) | released | `.deb` and Flatpak bundle on [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest) |
+| **Linux** (x86-64) | in development | builds in CI, not published ([#85](https://github.com/pasichDev/Encly/issues/85)) |
 | **Windows** | in development | builds in CI, not published ([#106](https://github.com/pasichDev/Encly/issues/106)) |
 | **macOS** | in development | builds in CI, not published ([#106](https://github.com/pasichDev/Encly/issues/106)) |
 | **iOS** | in development | not published ([#107](https://github.com/pasichDev/Encly/issues/107)) |
@@ -60,18 +59,17 @@ the `play` build has no in-app donation link, by Google Play policy.
 ## Features
 
 - 🔒 **Encrypted at rest** — Room on SQLCipher with a random 256-bit database key.
-- 🔐 **Mandatory lock** — on Android, a PIN of 6 to 12 digits bound to the phone's Android Keystore, plus optional
-  Class 3 biometric unlock. On Linux, a passphrase of 12 to 128 characters, stretched with Argon2id and mixed with a
-  secret kept in the system keyring.
+- 🔐 **Mandatory lock** — a PIN of 6 to 12 digits bound to the phone's Android Keystore, plus optional
+  Class 3 biometric unlock.
 - ⏱️ **Auto-lock** — the database closes and its key is wiped after you leave the app
   (immediately up to 30 minutes, 15 s by default) and at once when the screen turns off.
-- 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN or passphrase.
+- 🔑 **Optional BIP39 recovery phrase** — 12 words that unlock the vault if you forget the PIN.
 - 💾 **Encrypted backups** — one file, sealed with the recovery phrase, saved wherever you choose.
 - 📝 **Markdown export** — one note as `.md`, or everything as a `.zip`, after a warning that the
-  file is not encrypted and a PIN (or passphrase) check. Saved through the system save dialog, never shared.
+  file is not encrypted and a PIN check. Saved through the system save dialog, never shared.
 - 📌 **Organize** — pin, archive and colour notes, with configurable swipe actions on the cards.
-- 🚨 **Wipe PIN and duress PIN** — optional PINs (on Linux, passphrases) that erase the vault or open a decoy
-  one, for when you are forced to unlock.
+- 🚨 **Wipe PIN and duress PIN** — optional PINs that erase the vault or open a decoy one, for
+  when you are forced to unlock.
 - 🧩 **Block editor** — text, headings, quotes, checklists, nested lists, tables, code blocks,
   links, separators; select across blocks, find in note, and a toolbar you arrange yourself.
 - 🏷️ **Tags & tasks** — local organization: several tags per note, tasks with priorities and
@@ -127,26 +125,10 @@ exported backup: uninstalling deletes the vault.
 
 Requires Android 8.0 (API 26) or newer. Google Play Services are not needed.
 
-### Linux
-
-Download from [GitHub Releases](https://github.com/pasichDev/Encly/releases/latest) and verify the
-file (below) before installing.
-
-```bash
-sudo apt install ./encly_*.deb             # Debian 12+, Ubuntu 22.04+ and derivatives
-flatpak install --user ./encly-*.flatpak   # any distribution with Flatpak
-```
-
-The Flatpak has no network and no file-system permission; it talks to the Secret Service (GNOME
-Keyring, KWallet, KeePassXC) for the device half of the vault key, so one of them must be running; Encly checks it when
-onboarding starts and asks it to unlock or create its keyring in its own dialog. Encly needs an X11 display (XWayland on
-a Wayland session): without one it writes an error to stderr, sends a desktop notification and exits. Links open through
-the desktop portal, then `xdg-open` (outside a sandbox only). On Linux
-the vault is unlocked with a passphrase instead of a PIN: see
-[SECURITY.md](SECURITY.md#desktop).
-
-The Windows, macOS and iOS apps are in the repository and build in CI, but they are **not
-published and not supported yet** ([#106](https://github.com/pasichDev/Encly/issues/106),
+Android is the only platform Encly is released for. The repository also holds a desktop app
+(Linux, Windows, macOS) and an iOS app; they build, but they are **not published and not
+supported yet** ([#85](https://github.com/pasichDev/Encly/issues/85),
+[#106](https://github.com/pasichDev/Encly/issues/106),
 [#107](https://github.com/pasichDev/Encly/issues/107)).
 
 ## Verify a release
@@ -169,14 +151,6 @@ Any other certificate means the APK is not an official Encly build.
 
 The release workflow refuses to publish an APK that is not signed with this certificate.
 
-**Linux.** The `.deb` and the Flatpak bundle are listed in the same `SHA256SUMS`, so
-`sha256sum -c --ignore-missing SHA256SUMS` checks them too. They are **not code-signed**: what vouches for them is
-the checksum and a build provenance attestation on every package file of the release, which you can check with
-
-```bash
-gh attestation verify <file> --repo pasichDev/Encly
-```
-
 ## Upgrading
 
 - **From 2.x:** update in place. The vault format is v3, as it has been since 2.0, and 3.0
@@ -196,11 +170,7 @@ SQLCipher key directly from a seed or PIN:
 3. The mandatory PIN is processed with **PBKDF2-HMAC-SHA256 (600k)** and a random salt,
    and mixed (HKDF) with an HMAC from a non-exportable **Android Keystore** key (StrongBox
    when the phone has one), so PIN guesses can only run on this device. The resulting KEK
-   wraps the DEK using **AES-256-GCM**. Encly does not store a PIN hash. On Linux the secret is a passphrase
-   instead: it is stretched with **Argon2id** (64 MiB, 3 passes) and mixed the same way with a device secret
-   that lives in the system keyring (the Secret Service), which is bound to your user account, not to
-   hardware. There the vault is as strong as the passphrase, so make it long; details and limits in
-   [SECURITY.md](SECURITY.md#desktop).
+   wraps the DEK using **AES-256-GCM**. Encly does not store a PIN hash.
 4. If biometrics are enabled, the same DEK gets a second AES-GCM slot protected by an
    auth-per-use AndroidKeyStore key. Unwrapping requires
    `BiometricPrompt.CryptoObject` with `BIOMETRIC_STRONG`.
@@ -212,8 +182,7 @@ SQLCipher key directly from a seed or PIN:
    DEK copy is zeroized. The next entry must unwrap the DEK again.
 
 Skipping the recovery phrase leaves the vault with **no recovery seed** and no backups.
-Losing the PIN (or, on Linux, the passphrase or the keyring's secret) in that case makes the encrypted
-database unrecoverable.
+Losing the PIN in that case makes the encrypted database unrecoverable.
 
 **Erase all data** (Settings → Security, in the danger zone: hold the button for 5 s, confirm,
 then enter the PIN or use the fingerprint) deletes the database, every key slot and Encly's
@@ -235,8 +204,7 @@ See [SECURITY.md](SECURITY.md) for the threat model and reporting process, and t
 ## Tech stack
 
 Kotlin Multiplatform · Compose Multiplatform · Material 3 · Metro · Room (KMP) · SQLCipher
-through the Sealite driver · Coroutines · kotlinx.serialization · BIP39 (own implementation) · Argon2id on the
-desktop (Bouncy Castle)
+through the Sealite driver · Coroutines · kotlinx.serialization · BIP39 (own implementation)
 
 Clean architecture: `presentation` → `domain` → `data`, with `core/security`
 coordinating the key vault.
@@ -255,7 +223,7 @@ is a thin host around it. Details in [docs/architecture.md](docs/architecture.md
 | `core:database` | Room and the encrypted database (SQLCipher through Sealite), with the exported schemas. |
 | `core:keystore` | The desktop's OS secret store for the vault's device key, and the desktop's unlock secret (a passphrase stretched with Argon2id). |
 | `core:resources` | Every user-visible string (`src/commonMain/strings/values*/`) and the translations. |
-| `desktopApp`, `iosApp` | The desktop (Linux released; Windows and macOS not published) and iOS (not released) hosts. |
+| `desktopApp`, `iosApp` | The desktop (Windows, macOS, Linux) and iOS hosts. Not released. |
 | `build-logic` | Gradle convention plugins. |
 
 ## Build
@@ -303,7 +271,7 @@ links, no baseline profile) and `play`.
 Outputs: `app/build/outputs/apk/<flavor>/<buildType>/`, and the bundle in
 `app/build/outputs/bundle/playRelease/`. Releasing: [CONTRIBUTING.md → Releasing](CONTRIBUTING.md#releasing).
 
-The desktop and iOS targets build too; only Android and Linux are released: `./gradlew :desktopApp:run`
+The desktop and iOS targets build too, but only Android is released: `./gradlew :desktopApp:run`
 starts the desktop app ([desktopApp/README.md](desktopApp/README.md)), and the iOS app is built
 from Xcode on a Mac ([iosApp/README.md](iosApp/README.md)).
 
@@ -349,7 +317,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md#releasing).
 - [Changelog](CHANGELOG.md)
 - [Architecture](docs/architecture.md)
 - [iOS app](iosApp/README.md) (not released yet)
-- [Desktop app](desktopApp/README.md) (Linux released; Windows and macOS not published: run, package, data location, security notes)
+- [Desktop app](desktopApp/README.md) (Windows, macOS, Linux: run, package, data location, security notes; not released yet)
 
 ## Contributing
 

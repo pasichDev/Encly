@@ -1,7 +1,8 @@
 # :desktopApp
 
-Encly for Windows, macOS and Linux: Compose Multiplatform on the JVM around `:shared`. Linux is released (a `.deb` and a
-Flatpak bundle on GitHub Releases); Windows and macOS are in the repository, not published. It has the same
+Encly for Windows, macOS and Linux: Compose Multiplatform on the JVM around `:shared`. None of it is released yet: Encly 3.1.0 is for
+Android only, and the Linux packages (a `.deb` and a Flatpak bundle), Windows and macOS are built by CI or from source,
+not published. It has the same
 vault format, recovery slot and encrypted database as the Android app, but it is unlocked with a passphrase instead of
 a PIN (see "Using the Linux package"). It is the counterpart of `:app`: its own dependency graph, its own
 implementations of the platform interfaces, and a window.
@@ -20,7 +21,8 @@ the signing secrets exist, unsigned otherwise (see "Signing the desktop installe
 
 ## Using the Linux package
 
-The details and the limits are in [SECURITY.md](../SECURITY.md#desktop); this is what you need to know to use it.
+Not released yet: there is no download. Build the package or run the app from source (see below). The details and the
+limits are in [SECURITY.md](../SECURITY.md#desktop); this is how the Linux app behaves.
 
 - **A passphrase, not a PIN.** It is 12 to 128 characters, not only digits, with at least 5 different characters, in any
   language. Wherever a new passphrase is chosen, *Suggest a passphrase* is offered: five random words from the recovery-phrase word list (55 bits), shown in
@@ -260,25 +262,23 @@ after `packageDeb` in `release.yml` and `android.yml`, before the file is upload
 `./gradlew :desktopApp:packageDeb` is not patched unless you run
 `desktopApp/packaging/deb/harden-postinst.sh --in-place <file.deb>` on it (needs `dpkg-deb` and `fakeroot`).
 
-### Releasing the Linux packages
+### The Linux packages (not released)
 
-A `v*` tag builds the `.deb` and the Flatpak bundle (`release.yml`, jobs `linux-deb`, `linux-flatpak` and `linux-verify`:
-clean machines install the `.deb` (every Ubuntu LTS runner image, Debian 12 and 13 in containers) and the bundle and check
-the files, the metadata, the sandbox permissions and the licence files; the window is not opened; the same checks run on
-every pull request, `.github/workflows/_verify-linux.yml`) and attaches them to the GitHub Release of the tag next to the APKs. They are in the one `SHA256SUMS` (and
-`SHA256SUMS.asc`, which exists only when the GPG secrets are configured) and each package file has a build-provenance attestation (`gh attestation verify <file> --repo pasichDev/Encly`).
-They are not code-signed. The MSI and the DMG are not attached to a release (they are unsigned).
+The desktop app is **not released**: Encly 3.1.0 is published for Android only, and no `.deb` or Flatpak bundle is on
+GitHub Releases. The packages are built by CI and from source. `release.yml` builds them only on a manual run (Actions,
+Release, Run workflow, with an existing tag; jobs `linux-deb`, `linux-flatpak` and `linux-verify`), and a pushed tag builds
+Android alone. `android.yml` builds and checks them on every pull request: clean machines install the `.deb` (every Ubuntu
+LTS runner image, Debian 12 and 13 in containers) and the bundle and check the files, the metadata, the sandbox
+permissions and the licence files; the window is not opened (`.github/workflows/_verify-linux.yml`). If they are published
+later, they will be in the Release's one `SHA256SUMS` (and `SHA256SUMS.asc`, which exists only when the GPG secrets are
+configured), each with a build-provenance attestation; they are not code-signed. The MSI and the DMG are never attached to
+a release (they are unsigned).
 
 The `.deb` is built on Ubuntu 22.04, on purpose: jpackage writes the package's `Depends:` from the machine it runs on, and a
 build on Ubuntu 24.04 or later names `libasound2t64`, `libpng16-16t64` and the like, which Ubuntu 22.04 and Debian 12 do not
 have. The pre-t64 names that a 22.04 build gives are also satisfied by the newer systems (their t64 packages `Provide` them,
 checked in the Ubuntu noble and Debian trixie package indexes). The verify script fails a `.deb` whose `Depends:` has a t64
-name. Expected to install on: Ubuntu 22.04 LTS and later, Debian 12 and later; older systems are not tested.
-
-If the Linux build or its check fails, the Android files are published without them. To add the Linux files to that Release
-afterwards (or to replace them), run the **Release** workflow by hand (Actions, Release, Run workflow) with the tag, for
-example `v3.1.0`: it builds and checks only the Linux packages and adds them to the existing Release, and it never builds
-Android and never publishes to Google Play.
+name. A package built this way is expected to install on Ubuntu 22.04 LTS and later and Debian 12 and later; older systems are not tested.
 
 ## No network
 

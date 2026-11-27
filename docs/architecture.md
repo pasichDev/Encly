@@ -1,7 +1,7 @@
 # Architecture
 
-Encly is a local-first application, released for Android and Linux. The code is Kotlin Multiplatform: the desktop
-app (`:desktopApp`, released on Linux as a `.deb` and a Flatpak bundle; Windows and macOS are in the repository, not published)
+Encly is a local-first application, released for Android. The code is Kotlin Multiplatform: the desktop
+app (`:desktopApp`: Linux, Windows and macOS; in the repository and built by CI, not published or supported yet)
 and an iOS app (`iosApp`, not published or supported yet) are built from the same shared modules. This page describes
 the Android app unless it says otherwise. Its runtime direction is:
 

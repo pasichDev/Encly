@@ -4,7 +4,7 @@ Encly is a local encrypted notes application. This document describes the securi
 Encly 3.1 (vault format v3), its trust boundaries, and known limitations.
 
 The secret that unlocks the vault depends on the platform. On Android and iOS it is a numeric **PIN**. On a computer
-(Linux in 3.1.0, as a `.deb` and a Flatpak bundle; Windows and macOS are in the repository but not published) it is a **passphrase**, stretched with Argon2id. Where this document says PIN, wipe PIN or duress PIN
+(the desktop app in the repository: Linux, Windows and macOS, none of them released yet) it is a **passphrase**, stretched with Argon2id. Where this document says PIN, wipe PIN or duress PIN
 without naming a platform, it describes the phones; on a computer read passphrase, wipe passphrase and duress
 passphrase, with the rules and formats of [Desktop](#desktop). There is no biometric unlock on a computer.
 
@@ -130,8 +130,11 @@ PIN mixed in after the agreement gives a per-slot constant that one capture turn
 
 ### Desktop
 
-Linux is the desktop platform released in 3.1.0 (a `.deb` and a Flatpak bundle). Windows and macOS are in the
-repository and not published. On a computer the vault is unlocked with a **passphrase**, not a PIN, and the passphrase
+**The desktop app is not released: Encly 3.1.0 is published for Android only. This section describes the code as it is;
+nothing here is a promise about a build that anyone can download. The Linux packages (a `.deb` and a Flatpak bundle)
+are built by CI and from source, and Windows and macOS are in the repository too, none of them published.**
+
+On a computer the vault is unlocked with a **passphrase**, not a PIN, and the passphrase
 is stretched with **Argon2id** instead of PBKDF2. Android and iOS are unchanged: the PIN, PBKDF2-HMAC-SHA256 with
 600,000 iterations and slot version 3 stay byte for byte as described above.
 
@@ -287,7 +290,7 @@ What no passphrase stops:
 
 - malware running as the user while the vault is open (it can read the open database and the process's memory, and act as
   Encly), or at any time (it can read the secret store and the files);
-- a keylogger. The Flatpak and the `.deb` both run the bundled Java runtime through X11 (XWayland on a Wayland session),
+- a keylogger. The Flatpak and the `.deb` (built by CI, not published) both run the bundled Java runtime through X11 (XWayland on a Wayland session),
   where any client of the session can read keystrokes, so the sandbox does not help against one;
 - screen capture: Linux has no call to exclude a window from it;
 - a screen locker that the session does not report: the app sees logind's `Lock`, `PrepareForSleep` and `LockedHint` and
@@ -1131,11 +1134,9 @@ published in the README. Android refuses to update an install with an APK signed
 certificate, so a mismatch shows up as a failed update rather than a silent replacement; never
 uninstall to "fix" it without an exported backup, because uninstalling deletes the vault.
 
-The Linux packages (the `.deb` and the Flatpak bundle, on GitHub Releases only) are **not code-signed**. They are
-vouched for by `SHA256SUMS`, which is GPG-signed as `SHA256SUMS.asc` only when the maintainer's key is configured for the
-release, and by a build provenance attestation on every package file (the two checksum files themselves are not
-attested). To verify: `sha256sum -c --ignore-missing SHA256SUMS`, and `gh attestation verify <file> --repo
-pasichDev/Encly` (see the [README](README.md#verify-a-release)). A package that does not match is not an official build.
+The Linux packages (the `.deb` and the Flatpak bundle) are not released with 3.1.0 and are not on GitHub Releases;
+CI builds them (and checks them with `desktopApp/packaging/verify-linux-packages.sh`) and they can be built from source.
+When they are published, how to verify them will be described here and in the [README](README.md#verify-a-release).
 
 ## Supported versions
 
@@ -1147,7 +1148,7 @@ pasichDev/Encly` (see the [README](README.md#verify-a-release)). A package that 
 | 1.x (≤ 1.1.1, versionCode ≤ 30) | v1 (seed-derived SQLCipher key, 4-digit PIN) | ❌ no; not migrated, uninstall and install 3.0 |
 
 Reports should include the exact app version (About screen), where it was installed from, and
-the Android version or the Linux distribution and package (`.deb` or Flatpak).
+the Android version (or, for the desktop app built from source, the Linux distribution).
 
 ## Reporting a vulnerability
 
@@ -1157,8 +1158,8 @@ exploit details.
 - Preferred: [GitHub private vulnerability reporting](https://github.com/pasichDev/Encly/security/advisories/new).
 - Email: **pasichdev@outlook.com** (subject starting with `[Encly security]`).
 
-Include the app version, the Android version and device (or the Linux distribution, desktop environment and package
-type, `.deb` or Flatpak), the steps to reproduce, and the impact you
+Include the app version, the Android version and device (or, for the desktop app built from source, the Linux distribution
+and desktop environment), the steps to reproduce, and the impact you
 expect. **Never send real seed words, PINs, passphrases or note content**; a test vault is enough.
 Please allow reasonable time for a fix before public disclosure. Reporters are credited in the
 release notes unless they prefer otherwise.
