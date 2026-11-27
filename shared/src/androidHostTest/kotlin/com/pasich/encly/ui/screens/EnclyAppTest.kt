@@ -1,9 +1,14 @@
 package com.pasich.encly.ui.screens
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.withKeyDown
 import androidx.lifecycle.ViewModel
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.empty_notes
@@ -11,8 +16,10 @@ import com.pasich.encly.core.resources.lock_title
 import com.pasich.encly.core.resources.main_drawer_settings
 import com.pasich.encly.core.resources.note_add
 import com.pasich.encly.core.resources.note_title_placeholder
+import com.pasich.encly.core.resources.recovery_choice_title
 import com.pasich.encly.core.resources.settings_language
 import com.pasich.encly.core.security.InitialStatus
+import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.presentation.navigation.EnclyApp
 import com.pasich.encly.presentation.viewmodel.ThemeViewModel
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
@@ -35,8 +42,9 @@ class EnclyAppTest : ComposeScreenTest() {
             viewModels.associate { it::class to { it } }
     }
 
-    private fun show(status: InitialStatus?, unlocked: Boolean = true) {
+    private fun show(status: InitialStatus?, unlocked: Boolean = true, recovery: RecoveryStage = RecoveryStage.NONE) {
         `when`(app.security.isDatabaseUnlocked()).thenReturn(unlocked)
+        `when`(app.security.recoveryStage()).thenReturn(recovery)
         `when`(app.security.hasRecoverySeed()).thenReturn(true)
         val factory =
             Prebuilt(ThemeViewModel(app.settings), app.lock(), app.editor(), app.markdownExport(), *app.home())
@@ -60,6 +68,28 @@ class EnclyAppTest : ComposeScreenTest() {
 
         waitFor { onHome() }
         assertEquals(0, countText(str(Res.string.lock_title)))
+    }
+
+    @Test
+    fun anOpenVaultThatStillOwesTheRecoveryChoiceStartsOnTheChoiceNotOnHome() {
+        // A second window of the desktop opened after another one unlocked with the recovery phrase.
+        show(InitialStatus.MAIN, recovery = RecoveryStage.CHOOSE)
+
+        waitForText(str(Res.string.recovery_choice_title))
+        assertEquals(0, countText(str(Res.string.empty_notes)))
+    }
+
+    @Test
+    fun aKeyboardCommandCannotLeaveTheRecoveryChoice() {
+        show(InitialStatus.MAIN, recovery = RecoveryStage.CHOOSE)
+        waitForText(str(Res.string.recovery_choice_title))
+
+        // Ctrl+N would start a note, which leaves the screen that must be answered first.
+        rule.onRoot().performKeyInput { withKeyDown(Key.CtrlLeft) { pressKey(Key.N) } }
+        rule.waitForIdle()
+
+        assertEquals(0, countText(str(Res.string.note_title_placeholder)))
+        assertEquals(1, countText(str(Res.string.recovery_choice_title)))
     }
 
     @Test

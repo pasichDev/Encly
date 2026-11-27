@@ -1,0 +1,6 @@
+Encly 3.1.0
+• PIN di coercizione: la cassaforte esca ha un proprio timer del cestino e la stessa pausa prima di cambiare i PIN.
+• Editor: una sola coppia di maniglie dopo «Seleziona tutto», Copia dalla tastiera prende tutta la selezione, meno spazio sopra le tabelle.
+• Liste: il pulsante di blocco resta a portata; la nota scorre mentre trascini una voce.
+• La schermata di blocco entra nello schermo diviso.
+• L'importazione di file grandi usa meno memoria.

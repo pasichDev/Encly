@@ -9,6 +9,7 @@ import com.pasich.encly.core.resources.backup_export_done
 import com.pasich.encly.core.resources.backup_phrase_added
 import com.pasich.encly.core.resources.backup_phrase_check_wrong
 import com.pasich.encly.core.security.Mnemonic
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.RecoveryWords
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
@@ -72,7 +73,9 @@ class BackupFlowsTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
-        `when`(security.verifyPin(anyCharArray())).thenAnswer { String(it.getArgument<CharArray>(0)) == PIN }
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
+            if (String(it.getArgument<CharArray>(0)) == PIN) PinCheck.OK else PinCheck.WRONG
+        }
         `when`(security.hasRecoverySeed()).thenReturn(true)
         `when`(security.hasBackupKey()).thenReturn(true)
         // A fresh copy per call: createBackup wipes the key it was handed.

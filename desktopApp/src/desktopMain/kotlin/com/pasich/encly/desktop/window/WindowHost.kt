@@ -295,7 +295,13 @@ private fun ApplicationScope.EnclyWindow(
         val appWindow = remember(composeWindow) {
             DesktopAppWindow(environment.captureExclusion, windowProvider = { composeWindow })
         }
-        Box(Modifier.fillMaxSize().dropFiles(session.services.dropRouter::drop)) {
+        val dropScope = rememberCoroutineScope()
+        val dropped = { files: List<Path> ->
+            session.services.dropWhenUnlocked(graph.sessionLockManager.locked, dropScope, files) {
+                delay(FIRST_FRAME_MILLIS)
+            }
+        }
+        Box(Modifier.fillMaxSize().dropFiles(dropped)) {
             DesktopApp(graph, appWindow, shortcuts = shortcuts, services = session.services)
         }
     }

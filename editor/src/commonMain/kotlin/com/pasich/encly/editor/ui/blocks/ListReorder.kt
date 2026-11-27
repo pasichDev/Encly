@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -59,6 +61,7 @@ import com.pasich.encly.editor.model.siblingOffsetAt
 import com.pasich.encly.editor.model.siblingStarts
 import com.pasich.encly.editor.model.subtreeEnd
 import com.pasich.encly.editor.theme.LocalEditorTheme
+import com.pasich.encly.editor.ui.RangeDrag
 
 // Reordering and nesting list items by hand: the drag handle at the end of an item, TalkBack's actions on it, and the
 // keys that indent, outdent and move the item the cursor is in.
@@ -176,6 +179,9 @@ internal class ListDrag(private val rows: () -> List<ItemListBlock>) {
     private val tops = mutableMapOf<String, Float>()
     private val bottoms = mutableMapOf<String, Float>()
 
+    /** What scrolls the note while the item is held near the edge of its list; null where the note cannot scroll. */
+    var scroll: RangeDrag? = null
+
     /** Records where row [id] sits in the list, from its top to its bottom. */
     fun place(id: String, top: Float, bottom: Float) {
         tops[id] = top
@@ -193,6 +199,17 @@ internal class ListDrag(private val rows: () -> List<ItemListBlock>) {
 
     fun by(dy: Float) {
         offset += dy
+    }
+
+    /**
+     * The pointer of the drag is at [root] in the window: held near the top or bottom of the list it makes the note
+     * scroll, and the item goes with the note, so it stays under the pointer.
+     */
+    fun holdAt(root: Offset) {
+        val scroll = scroll ?: return
+        scroll.update = {}
+        scroll.onScroll = ::by
+        scroll.pointer = root
     }
 
     /** How many places among its siblings the dragged item is now over: negative is up. */
@@ -222,6 +239,10 @@ internal class ListDrag(private val rows: () -> List<ItemListBlock>) {
     }
 
     fun end() {
+        scroll?.let {
+            it.pointer = null
+            it.onScroll = {}
+        }
         itemId = null
         moving = emptySet()
         offset = 0f
@@ -294,6 +315,14 @@ internal fun RowScope.ItemHandle(
     )
 }
 
+/** Where a handle is in the window, for the position of a pointer that drags it. */
+private class HandlePlace {
+    var coordinates: LayoutCoordinates? = null
+
+    /** The window position of [local], a position in the handle; null while the handle is not placed. */
+    fun rootOf(local: Offset): Offset? = coordinates?.takeIf { it.isAttached }?.localToRoot(local)
+}
+
 /** How a handle looks: whether it is [visible], its [label] and size. */
 internal class HandleSpec(val visible: Boolean, val label: String, val height: Dp, val topPadding: Dp)
 
@@ -313,6 +342,7 @@ internal fun ItemDragHandle(
 ) {
     val haptics = LocalHapticFeedback.current
     val currentDrop by rememberUpdatedState(onDrop)
+    val handle = remember { HandlePlace() }
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -321,6 +351,7 @@ internal fun ItemDragHandle(
             .height(spec.height)
             .pointerHoverIcon(PointerIcon.Hand)
             .testTag(ITEM_HANDLE_TAG)
+            .onGloballyPositioned { handle.coordinates = it }
             .semantics {
                 contentDescription = spec.label
                 semantics()
@@ -338,12 +369,18 @@ internal fun ItemDragHandle(
                         drag.begin(itemId)
                         // A mouse has already moved past the slop by now; the item goes with it.
                         drag.by(start.position.y - down.position.y)
-                        val finished = drag(start.id) { change ->
-                            drag.by(change.positionChange().y)
-                            change.consume()
+                        var places = 0
+                        try {
+                            handle.rootOf(start.position)?.let(drag::holdAt)
+                            val finished = drag(start.id) { change ->
+                                drag.by(change.positionChange().y)
+                                handle.rootOf(change.position)?.let(drag::holdAt)
+                                change.consume()
+                            }
+                            places = if (finished) drag.placesMoved() else 0
+                        } finally {
+                            drag.end()
                         }
-                        val places = if (finished) drag.placesMoved() else 0
-                        drag.end()
                         if (places != 0) currentDrop(places)
                     }
                 }

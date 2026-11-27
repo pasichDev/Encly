@@ -5,6 +5,7 @@ import com.pasich.encly.core.di.ApplicationScope
 import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.AutoLockPolicy
 import com.pasich.encly.core.security.HandoffStagingSweeper
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.desktop.platform.ClipboardWiper
@@ -32,8 +33,12 @@ import kotlinx.coroutines.CoroutineScope
  * Unlike Android, the desktop creates every object itself, so the entry points are plain accessors: the
  * window host reads what it needs from here once. What belongs to one window (its menu requests, dropped files
  * and file dialogs) is not here but in `WindowServices`: the graph is the process's, shared by every window.
+ *
+ * The desktop unlocks with a password, not the PIN: the PIN policy that `:core:security` contributes to [AppScope]
+ * (and that Android and iOS use as it is) is excluded here, and [DesktopPlatformModule] binds the environment's
+ * policy in its place.
  */
-@DependencyGraph(AppScope::class)
+@DependencyGraph(AppScope::class, excludes = [PinSecretPolicy::class])
 interface DesktopAppGraph : ViewModelGraph {
     val securityManager: SecurityManager
     val sessionLockManager: SessionLockManager

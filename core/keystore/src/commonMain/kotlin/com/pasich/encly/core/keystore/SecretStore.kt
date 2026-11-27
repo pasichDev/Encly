@@ -1,5 +1,6 @@
 package com.pasich.encly.core.keystore
 
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinKeySlot
 
 /**
@@ -25,6 +26,24 @@ internal interface SecretStore {
     @Throws(SecretStoreException::class)
     fun delete(slot: PinKeySlot)
 
+    /**
+     * Whether [read] returning null proves the secret is gone for good. True where the store is the one place the
+     * secret can be (a Windows file, the macOS login Keychain); false where "not found" may only mean that this is not
+     * the store that holds it (the freedesktop Secret Service: another provider owns the bus, a closed database, a data
+     * folder reached by another path).
+     */
+    val missingMeansLost: Boolean get() = true
+
+    /**
+     * Gets the store ready for [create] and [read]: running, unlocked, with a place to keep the secret, asking the user
+     * through the system's own prompt where it has one. Creates no secret. Nothing to do by default.
+     */
+    @Throws(SecretStoreException::class)
+    fun prepare() = Unit
+
+    /** Ends a wait on the user that [prepare], [read] or [create] is in (a system prompt). Any thread. */
+    fun abandonPending() = Unit
+
     companion object {
         const val SECRET_SIZE = 32
     }
@@ -45,5 +64,10 @@ internal const val APPLICATION_ID = "com.pasich.encly"
  * DPAPI blob that no longer decrypts); a missing entry is not an error (read returns null) and a store that
  * is merely unavailable or locked is not lost.
  */
-internal class SecretStoreException(val lost: Boolean, message: String, cause: Throwable? = null) :
-    Exception(message, cause)
+internal class SecretStoreException(
+    val lost: Boolean,
+    message: String,
+    cause: Throwable? = null,
+    /** What an unavailable store is missing, for the message; null where that is not known. */
+    val problem: KeyStoreProblem? = null,
+) : Exception(message, cause)

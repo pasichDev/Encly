@@ -110,7 +110,7 @@
 
     <string name="falied_content">تعذّر تحميل المحتوى</string>
 
-    <string name="faq_background_a">يحفظ Encly تغييراتك، وبعد المهلة المحددة في الإعدادات ← الأمان (15 ثانية افتراضيًا) يغلق قاعدة البيانات المشفرة ويمحو مفتاح الجلسة. وإطفاء الشاشة أو قفل الهاتف يفعل ذلك فورًا. بعدها تفتح القفل من جديد.</string>
+    <string name="faq_background_a">يحفظ Encly تغييراتك، وبعد المهلة المحددة في الإعدادات ← الأمان (15 ثانية افتراضيًا) يغلق قاعدة البيانات المشفرة ويمحو مفتاح الجلسة. وإطفاء الشاشة أو قفل الجهاز يفعل ذلك فورًا. بعدها تفتح القفل من جديد.</string>
     <string name="faq_background_q">ماذا يحدث عند مغادرة التطبيق؟</string>
     <string name="faq_biometrics_a">استخدم مفتاح القياسات الحيوية في الإعدادات ← الأمان. يتطلب إنشاء خانة القياسات الحيوية أو إزالتها مصادقة قوية بالقياسات الحيوية.</string>
     <string name="faq_biometrics_q">كيف أُشغّل القياسات الحيوية أو أوقفها؟</string>
@@ -354,7 +354,7 @@
     <string name="backup_settings_subtitle">نسخ احتياطي مشفر، واستيراد، وMarkdown</string>
     <string name="backup_title">النسخ الاحتياطي</string>
     <string name="backup_intro_title">مشفرة بعبارة الاسترداد</string>
-    <string name="backup_intro_body">تحتوي النسخة الاحتياطية على كل ملاحظاتك ومهامك ووسومك، مشفرة بعبارة الاسترداد المكونة من 12 كلمة. لا يرفعها Encly أبدًا: أنت من يختار مكان حفظ الملف. وعلى هاتف جديد تستعيدها الكلمات الـ12 نفسها.</string>
+    <string name="backup_intro_body">تحتوي النسخة الاحتياطية على كل ملاحظاتك ومهامك ووسومك، مشفرة بعبارة الاسترداد المكونة من 12 كلمة. لا يرفعها Encly أبدًا: أنت من يختار مكان حفظ الملف. وعلى جهاز جديد تستعيدها الكلمات الـ12 نفسها.</string>
     <string name="backup_last_export">آخر تصدير: %1$s</string>
     <string name="backup_never_exported">لم تُصدَّر أي نسخة احتياطية بعد</string>
     <string name="backup_export">تصدير نسخة احتياطية</string>
@@ -441,7 +441,7 @@
     <string name="pin_unlock_with_fingerprint">فتح القفل ببصمة الإصبع</string>
     <string name="onboarding_step_of">الخطوة %1$d من %2$d</string>
     <string name="onboarding_welcome_headline">دفتر ملاحظات لا يفتحه غيرك.</string>
-    <string name="onboarding_welcome_sub">ملاحظات ومهام مشفرة على هذا الهاتف. يستغرق الإعداد دقيقة تقريبًا.</string>
+    <string name="onboarding_welcome_sub">ملاحظات ومهام مشفرة على هذا الجهاز. يستغرق الإعداد دقيقة تقريبًا.</string>
     <string name="onboarding_fact_account_title">بلا حساب</string>
     <string name="onboarding_fact_account_desc">بلا تسجيل ولا بريد إلكتروني ولا إعادة تعيين كلمة مرور.</string>
     <string name="onboarding_fact_offline_title">يعمل دون اتصال</string>
@@ -461,7 +461,7 @@
     <string name="onboarding_recovery_pin_desc">تفتح العبارة خزنتك وتتيح لك تعيين رمز PIN جديد.</string>
     <string name="onboarding_recovery_backups_title">تفتح نسخك الاحتياطية</string>
     <string name="onboarding_recovery_backups_desc">لا يمكن قراءة ملفات النسخ الاحتياطية المشفرة إلا بهذه الكلمات.</string>
-    <string name="onboarding_recovery_phone_title">هاتف جديد</string>
+    <string name="onboarding_recovery_phone_title">جهاز جديد</string>
     <string name="onboarding_recovery_phone_desc">ملف النسخة الاحتياطية مع العبارة يستعيدان كل ملاحظة ومهمة ووسم.</string>
     <string name="onboarding_recovery_warning">لا أحد يستطيع استرجاعها لك، ولا حتى نحن. إن فقدت رمز PIN والعبارة معًا ضاعت الملاحظات.</string>
     <string name="onboarding_recovery_create">أنشئ عبارتي</string>
@@ -496,9 +496,9 @@
     <string name="onboarding_restore_label">استعد ثم عيّن رمز PIN</string>
     <string name="onboarding_restore_intro">اختر ملف النسخة الاحتياطية من Encly، ثم أدخل الكلمات الـ12 التي أُنشئ بها.</string>
     <string name="onboarding_restore_file_section">1 · ملف النسخة الاحتياطية</string>
-    <string name="onboarding_restore_tap_other">اضغط لاختيار ملف آخر</string>
+    <string name="onboarding_restore_tap_other">اختيار ملف آخر</string>
     <string name="onboarding_restore_phrase_section">2 · عبارة الاسترداد</string>
-    <string name="onboarding_restore_phrase_helper">تصبح هذه الكلمات أيضًا عبارة الاسترداد لهذا الهاتف.</string>
+    <string name="onboarding_restore_phrase_helper">تصبح هذه الكلمات أيضًا عبارة الاسترداد لهذا الجهاز.</string>
     <string name="notes_title">الملاحظات</string>
     <string name="lock_now">اقفل الآن</string>
     <string name="search_placeholder">ابحث في العناوين والنصوص</string>
@@ -721,9 +721,10 @@
     <string name="selection_copy">نسخ</string>
     <string name="selection_count">الكتل المحددة: %1$d</string>
     <string name="selection_cut">قص</string>
+    <string name="selection_paste">لصق</string>
     <string name="selection_delete">حذف الكتل المحددة</string>
     <string name="faq_pin_length_q">ما طول رمز PIN المسموح به؟</string>
-    <string name="faq_pin_length_a">من 6 إلى 12 رقمًا بحسب اختيارك. لا تُعرض رموز أقصر: فالقفل المؤقت ومفتاح الجهاز يحدّان من عدد المحاولات، و6 أرقام هي أقصر طول يبقى آمنًا مع هذه الحدود. لا تُظهر شاشة القفل طول رمزك أبدًا: تضغط «فتح القفل» عند الانتهاء، والأمر نفسه ينطبق على رمز المسح ورمز الإكراه. تبقى الرموز التي عيّنتها سابقًا تعمل كما هي.</string>
+    <string name="faq_pin_length_a">من 6 إلى 12 رقمًا بحسب اختيارك. لا تُعرض رموز أقصر: فالقفل المؤقت ومفتاح الجهاز يحدّان من عدد المحاولات، و6 أرقام هي أقصر طول يبقى آمنًا مع هذه الحدود. لا يحتفظ Encly بطول رمزك ولا يعرضه قبل أن تكتب. تظهر النقاط واحدة لكل رقم، لذا يستطيع من يراقبك عدّها. تضغط «فتح القفل» عند الانتهاء، والأمر نفسه ينطبق على رمز المسح ورمز الإكراه. تبقى الرموز التي عيّنتها سابقًا تعمل كما هي.</string>
     <string name="block_code">كود</string>
     <string name="block_table">جدول</string>
     <string name="table_add_row">إضافة صف</string>
@@ -826,6 +827,8 @@
     <string name="security_encryption_pin_plain_nobio">ملاحظاتك مشفرة. يفتحها رمز PIN.</string>
     <string name="security_encryption_seed_plain_nobio">ملاحظاتك مشفرة. يفتحها رمز PIN، وتفتحها عبارة الاسترداد إن نسيت رمز PIN.</string>
     <string name="lock_pin_key_lost_desktop">لم يعد رمز PIN قادرًا على فتح Encly على هذا الكمبيوتر: السر المحفوظ في سلسلة مفاتيح النظام مفقود أو أُعيد تعيينه. استخدم عبارة الاسترداد، ثم عيّن رمز PIN جديدًا.</string>
+    <string name="error_keystore_unavailable_desktop">لم تستجب سلسلة مفاتيح النظام. حاول مرة أخرى، وإذا استمر الفشل فأعد تشغيلها أو سجّل الخروج ثم الدخول من جديد.</string>
+    <string name="loss_message_desktop">يبدو أن البيانات المشفرة أو مفاتيح التشفير (بما فيها السر المحفوظ في سلسلة مفاتيح النظام) قد تغيّرت أو تلفت، لذا لا يمكن الاسترداد.\n\nلمواصلة استخدام التطبيق عليك إعادة تعيينه ومسح البيانات التالفة على هذا الكمبيوتر. سيؤدي ذلك إلى حذف كل الملاحظات والإعدادات المحفوظة نهائيًا.</string>
     <string name="security_protection_slots_desc_nobio">رمز PIN وعبارة الاسترداد يفتح كل منهما خانته المشفرة الخاصة.</string>
     <string name="duress_pin_real_vault_nobio">تبقى خزنتك الحقيقية مقفلة ولا تُمسّ. وعلى خلاف رمز المسح، لا يمسح رمز الإكراه شيئًا. وتفتح عبارة الاسترداد الخزنة الحقيقية دائمًا.</string>
     <string name="security_protection_pin_title_device">رمز PIN مرتبط بهذا الجهاز</string>
@@ -839,4 +842,49 @@
     <string name="faq_swipe_a_other">افتراضيًا، سحب الملاحظة لليسار يثبّتها أو يلغي تثبيتها، وسحبها لليمين يؤرشفها. في الإعدادات ← إجراءات السحب يمكنك اختيار التثبيت أو الأرشفة أو اللون التالي أو النقل إلى سلة المحذوفات (يسأل دائمًا أولًا) أو لا شيء لكل اتجاه، أو إيقاف السحب.</string>
     <string name="faq_theme_a_other">في الإعدادات ← المظهر اختر إحدى السمات الخمس، والوضع الفاتح أو الداكن أو وضع النظام، وأحد أنماط الخطوط الثلاثة، وحجم النص.</string>
     <string name="faq_language_a_ios">افتح الإعدادات ← اللغة واختر إحدى اللغات المتاحة، أو «افتراضي النظام» لاتّباع لغة جهازك. يُطبَّق التغيير عند فتح Encly في المرة التالية.</string>
+    <!-- Passphrase wording: the twin of a PIN text, used where the unlock secret is a passphrase (desktop). -->
+    <string name="lock_passphrase_subtitle">أدخل كلمة المرور للمتابعة</string>
+    <string name="lock_wrong_passphrase">كلمة المرور خاطئة</string>
+    <string name="lock_back_to_passphrase">العودة إلى كلمة المرور</string>
+    <string name="backup_reauth_passphrase_subtitle">أدخل كلمة المرور للمتابعة</string>
+    <string name="passphrase_change_current_title">أدخل كلمة المرور الحالية</string>
+    <string name="passphrase_change_current_subtitle">أكّد كلمة المرور الحالية قبل تغييرها</string>
+    <string name="passphrase_create_title">أنشئ كلمة مرور</string>
+    <string name="passphrase_change_new_subtitle">من 12 إلى 128 حرفًا، وليست أرقامًا فقط</string>
+    <string name="passphrase_change_confirm_title">أكّد كلمة المرور</string>
+    <string name="passphrase_change_confirm_subtitle">أدخل كلمة المرور مرة أخرى للتأكيد</string>
+    <string name="passphrase_changed">تم تغيير كلمة المرور</string>
+    <string name="passphrase_current_wrong">كلمة المرور الحالية غير صحيحة</string>
+    <string name="passphrase_mismatch_retry">كلمتا المرور غير متطابقتين. حاول مرة أخرى.</string>
+    <string name="passphrase_save_failed">تعذّر حفظ كلمة المرور</string>
+    <string name="passphrase_update_failed">تعذّر تحديث كلمة المرور. حاول مرة أخرى.</string>
+    <string name="passphrase_reset_subtitle">فتحت Encly بعبارة الاسترداد. عيّن كلمة مرور جديدة للمتابعة.</string>
+    <string name="onboarding_passphrase_title">اختر كلمة مرور</string>
+    <string name="onboarding_passphrase_body">من 12 إلى 128 حرفًا، وليست أرقامًا فقط. تكفي بضع كلمات. تفتح Encly كل يوم على هذا الكمبيوتر وتحمي مفتاح خزنتك. وهي ليست عبارة الاسترداد، ولا يوجد بريد إلكتروني لإعادة تعيينها.</string>
+    <string name="onboarding_passphrase_again_title">أدخل كلمة المرور مرة أخرى</string>
+    <string name="onboarding_passphrase_again_body">لنتأكد أنها التي قصدتها.</string>
+    <string name="onboarding_recovery_passphrase_title">نسيت كلمة المرور؟</string>
+    <string name="onboarding_recovery_passphrase_desc">تفتح عبارة الاسترداد خزنتك وتتيح لك تعيين كلمة مرور جديدة.</string>
+    <string name="onboarding_recovery_warning_passphrase">لا أحد يستطيع استرجاعها لك، ولا حتى نحن. تعمل كلمة المرور مع سر محفوظ في سلسلة مفاتيح النظام على هذا الكمبيوتر. إن أُعيد تعيين هذه السلسلة أو استُبدلت، أو انتقلت إلى حساب جديد في نظام التشغيل، أو نُقل مجلد المنزل أو استُعيد بدونها، فلن يفتح ملاحظاتك إلا عبارة الاسترداد. وإن فقدتها أيضًا ضاعت الملاحظات.</string>
+    <string name="onboarding_recovery_skip_passphrase">تخطَّ: كلمة المرور فقط، بلا نسخ احتياطية</string>
+    <string name="onboarding_ready_passphrase_title">تم تعيين كلمة المرور</string>
+    <string name="onboarding_ready_passphrase_desc">تُطلب عند كل فتح لـ Encly</string>
+    <string name="onboarding_restore_label_passphrase">استعد ثم عيّن كلمة مرور</string>
+    <string name="auth_method_passphrase_title">كلمة المرور</string>
+    <string name="auth_method_passphrase_desc">من 12 إلى 128 حرفًا. اضغط لتغيير كلمة المرور.</string>
+    <string name="security_recovery_missing_passphrase">غير معدّة. من دونها يؤدي نسيان كلمة المرور إلى فقدان كل شيء. اضغط لإنشائها.</string>
+    <string name="backup_needs_phrase_body_passphrase">تُشفَّر النسخ الاحتياطية بعبارة استرداد، فلا يفتحها إلا كلماتها الـ12. لا تملك هذه الخزنة واحدة بعد. أنشئها الآن: فهي تتيح لك أيضًا فتح هذه الخزنة إن نسيت كلمة المرور.</string>
+    <string name="markdown_export_warning_body_passphrase">الملف المُصدَّر غير مشفر. كل من يحصل عليه يستطيع قراءة ملاحظاتك. وأي مكان تحفظه فيه، بما في ذلك مجلد سحابي، سيحتوي على نسخة مقروءة لا يستطيع Encly حمايتها ولا استردادها. ستؤكد بكلمة المرور بعد ذلك.</string>
+    <string name="pdf_export_warning_body_passphrase">ملف PDF غير مشفر. كل من يحصل عليه يستطيع قراءة ملاحظتك. وأي مكان تحفظه فيه، بما في ذلك مجلد سحابي، سيحتوي على نسخة مقروءة لا يستطيع Encly حمايتها ولا استردادها. ستؤكد بكلمة المرور بعد ذلك.</string>
+    <string name="print_warning_body_passphrase">ترسل الطباعة نص ملاحظتك إلى الطابعة دون تشفير. وقد يحتفظ مُجمِّع الطباعة في النظام بنسخ مؤقتة منه، وقد تخزنه طابعة الشبكة أو السحابة أيضًا. لا يستطيع Encly إزالتها. ستؤكد بكلمة المرور بعد ذلك.</string>
+    <string name="faq_change_passphrase_q">كيف أغيّر كلمة المرور؟</string>
+    <string name="faq_change_passphrase_a">افتح الإعدادات ← الأمان، وأكّد كلمة المرور الحالية، ثم أدخل الجديدة مرتين.</string>
+    <string name="faq_forgot_passphrase_q">ماذا لو نسيت كلمة المرور؟</string>
+    <string name="faq_forgot_passphrase_a">في شاشة القفل اضغط «استعادة الوصول» وأدخل كلمات الاسترداد الـ12. إن كانت كلمة المرور تعمل بعدُ فيمكنك الاحتفاظ بها أو تعيين كلمة مرور جديدة، وإلا فتعيّن كلمة مرور جديدة فورًا. بدون عبارة الاسترداد لا توجد وسيلة أخرى للدخول: لا أحد، ولا حتى المطوّر، يستطيع إعادة تعيينها.</string>
+    <string name="faq_passphrase_length_q">ما طول كلمة المرور المسموح به؟</string>
+    <string name="faq_passphrase_length_a">بين 12 و128 حرفًا، بأي لغة. لا يمكن أن تكون أرقامًا فقط، وتحتاج إلى 5 أحرف مختلفة على الأقل. بضع كلمات عشوائية قوية وسهلة التذكر، ويستطيع Encly اقتراح خمس منها. لا يحتفظ Encly بطول كلمة المرور ولا يعرضه قبل أن تكتب. ما تكتبه مخفي، لكن من يراقبك يستطيع عدّ النقاط. تضغط «فتح القفل» عند الانتهاء، والأمر نفسه ينطبق على كلمة مرور المسح وكلمة مرور الإكراه. كلمة المرور ليست عبارة الاسترداد: عبارة الاسترداد هي الكلمات الـ12 التي تدوّنها ليوم تنسى فيه كلمة المرور.</string>
+    <string name="faq_db_key_a_passphrase">ينشئ Encly مفتاحًا عشوائيًا لقاعدة البيانات طوله 256 بت. تحمي كلمة المرور خانة فتح منفصلة بتشفير AES-GCM: تُقوَّى بخوارزمية Argon2id وتُمزج بسر محفوظ في سلسلة مفاتيح النظام.</string>
+    <string name="faq_recovery_phrase_a_passphrase">هي مفتاح احتياطي من 12 كلمة. تفتح الخزنة إن نسيت كلمة المرور، وهي المفتاح الوحيد لملفات نسخك الاحتياطية. تنشئها أثناء الإعداد، أو لاحقًا في الإعدادات ← الأمان إن تخطيتها. احتفظ بها على الورق، دون اتصال. وهي ليست كلمة المرور التي تكتبها كل يوم.</string>
+    <string name="faq_report_bug_a_passphrase">افتح «حول» واستخدم خيار الاقتراحات والبلاغات، أو راسل المطوّر. لا تُدرج أبدًا عبارة الاسترداد أو كلمة المرور أو نص ملاحظاتك الخاصة في بلاغ الخلل.</string>
+    <string name="faq_markdown_a_passphrase">نعم. في قائمة الملاحظة اختر «تصدير بصيغة Markdown» للحصول على ملف .md واحد، أو استخدم الإعدادات ← النسخ الاحتياطي ← «تصدير بصيغة Markdown» للحصول على ملف .zip لكل الملاحظات (المؤرشفة في مجلد أرشيف، وسلة المحذوفات مستثناة) وملف للمهام. هذه الملفات غير مشفرة: ينبّهك Encly أولًا ويطلب كلمة المرور ويحفظ حيث تختار فقط.</string>
 </resources>

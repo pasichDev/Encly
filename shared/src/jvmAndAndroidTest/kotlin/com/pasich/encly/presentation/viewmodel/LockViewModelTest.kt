@@ -8,10 +8,12 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.pasich.encly.core.security.AuthStrategy
 import com.pasich.encly.core.security.DeviceLockWatcher
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.RecoveryStage
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.core.security.VaultUnlockResult
+import com.pasich.encly.testutil.FakePassphrasePolicy
 import com.pasich.encly.testutil.TestScreen
 import com.pasich.encly.testutil.answerCallback
 import com.pasich.encly.testutil.anyByteArray
@@ -22,6 +24,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -214,6 +217,32 @@ class LockViewModelTest {
     }
 
     @Test
+    fun aSecretIsWipedEvenWhenTheScreenGoesBeforeTheUnlockBegan() {
+        // The launch is queued and the screen is cleared before it runs: its body, and the wipe in it, never run.
+        val queued = StandardTestDispatcher()
+        Dispatchers.setMain(queued)
+        val store = ViewModelStore()
+        val owned = ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel as T
+            },
+        )[LockViewModel::class]
+        val pin = PIN.toCharArray()
+        val words = "one two three".toCharArray()
+
+        owned.authenticatePin(pin) { }
+        owned.authenticateSeed(words) { }
+        store.clear()
+        queued.scheduler.advanceUntilIdle()
+
+        assertTrue(pin.all { it == 0.toChar() })
+        assertTrue(words.all { it == 0.toChar() })
+        verify(security, never()).unlockWithPin(anyCharArray())
+    }
+
+    @Test
     fun aLostPinKeyAndALockoutAreReported() = runTest {
         `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.PIN_KEY_LOST)
         assertEquals(PinUnlockResult.KEY_LOST, pin())
@@ -232,6 +261,57 @@ class LockViewModelTest {
     fun anUnavailableKeyStoreIsReported() = runTest {
         `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.KEY_STORE_UNAVAILABLE)
         assertEquals(PinUnlockResult.KEY_STORE_UNAVAILABLE, pin())
+    }
+
+    @Test
+    fun anUnavailableKeyStoreSaysWhatIsMissingAndANotFoundKeyIsItsOwnResult() = runTest {
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.KEY_STORE_UNAVAILABLE)
+        val expected = mapOf(
+            KeyStoreProblem.NOT_RUNNING to PinUnlockResult.KEY_STORE_NOT_RUNNING,
+            KeyStoreProblem.NO_DEFAULT to PinUnlockResult.KEY_STORE_NO_DEFAULT,
+            KeyStoreProblem.DISMISSED to PinUnlockResult.KEY_STORE_DISMISSED,
+            KeyStoreProblem.LOCKED to PinUnlockResult.KEY_STORE_UNAVAILABLE,
+            KeyStoreProblem.OTHER to PinUnlockResult.KEY_STORE_UNAVAILABLE,
+        )
+        for ((problem, result) in expected) {
+            `when`(security.keyStoreProblem()).thenReturn(problem)
+            assertEquals(result, pin())
+        }
+        `when`(security.keyStoreProblem()).thenReturn(null)
+        assertEquals(PinUnlockResult.KEY_STORE_UNAVAILABLE, pin())
+
+        `when`(security.unlockWithPin(PIN.toCharArray())).thenReturn(VaultUnlockResult.KEY_NOT_FOUND)
+        assertEquals(PinUnlockResult.KEY_NOT_FOUND, pin())
+    }
+
+    @Test
+    fun aPasswordVaultWhoseSecretSlotIsOfAnotherFormatGoesToTheRecoveryPhrase() {
+        val password = LockViewModel(security, sessionLock, CoroutineScope(Dispatchers.Default), FakePassphrasePolicy())
+        `when`(security.authStrategy()).thenReturn(AuthStrategy.RECOVERY_DATA)
+        `when`(security.hasRecoverySeed()).thenReturn(true)
+
+        assertTrue(password.secretSlotUnusable())
+        assertFalse("a PIN vault is not sent there", viewModel.secretSlotUnusable())
+
+        `when`(security.hasRecoverySeed()).thenReturn(false)
+        assertFalse("nothing to recover with", password.secretSlotUnusable())
+        `when`(security.hasRecoverySeed()).thenReturn(true)
+        `when`(security.authStrategy()).thenReturn(AuthStrategy.PIN)
+        assertFalse("a usable slot is typed", password.secretSlotUnusable())
+    }
+
+    @Test
+    fun theWipeFromTheMissingKeyScreenErasesAndTellsEveryWindow() {
+        `when`(security.wipeAndReset()).thenReturn(true)
+
+        assertTrue(viewModel.wipeVault())
+
+        verify(security).wipeAndReset()
+        assertEquals(1L, sessionLock.erasedCount.value)
+
+        `when`(security.wipeAndReset()).thenReturn(false)
+        assertFalse(viewModel.wipeVault())
+        assertEquals("a refused erase is not announced", 1L, sessionLock.erasedCount.value)
     }
 
     @Test

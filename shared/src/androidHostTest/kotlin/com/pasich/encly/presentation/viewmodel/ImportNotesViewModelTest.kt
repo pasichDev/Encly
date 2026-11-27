@@ -5,9 +5,12 @@ import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.backup.VaultSnapshot
+import com.pasich.encly.data.importer.FaultyVault
 import com.pasich.encly.data.importer.ImportDocuments
+import com.pasich.encly.data.importer.ImportFileSource
 import com.pasich.encly.data.importer.ImportFixtures
 import com.pasich.encly.data.importer.ImportSource
+import com.pasich.encly.data.importer.SourceFile
 import com.pasich.encly.data.model.Tag
 import com.pasich.encly.testutil.FakeDocuments
 import com.pasich.encly.testutil.InMemoryVaultDataStore
@@ -18,6 +21,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.io.Buffer
+import kotlinx.io.RawSource
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -26,6 +31,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import java.io.IOException
 
 /** Detect -> review -> import -> summary, with an in-memory vault. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -348,6 +354,151 @@ class ImportNotesViewModelTest {
         assertEquals(ImportStep.Start, vm.step.value)
         assertNull(held(vm, "plan"))
         assertNull(held(vm, "pending"))
+    }
+
+    // More than one batch of ImportMerger.BATCH, so a failure or a cancel can come after the first.
+    private fun many(count: Int = 450) = (1..count)
+        .map { keep("Note $it", "text $it", 1_000_000_000_000_000L + it * 1_000_000L, label = "Work") }
+        .toTypedArray()
+
+    private fun FaultyVault.assertUntouched() {
+        assertTrue(vault.notes.isEmpty() && vault.tags.isEmpty() && vault.noteTags.isEmpty())
+    }
+
+    @Test
+    fun aLargeSelectionIsImportedInFullAcrossSeveralBatches() {
+        val vm = viewModel()
+        vm.begin(ImportFixtures.textSource(*many()))
+        vm.confirm()
+
+        val done = (vm.step.value as ImportStep.Done).result
+        assertEquals(450, done.imported)
+        assertEquals(1, done.tagsAdded)
+        assertEquals(450, store.notes.size)
+        assertEquals(450, store.noteTags.size)
+    }
+
+    @Test
+    fun aFullDiskPartWayThroughLeavesTheVaultUntouched() {
+        val vault = FaultyVault()
+        vault.beforeNote = { n -> if (n == 250) throw IllegalStateException("database or disk is full") }
+        val vm = viewModel(vault)
+        vm.begin(ImportFixtures.textSource(*many()))
+
+        vm.confirm()
+
+        assertEquals(ImportStep.Failed(ImportFailure.IMPORT), vm.step.value)
+        vault.assertUntouched()
+    }
+
+    @Test
+    fun aWriteThatFailsAsAnIoErrorLeavesTheVaultUntouched() {
+        val vault = FaultyVault()
+        vault.beforeNote = { n -> if (n == 250) throw IOException("No space left on device") }
+        val vm = viewModel(vault)
+        vm.begin(ImportFixtures.textSource(*many()))
+
+        vm.confirm()
+
+        assertEquals(ImportStep.Failed(ImportFailure.IMPORT), vm.step.value)
+        vault.assertUntouched()
+    }
+
+    @Test
+    fun aFullDiskAtCommitLeavesTheVaultUntouched() {
+        val vault = FaultyVault()
+        vault.failCommit = IllegalStateException("database or disk is full")
+        val vm = viewModel(vault)
+        vm.begin(ImportFixtures.textSource(*many()))
+
+        vm.confirm()
+
+        assertEquals(ImportStep.Failed(ImportFailure.IMPORT), vm.step.value)
+        vault.assertUntouched()
+    }
+
+    @Test
+    fun outOfMemoryWhileWritingFailsAsTooLargeAndLeavesTheVaultUntouched() {
+        val vault = FaultyVault()
+        vault.beforeNote = { n -> if (n == 250) throw OutOfMemoryError("simulated") }
+        val vm = viewModel(vault)
+        vm.begin(ImportFixtures.textSource(*many()))
+
+        vm.confirm()
+
+        assertEquals(ImportStep.Failed(ImportFailure.TOO_LARGE), vm.step.value)
+        vault.assertUntouched()
+    }
+
+    @Test
+    fun aCancelWhileWritingRollsEverythingBack() {
+        val vault = FaultyVault()
+        // The write runs on its own dispatcher, so confirm() has stored its job before Cancel arrives.
+        val io = StandardTestDispatcher()
+        val vm = ImportNotesViewModel(ImportDocuments(FakeDocuments()), vault, sessionLock, io)
+        vm.begin(ImportFixtures.textSource(*many()))
+        io.scheduler.advanceUntilIdle()
+        assertTrue(vm.step.value is ImportStep.Preview)
+        vault.beforeNote = { n -> if (n == 50) vm.cancel() } // in the first batch; the check comes between batches
+
+        vm.confirm()
+        io.scheduler.advanceUntilIdle()
+
+        assertEquals(ImportStep.Start, vm.step.value)
+        vault.assertUntouched()
+        assertNull(held(vm, "plan"))
+    }
+
+    @Test
+    fun aRelockWhileWritingRollsEverythingBack() {
+        val vault = FaultyVault()
+        val io = StandardTestDispatcher()
+        val vm = ImportNotesViewModel(ImportDocuments(FakeDocuments()), vault, sessionLock, io)
+        vm.begin(ImportFixtures.textSource(*many()))
+        io.scheduler.advanceUntilIdle()
+        vault.beforeNote = { n -> if (n == 50) sessionLock.requireUnlock() }
+
+        vm.confirm()
+        io.scheduler.advanceUntilIdle()
+
+        assertEquals(ImportStep.Start, vm.step.value)
+        vault.assertUntouched()
+    }
+
+    @Test
+    fun outOfMemoryWhileReadingFailsAsTooLargeAndWritesNothing() {
+        val exhausted = object : RawSource {
+            override fun readAtMostTo(sink: Buffer, byteCount: Long): Long = throw OutOfMemoryError("simulated")
+
+            override fun close() = Unit
+        }
+        val vm = viewModel()
+        vm.begin(ImportFileSource { sequenceOf(SourceFile("big.json") { exhausted }) })
+
+        assertEquals(ImportStep.Failed(ImportFailure.TOO_LARGE), vm.step.value)
+        assertTrue(store.notes.isEmpty())
+        assertNull(held(vm, "plan"))
+        assertNull(held(vm, "pending"))
+    }
+
+    @Test
+    fun outOfMemoryWhileAnalysingTheChosenSourceFailsAsTooLarge() {
+        val md = "n.md" to "---\ntitle: T\ncreated_at: 2024-01-01\nupdated_at: 2024-01-01\n---\nbody"
+        val vm = viewModel(
+            object : VaultDataStore by store {
+                override fun bindToCurrentSession(): VaultDataStore = this
+
+                override suspend fun snapshot(): VaultSnapshot = throw OutOfMemoryError("simulated")
+            },
+        )
+        vm.begin(ImportFixtures.textSource(files[0], md))
+        assertEquals(ImportStep.ChooseSource, vm.step.value)
+
+        vm.chooseSource(ImportSource.GOOGLE_KEEP)
+
+        assertEquals(ImportStep.Failed(ImportFailure.TOO_LARGE), vm.step.value)
+        assertNull(held(vm, "pending"))
+        assertTrue(store.notes.isEmpty())
     }
 
     private fun held(vm: ImportNotesViewModel, name: String): Any? =

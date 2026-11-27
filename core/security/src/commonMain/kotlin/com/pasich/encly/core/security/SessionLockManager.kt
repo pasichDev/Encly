@@ -177,13 +177,42 @@ public class SessionLockManager(
     /**
      * Startup found a committed vault that is not open. Starts [locked], so any screen that a
      * restored back stack (process death) or an intent would open is replaced by the lock
-     * screen before it can show anything.
+     * screen before it can show anything. By default it is also a lock request (an unlock that began before it is not
+     * published). A host that shows one vault in several windows passes `countsAsLockRequest = false`: a window that
+     * opens is no lock, and must not throw away the unlock another window is checking (a real lock still counts);
+     * with the vault open it then does nothing.
      */
     @MainThread
-    public fun requireUnlock() {
-        lockRequestCount.addAndFetch(1L)
+    public fun requireUnlock(countsAsLockRequest: Boolean = true) {
+        if (!countsAsLockRequest && securityManager.isDatabaseUnlocked()) return
+        if (countsAsLockRequest) lockRequestCount.addAndFetch(1L)
         screenshots.revoke()
         _locked.value = true
+    }
+
+    /**
+     * Counts published erases of the whole vault ("Erase all data"): every window that shows this vault drops what it
+     * shows and starts over (see [onVaultErased]). Starts at 0 for the process.
+     */
+    private val _erasedCount = MutableStateFlow(0L)
+    public val erasedCount: StateFlow<Long> = _erasedCount.asStateFlow()
+
+    /**
+     * The whole vault was erased (see [SecurityManager.wipeAndReset]): any unlock still running must not be published
+     * (the keys it opens are gone), and every window learns of it through [erasedCount] and starts over with
+     * onboarding, so none keeps showing the erased vault's notes. [locked] is cleared: nothing is locked, there is no
+     * vault, and a new one made in onboarding must not start behind a lock screen. Call on the main thread after a
+     * successful erase, from the window that made it.
+     */
+    @MainThread
+    public fun onVaultErased() {
+        lockRequestCount.addAndFetch(1L)
+        screenshots.revoke()
+        securityManager.abandonKeyStorePrompt()
+        // A lock that raced the erase (the screen went off while it ran) has nothing left to lock: left set, it would
+        // keep the shield over the onboarding of the new vault until the process ends.
+        _locked.value = false
+        _erasedCount.update { it + 1L }
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -305,7 +334,11 @@ public class SessionLockManager(
     @MainThread
     public fun lockNow() {
         // Counted even with nothing open: an unlock that is running must not publish after it.
-        if (securityManager.isLockable()) lockRequestCount.addAndFetch(1L)
+        if (securityManager.isLockable()) {
+            lockRequestCount.addAndFetch(1L)
+            // A keyring prompt that unlock waits on goes away with the lock request.
+            securityManager.abandonKeyStorePrompt()
+        }
         if (isOpenAndLockable()) relock()
     }
 
@@ -319,6 +352,7 @@ public class SessionLockManager(
 
     private fun relock() {
         lockRequestCount.addAndFetch(1L)
+        securityManager.abandonKeyStorePrompt()
         // The screenshot allowance ends with every lock, before anything else can show.
         screenshots.revoke()
         val flushes = preLockFlushes.value

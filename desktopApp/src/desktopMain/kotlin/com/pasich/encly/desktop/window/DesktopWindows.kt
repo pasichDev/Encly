@@ -21,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.file.Path
 
@@ -44,12 +45,14 @@ class WindowServices(
     val startStatus = CompletableDeferred<InitialStatus>()
 
     /**
-     * Waits until files given to the app can be taken: the start status is known and, for a vault that starts
-     * locked, until it is unlocked ([locked] turns false) and the lock screen has left; [settle] pauses for that.
+     * Waits until files given to the app can be taken: the start status is known and, whatever it was, the vault is not
+     * locked now ([locked] turns false) and the lock screen has left; [settle] pauses for that. A first start on
+     * onboarding that has locked since needs the unlock like any other. The files are not routed (and so their
+     * [DropRouter] wait does not begin) until then: a lock screen can stay up for as long as the passphrase takes.
      * Files handed over before this would meet a window that cannot take them yet and be dropped without a word.
      */
     suspend fun awaitReadyForFiles(locked: StateFlow<Boolean>, settle: suspend () -> Unit) {
-        if (startStatus.await() != InitialStatus.AUTH) return
+        startStatus.await()
         if (locked.value) {
             locked.first { !it }
             settle()
@@ -84,6 +87,22 @@ class WindowServices(
 suspend fun WindowServices.handOverFiles(locked: StateFlow<Boolean>, files: List<Path>, settle: suspend () -> Unit) {
     awaitReadyForFiles(locked, settle)
     dropRouter.drop(files)
+}
+
+/**
+ * Files dropped on the window: routed now when the vault is open. While it is locked they wait for the unlock like the
+ * files the app was started with ([handOverFiles]), so the lock screen the window shows cannot outlast their wait.
+ * Returns whether the drop was taken.
+ */
+fun WindowServices.dropWhenUnlocked(
+    locked: StateFlow<Boolean>,
+    scope: CoroutineScope,
+    files: List<Path>,
+    settle: suspend () -> Unit,
+): Boolean {
+    if (!locked.value) return dropRouter.drop(files)
+    scope.launch { handOverFiles(locked, files, settle) }
+    return true
 }
 
 /** One open window: its [id], its [services] and, for a window opened on a note, the note's id. */

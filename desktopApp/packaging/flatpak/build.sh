@@ -61,6 +61,25 @@ cp -a "${images[0]}" "$out/app"
 printf '#!/bin/sh\nexec /app/encly/bin/%s "$@"\n' "$(basename "${launchers[0]}")" > "$out/encly"
 chmod 755 "$out/encly"
 
+# 4b. The licence texts, staged for /app/share/licenses/<app-id>/: the notices of the libraries and of Skiko (the
+# app resources of the image), Encly's own LICENSE, and the bundled Java runtime's own "legal" folder (OpenJDK).
+# A path that is not there is an error: the CI run is what finds a changed layout of the image.
+mapfile -t notices < <(find "${images[0]}" -type f -name THIRD-PARTY-NOTICES.txt)
+if [ "${#notices[@]}" -ne 1 ]; then
+  echo "::error::expected one THIRD-PARTY-NOTICES.txt in the app image, found ${#notices[@]}"
+  exit 1
+fi
+legal="${images[0]}/lib/runtime/legal"
+if [ ! -f "$legal/java.base/LICENSE" ]; then
+  echo "::error::the bundled runtime has no legal/java.base/LICENSE ($legal)"
+  exit 1
+fi
+rm -rf "$out/licenses"
+mkdir -p "$out/licenses"
+cp -a "$(dirname "${notices[0]}")/." "$out/licenses/"
+cp "$root/LICENSE" "$out/licenses/LICENSE"
+cp -rL "$legal" "$out/licenses/openjdk"
+
 # 5. Build and bundle. The bundle names the runtime repository, so installing it fetches the runtime.
 flatpak-builder --user --force-clean --disable-rofiles-fuse \
   --install-deps-from=flathub \

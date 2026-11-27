@@ -192,9 +192,10 @@ internal fun TableBlock(
     val onCell = remember(block) {
         { cellId: String, text: String -> change(block.table.value.withCell(cellId, text), true) }
     }
-    Column(modifier = modifier.fillMaxWidth()) {
-        if (!isLocked) CellMenu(commands, table, modifier = Modifier.align(Alignment.End))
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState())) {
+    // The menu button sits beside the table, not above it: a row of its own above the grid was a tall empty strip
+    // over every table that took no tap, and made the gap to the block above look far larger than the others.
+    Row(modifier = modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.weight(1f, fill = false).horizontalScroll(rememberScrollState())) {
             Column(
                 modifier = Modifier
                     .border(CellBorder, MaterialTheme.colorScheme.outlineVariant)
@@ -222,6 +223,7 @@ internal fun TableBlock(
                 }
             }
         }
+        if (!isLocked) CellMenu(commands, table)
     }
 }
 

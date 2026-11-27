@@ -1,9 +1,9 @@
 # Architecture
 
-Encly is a local-first application, released for Android. The code is Kotlin Multiplatform: a desktop
-app (`:desktopApp`) and an iOS app (`iosApp`) are built from the same shared modules, but neither is
-published or supported yet. This page describes the Android app unless it says otherwise. Its runtime
-direction is:
+Encly is a local-first application, released for Android. The code is Kotlin Multiplatform: the desktop
+app (`:desktopApp`: Linux, Windows and macOS; in the repository and built by CI, not published or supported yet)
+and an iOS app (`iosApp`, not published or supported yet) are built from the same shared modules. This page describes
+the Android app unless it says otherwise. Its runtime direction is:
 
 ```
 presentation → domain/use cases → repositories → local data source → Room/SQLCipher
@@ -23,26 +23,47 @@ sends user intent; persistence and security decisions remain outside Composables
   target, and the app tells it where the files are through `DatabasePlatform` (on Android, the
   app's own `databases` directory, the same files as ever).
 - **Core security** — vault setup/unlock, session lock and auto-lock delay (`SessionLockManager`,
-  `AutoLock`), the Keystore-bound PIN factor, biometric slot, recovery slot and the SQLCipher
-  database lifecycle.
+  `AutoLock`), the unlock secret (a PIN with a Keystore-bound factor on the phones, a passphrase on the desktop: see
+  `UnlockSecretPolicy` below), biometric slot, recovery slot and the SQLCipher database lifecycle.
 - **Backup** — encrypted export/import (`core/backup`, `data/backup`), described below.
 
 ## Vault and session lifecycle
 
 ```mermaid
 flowchart TD
-    Setup["Onboarding"] --> Pin["PIN wraps random DEK"]
+    Setup["Onboarding"] --> Pin["PIN (desktop: passphrase) wraps random DEK"]
     Pin --> Open["Open SQLCipher"]
     Open --> Session["Unlocked session"]
     Session --> Background["Left the app past the auto-lock delay, or screen off"]
     Background --> Lock["Close DB and clear DEK"]
-    Lock --> Unlock["PIN / biometric / recovery"]
+    Lock --> Unlock["PIN or passphrase / biometric / recovery"]
     Unlock --> Open
 ```
 
-A fresh vault generates a random 256-bit DEK. SQLCipher uses the DEK; the mandatory PIN,
-optional auth-bound biometric key and optional recovery seed each protect a separate AES-GCM
-envelope of that same DEK. No UI layer derives or stores the database key directly.
+A fresh vault generates a random 256-bit DEK. SQLCipher uses the DEK; the mandatory PIN (on the desktop, the
+passphrase), optional auth-bound biometric key (not on the desktop) and optional recovery seed each protect a separate
+AES-GCM envelope of that same DEK. No UI layer derives or stores the database key directly.
+
+What the user types to unlock is decided in one place, `UnlockSecretPolicy` (`:core:security`, `commonMain`).
+`AuthenticationManager` runs every secret through it and knows nothing else about PINs or passphrases: the policy says
+what may be typed and what may be set (`canonical`, `mayBeSet`), which slot header it writes (`newHeader`), how the
+slow half of the key is made (`stretch`), what the device factor signs (`factorInput`), which slots it will try at all
+(`accepts`, checked before anything is allocated), the HKDF infos, and what to suggest (`suggest`). Each platform binds
+exactly one policy:
+
+| Policy | Where | Secret | Stretch | Slot |
+|---|---|---|---|---|
+| `PinSecretPolicy` | `:core:security`, contributed to the graph; used as it is by Android and iOS | 6 to 12 digits | PBKDF2-HMAC-SHA256, 600,000 iterations | version 3 |
+| `DesktopPasswordPolicy` | `:core:keystore` (`desktopMain`), bound by `:desktopApp`, whose graph excludes the PIN policy | passphrase, 12 to 128 code points | Argon2id (Bouncy Castle), 64 MiB, 3 passes | version 4 |
+
+The slot formats by version are in `SecretSlots`: it reads and writes version 4 itself and hands version 3 to `PinSlots`
+and `DuressSlots` (the latter now takes the slot version, and also serves the version 4 wipe and duress slots; the
+version 3 bytes and behaviour are unchanged). A slot the bound policy does not accept costs nothing and nothing is
+derived for it under the passphrase, while under the PIN a `pin.slot` that cannot be read still costs an attempt, as it
+always has (`UnlockSecretPolicy.chargesForUnusableSlot`).
+The lock screen, onboarding and Settings ask `SecurityManager` which kind of secret the vault has (`secretKind`) and show
+a keypad or a passphrase field; the wording of every PIN text has a passphrase twin (`SecretWording`). The bytes of both
+formats, the derivation and the limits are in [SECURITY.md](../SECURITY.md#desktop).
 
 `SecureDatabaseManager` owns the active Room instance: the real vault's `database.db` or, after
 the duress PIN, the decoy vault's `vault_b.db`, never both at once. Each opening issues a
@@ -85,12 +106,15 @@ The shared core is Kotlin Multiplatform modules, checked by a source-scan test e
 - `:core:crypto` (Android, desktop, iOS): `Crypto` (AES-256-GCM, HKDF, PBKDF2, SHA-256, the CSPRNG) and BIP-39. The
   API is common code; the implementation is JCA in `jvmAndAndroidMain`, shared by Android and desktop, and Apple's
   own libraries in `iosMain` (CommonCrypto, and CryptoKit for AES-GCM through a small Swift file).
-- `:core:security` (Android, desktop, iOS): the vault store, the PIN, wipe-PIN, duress and recovery slots, the
+- `:core:security` (Android, desktop, iOS): the vault store, the secret slots (PIN, wipe-PIN and duress slots of version 3;
+  the passphrase, wipe and duress slots of version 4) behind `UnlockSecretPolicy`, the recovery slot, the
   lockout, `SecurityManager`, `SessionLockManager`, `AutoLock`, and the backup file format and cipher. Locks are
   atomicfu `SynchronizedObject`s. Only the vault file I/O and the backup JSON bytes are platform code
   (`jvmAndAndroidMain`, `iosMain`).
-- `:core:keystore` (desktop): the OS secret store behind the PIN's device-bound key on Windows, macOS and Linux.
-  Android has its own Keystore implementation in `:app`, and iOS binds the Secure Enclave in `:shared`'s `iosMain`.
+- `:core:keystore` (desktop): the OS secret store behind the device-bound key on Windows, macOS and Linux, and the
+  desktop's unlock secret: `DesktopPasswordPolicy` with its Argon2id (Bouncy Castle, a dependency of this source set
+  only), the passphrase's NFC form and rules, and the passphrase suggestion. Android has its own Keystore
+  implementation in `:app`, and iOS binds the Secure Enclave in `:shared`'s `iosMain`.
 - `:core:resources` (Android, desktop, iOS): every user-visible string, as Compose resources built from Android's
   `strings.xml` files in `core/resources/src/commonMain/strings/values*/`.
 
@@ -98,7 +122,8 @@ Their sources import nothing of Android and nothing of the JVM. What they need f
 they declare, implemented in `:app` and bound in `core/di`: `KeyValueStore` (flags), `VaultFileIo` (the vault
 file's fsync and atomic replace, `JvmVaultFileIo` in the module), `VaultDatabase` (the encrypted database,
 `SecureDatabaseVault`, in `:shared` for both apps), `BiometricManager` and `BiometricHost`, `PinHardwareFactor`, `LockoutClock`,
-`DeviceLockWatcher`, `MainThreadTimer`, `HandoffStagingSweeper`, `AppStrings`.
+`DeviceLockWatcher`, `MainThreadTimer`, `HandoffStagingSweeper`, `AppStrings`. `UnlockSecretPolicy` is the exception: its
+PIN implementation lives in `:core:security` itself, and only the desktop replaces it.
 
 The rest of the domain and data logic (`domain`, `data/repository|backup|importer|export|handoff|zip`) and the whole
 UI (design system, screens, dialogs, navigation, ViewModels) are the Kotlin Multiplatform module `:shared` (Android,
@@ -144,7 +169,7 @@ Export/import is fully offline: the UI hands whole files to and from the Storage
 Framework (`CreateDocument` / `OpenDocument`, behind `DocumentPickers` and `PlatformDocuments`), so there is no
 storage permission, no temp file and no network code. The key comes from the BIP39 recovery seed (see
 [SECURITY.md](../SECURITY.md#encrypted-backups)), so the same 12 words open a backup on a new
-phone.
+phone or on a computer; the unlock secret (PIN or passphrase) takes no part in it.
 
 | Piece | Role |
 |---|---|
@@ -243,7 +268,8 @@ For implementation details and limits, see [SECURITY.md](../SECURITY.md).
 
 Settings → Import notes (`data/importer`, `ImportNotesViewModel`) reads another app's export from
 files or a folder the user picks through the Storage Access Framework, entirely offline. The
-pipeline is all in memory: `ImportReader` (ZIP and TAR read sequentially from `ContentResolver`
+pipeline is all in memory (the bytes read, never a file; JSON exports are parsed one item at a
+time by `JsonScan`, not as one tree): `ImportReader` (ZIP and TAR read sequentially from `ContentResolver`
 streams by readers of our own, since `ZipInputStream` fails on the ZIP64 data descriptors that
 streaming exporters write, bounded by `ImportLimits` on the bytes actually read; unsafe paths, links and nested
 archives skipped) → `FormatDetector` (by content, never by extension alone; encrypted Standard
@@ -252,7 +278,8 @@ source (Google Keep, Standard Notes, Joplin, Notesnook, generic Markdown/TXT) �
 which builds the same `BackupPayload` as a backup with uids derived from the source's own ids, so
 `BackupImporter` MERGE (tags matched by name) skips what is already there and a repeated import
 adds nothing. The user reviews and ticks the notes first; only the ticked ones (and the tags they
-use) are written, in one transaction on the vault session bound when the read started. The read
+use) are written by `ImportMerger`, in batches inside one transaction (Cancel and a re-lock stop it
+between batches and roll back) on the vault session bound when the read started. The read
 files, parsed notes and selection live in the ViewModel only, are never put in saved state, and are
 dropped on cancel, on finish and when the vault locks. Import is available in a decoy session too
 and imports into whichever vault is open. The real exporters' files are the test fixtures

@@ -35,9 +35,11 @@ import com.pasich.encly.core.resources.wipe_pin_saved
 import com.pasich.encly.core.resources.wipe_pin_set
 import com.pasich.encly.core.resources.wipe_pin_title
 import com.pasich.encly.core.resources.wipe_pin_turned_off
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.platform.LocalBiometricHost
 import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -69,15 +71,19 @@ fun WipePinScreen(
     modifier: Modifier = Modifier,
     securityViewModel: SecuritySettingsViewModel = metroViewModel(),
 ) {
-    val state = remember { PinFlowState() }
+    val state = remember { PinFlowState(securityViewModel.secretKind, securityViewModel.secretMaxUnits) }
     val securityState by securityViewModel.uiState.collectAsStateWithLifecycle()
     val host = LocalBiometricHost.current
     val flowActions = remember(state, securityViewModel) {
         PinFlowActions(
             verify = securityViewModel::verifyCurrentPin,
+            keyStoreProblem = securityViewModel::keyStoreProblem,
             lockoutMillis = securityViewModel::pinLockoutRemainingMillis,
             save = { pin -> securityViewModel.setWipePin(pin) { result -> state.onWipePinResult(result) } },
             close = { navController.popBack() },
+            refusal = securityViewModel::refusalOf,
+            same = securityViewModel::sameSecret,
+            suggest = securityViewModel::suggestSecret,
         )
     }
 
@@ -91,6 +97,7 @@ fun WipePinScreen(
             info = WipePinInfo(
                 turnedOff = securityState.wipePinTurnedOff,
                 biometricOn = securityState.biometricEnable,
+                kind = securityViewModel.secretKind,
             ),
             actions = WipePinActions(
                 onSet = state::startNew,
@@ -118,7 +125,7 @@ private fun PinFlowState.onWipePinResult(result: WipePinChange) {
 }
 
 /** What the options page shows besides the actions. */
-private class WipePinInfo(val turnedOff: Boolean, val biometricOn: Boolean)
+private class WipePinInfo(val turnedOff: Boolean, val biometricOn: Boolean, val kind: SecretKind)
 
 private class WipePinActions(val onSet: () -> Unit, val onRemove: () -> Unit, val onBiometricOff: () -> Unit)
 
@@ -131,14 +138,14 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
         contentPadding = PaddingValues(horizontal = spacing.gutter, vertical = spacing.s),
     ) {
         if (info.turnedOff) {
-            EnclyCallout(text = stringResource(Res.string.wipe_pin_turned_off), tone = CalloutTone.WARNING)
+            EnclyCallout(text = secretString(info.kind, Res.string.wipe_pin_turned_off), tone = CalloutTone.WARNING)
         }
         Text(
-            text = stringResource(Res.string.wipe_pin_intro),
+            text = secretString(info.kind, Res.string.wipe_pin_intro),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        EnclyCallout(text = stringResource(Res.string.wipe_pin_after_erase), tone = CalloutTone.WARNING)
+        EnclyCallout(text = secretString(info.kind, Res.string.wipe_pin_after_erase), tone = CalloutTone.WARNING)
         EnclyCallout(text = stringResource(Res.string.wipe_pin_backups))
         if (info.biometricOn) {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
@@ -150,7 +157,7 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
             }
         }
         Text(
-            text = stringResource(Res.string.wipe_pin_limits),
+            text = secretString(info.kind, Res.string.wipe_pin_limits),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -158,9 +165,9 @@ private fun WipePinOptions(info: WipePinInfo, actions: WipePinActions, modifier:
             verticalArrangement = Arrangement.spacedBy(spacing.xxs),
             modifier = Modifier.fillMaxWidth().padding(top = spacing.s),
         ) {
-            EnclyButton(text = stringResource(Res.string.wipe_pin_set), onClick = actions.onSet)
+            EnclyButton(text = secretString(info.kind, Res.string.wipe_pin_set), onClick = actions.onSet)
             EnclyTextButton(
-                text = stringResource(Res.string.wipe_pin_remove),
+                text = secretString(info.kind, Res.string.wipe_pin_remove),
                 onClick = actions.onRemove,
                 destructive = true,
                 modifier = Modifier.fillMaxWidth(),

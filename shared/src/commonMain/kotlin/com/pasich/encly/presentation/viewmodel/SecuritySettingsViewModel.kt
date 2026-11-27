@@ -7,21 +7,25 @@ import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.biometric_change_not_confirmed
 import com.pasich.encly.core.resources.biometric_enroll_failed
-import com.pasich.encly.core.resources.key_store_unavailable
-import com.pasich.encly.core.resources.pin_current_wrong
 import com.pasich.encly.core.resources.pin_update_failed
 import com.pasich.encly.core.security.AuthType
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.BiometricStatus
 import com.pasich.encly.core.security.DuressPinChange
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.KeyboardPrivacy
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinCheck
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.ScreenshotAllowance
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.core.security.WipePinChange
 import com.pasich.encly.platform.ScreenBiometricHost
+import com.pasich.encly.platform.secretVariant
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -43,7 +47,26 @@ class SecuritySettingsViewModel(
     private val keyboardPrivacy: KeyboardPrivacy,
     private val autoLock: AutoLock,
     private val screenshots: ScreenshotAllowance,
+    /** What the vault's secret is; the graph always passes the real policy, the default only spares tests. */
+    policy: UnlockSecretPolicy = PinSecretPolicy(),
 ) : ViewModel() {
+
+    private val secrets = SecretChoice(policy)
+
+    /** What the user types to unlock and to set the wipe and duress secrets: a PIN or a passphrase. */
+    val secretKind: SecretKind = secrets.kind
+
+    /** The most UTF-16 units a typed passphrase may have: the field takes no more. */
+    val secretMaxUnits: Int = secrets.maxTypedUnits
+
+    /** Why [typed] may not be the new secret (a passphrase the policy refuses), or null. [typed] stays the caller's. */
+    fun refusalOf(typed: CharArray): SecretRefusal? = secrets.refusal(typed)
+
+    /** Whether the two entries are the same secret. Both stay the caller's. */
+    fun sameSecret(first: CharArray, second: CharArray): Boolean = secrets.same(first, second)
+
+    /** A passphrase to offer, or null for a PIN. The caller wipes it. */
+    fun suggestSecret(): CharArray? = secrets.suggest()
 
     private val _uiState = MutableStateFlow(SecuritySettingsUiState())
     val uiState: StateFlow<SecuritySettingsUiState> = _uiState.asStateFlow()
@@ -102,26 +125,37 @@ class SecuritySettingsViewModel(
 
     fun pinLockoutRemainingMillis(): Long = securityManager.pinLockoutRemainingMillis()
 
-    /** Checks [pin] against the vault; [pin] is wiped. */
-    fun verifyCurrentPin(pin: CharArray, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val ok = withContext(Dispatchers.Default) {
+    /** What the device key store was missing when the last check or change found it unusable; see [keyStoreMessage]. */
+    fun keyStoreProblem(): KeyStoreProblem? = securityManager.keyStoreProblem()
+
+    /**
+     * Checks [pin] against the vault and says what the check found: a wrong secret ([PinCheck.WRONG]), or a device key
+     * store that did not answer (which says nothing about the secret). [pin] is wiped.
+     */
+    fun verifyCurrentPin(pin: CharArray, onResult: (PinCheck) -> Unit) {
+        val job = viewModelScope.launch {
+            val check = withContext(Dispatchers.Default) {
                 try {
-                    securityManager.verifyPin(pin)
+                    securityManager.verifyPinResult(pin)
                 } finally {
                     SensitiveDataCleaner.clear(pin)
                 }
             }
-            if (!ok) {
-                _uiState.value = _uiState.value.copy(error = UiText.of(Res.string.pin_current_wrong))
+            val message = pinCheckError(check, securityManager.keyStoreProblem())
+            if (message != null) {
+                _uiState.value = _uiState.value.copy(
+                    error = UiText.of(if (check == PinCheck.WRONG) secretVariant(message, secretKind) else message),
+                )
             }
-            onResult(ok)
+            onResult(check)
         }
+        // Cancelled before the body began (the screen was left): the secret still goes.
+        job.invokeOnCompletion { SensitiveDataCleaner.clear(pin) }
     }
 
     /** Makes [pin] the vault's new PIN; [pin] is wiped. */
     fun activationPinAuth(pin: CharArray, onResult: (PinChange) -> Unit = {}) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             val result = withContext(Dispatchers.Default) {
                 try {
                     securityManager.changePin(pin)
@@ -137,14 +171,15 @@ class SecuritySettingsViewModel(
 
                 PinChange.FAILED ->
                     _uiState.value =
-                        _uiState.value.copy(error = UiText.of(Res.string.pin_update_failed))
+                        _uiState.value.copy(error = UiText.of(secretVariant(Res.string.pin_update_failed, secretKind)))
 
                 PinChange.KEY_STORE_UNAVAILABLE ->
                     _uiState.value =
-                        _uiState.value.copy(error = UiText.of(Res.string.key_store_unavailable))
+                        _uiState.value.copy(error = UiText.of(keyStoreMessage(securityManager.keyStoreProblem())))
             }
             onResult(result)
         }
+        job.invokeOnCompletion { SensitiveDataCleaner.clear(pin) }
     }
 
     /**
@@ -152,11 +187,12 @@ class SecuritySettingsViewModel(
      * [verifyCurrentPin] in the same screen.
      */
     fun setWipePin(pin: CharArray, onResult: (WipePinChange) -> Unit) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { securityManager.configureWipePin(pin) }
             if (result == WipePinChange.SET) _uiState.value = _uiState.value.copy(wipePinTurnedOff = false)
             onResult(result)
         }
+        job.invokeOnCompletion { SensitiveDataCleaner.clear(pin) }
     }
 
     /** Turns the wipe PIN off (whether one was set is never known). */
@@ -173,13 +209,14 @@ class SecuritySettingsViewModel(
      * [verifyCurrentPin] in the same screen.
      */
     fun setDuressPin(pin: CharArray, onResult: (DuressPinChange) -> Unit) {
-        viewModelScope.launch {
+        val job = viewModelScope.launch {
             val result = withContext(Dispatchers.Default) { securityManager.configureDuressPin(pin) }
             if (result == DuressPinChange.SET || result == DuressPinChange.SET_NEW_VAULT) {
                 _uiState.value = _uiState.value.copy(hasDuressPin = true, duressPinTurnedOff = false)
             }
             onResult(result)
         }
+        job.invokeOnCompletion { SensitiveDataCleaner.clear(pin) }
     }
 
     /** Turns the duress PIN off and deletes the decoy vault with its notes. */

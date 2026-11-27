@@ -19,8 +19,8 @@ import kotlinx.serialization.json.JsonObject
  * ignored.
  */
 internal object KeepParser {
-    private const val CREATED = "createdTimestampUsec"
-    private const val EDITED = "userEditedTimestampUsec"
+    const val CREATED = "createdTimestampUsec"
+    const val EDITED = "userEditedTimestampUsec"
     private const val DEFAULT_COLOR = "DEFAULT"
 
     fun isNote(element: JsonElement?): JsonObject? {

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.lock_subtitle
 import com.pasich.encly.core.resources.notes_title
+import com.pasich.encly.core.resources.onboarding_get_started
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.AutoLockDelay
 import com.pasich.encly.core.security.VaultUnlockResult
@@ -84,6 +85,73 @@ class MultiWindowLockTest {
         waitUntil(timeoutMillis = 60_000) { prompts() == 0 }
         waitUntil(timeoutMillis = 60_000) { lists() >= 2 }
         assertTrue(graph.securityManager.isDatabaseUnlocked())
+    }
+}
+
+/** "Erase all data" in one window, a window that opens during an unlock, and a lock that arrives before the graph. */
+@OptIn(ExperimentalTestApi::class)
+class MultiWindowEraseAndStartTest {
+    @get:Rule
+    val temp = TemporaryFolder()
+
+    @Test
+    fun eraseAllDataInOneWindowSendsEveryWindowToTheStartAndNoneKeepsTheErasedNotes() = runComposeUiTest {
+        val graph = committedGraph(temp.root.toPath())
+        val first = WindowServices.create(graph.environment, graph.lifecycle)
+        val second = WindowServices.create(graph.environment, graph.lifecycle)
+        val notes = runBlocking { getString(Res.string.notes_title) }
+        val welcome = runBlocking { getString(Res.string.onboarding_get_started) }
+        fun lists() = onAllNodesWithText(notes).fetchSemanticsNodes().size
+        fun starts() = onAllNodesWithText(welcome).fetchSemanticsNodes().size
+
+        setContent {
+            Row {
+                Box(Modifier.weight(1f).fillMaxHeight()) { DesktopApp(graph, AppWindow.None, services = first) }
+                Box(Modifier.weight(1f).fillMaxHeight()) { DesktopApp(graph, AppWindow.None, services = second) }
+            }
+        }
+        waitUntil(timeoutMillis = 60_000) { lists() >= 2 }
+
+        // What the erase of one window does (BackupViewModel.eraseAllData): the vault goes, and the lock manager says so.
+        assertTrue(graph.securityManager.wipeAndReset())
+        runOnUiThread { graph.sessionLockManager.onVaultErased() }
+
+        waitUntil(timeoutMillis = 60_000) { starts() == 2 }
+        assertEquals(0, lists(), "no window keeps the erased vault's notes")
+        assertFalse(graph.securityManager.isDatabaseUnlocked())
+    }
+
+    @Test
+    fun aWindowThatOpensOnALockedVaultDoesNotCountAsALockRequest() = runComposeUiTest {
+        val graph = committedGraph(temp.root.toPath())
+        graph.sessionLockManager.lockNow()
+        val before = graph.sessionLockManager.lockRequests()
+        val lockPrompt = runBlocking { getString(Res.string.lock_subtitle) }
+
+        setContent { DesktopApp(graph, AppWindow.None) }
+        waitUntil(timeoutMillis = 60_000) { onAllNodesWithText(lockPrompt).fetchSemanticsNodes().isNotEmpty() }
+
+        assertEquals(before, graph.sessionLockManager.lockRequests())
+        // So an unlock that began before the window opened is still published.
+        assertEquals(VaultUnlockResult.SUCCESS, graph.securityManager.unlockWithPin(PIN.toCharArray()))
+        assertTrue(graph.sessionLockManager.onUnlocked(before))
+    }
+
+    // The CI failure of the passphrase test: the lock of a vault that starts locked was asked of the NavController
+    // in the first frame, where an effect that runs at once (as one does on a busy CI machine) is ahead of the NavHost
+    // setting its graph: "You must call setGraph() before calling getGraph()".
+    @Test
+    fun aVaultThatStartsLockedShowsTheLockScreenEvenWhenEffectsRunAtOnce() = runComposeUiTest(
+        effectContext = kotlinx.coroutines.Dispatchers.Unconfined,
+    ) {
+        val graph = committedGraph(temp.root.toPath())
+        graph.sessionLockManager.lockNow()
+        graph.securityManager.lock()
+        val lockPrompt = runBlocking { getString(Res.string.lock_subtitle) }
+
+        setContent { DesktopApp(graph, AppWindow.None) }
+
+        waitUntil(timeoutMillis = 60_000) { onAllNodesWithText(lockPrompt).fetchSemanticsNodes().isNotEmpty() }
     }
 }
 

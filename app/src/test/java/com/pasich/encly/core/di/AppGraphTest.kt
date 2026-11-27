@@ -16,10 +16,13 @@ import com.pasich.encly.core.platform.KeyValueStore
 import com.pasich.encly.core.security.AuthenticationManager
 import com.pasich.encly.core.security.AutoLock
 import com.pasich.encly.core.security.BiometricManager
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.ScreenshotAllowance
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SeedPhraseManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.core.security.VaultLockEvents
 import com.pasich.encly.core.security.VaultStore
 import com.pasich.encly.data.backup.BackupManager
@@ -91,6 +94,7 @@ interface ContributionsGraph : ViewModelGraph {
     val vaultLockEvents: VaultLockEvents
     val vaultStore: VaultStore
     val authenticationManager: AuthenticationManager
+    val secretPolicy: UnlockSecretPolicy
     val seedPhraseManager: SeedPhraseManager
     val biometricManager: BiometricManager
     val autoLock: AutoLock
@@ -142,6 +146,15 @@ class AppGraphTest {
         assertSame(graph.backupManager, graph.backupManager)
         assertSame(graph.appFlags, graph.appFlags)
         assertSame(graph.applicationScope, graph.applicationScope)
+    }
+
+    @Test
+    fun androidUnlocksWithThePinPolicyAndNothingElseIsBound() {
+        // One binding of the policy exists in the graph (a second one would not compile), and it is the PIN's.
+        assertTrue(graph.secretPolicy is PinSecretPolicy)
+        assertEquals(SecretKind.PIN, graph.secretPolicy.kind)
+        assertEquals(SecretKind.PIN, graph.authenticationManager.secretKind)
+        assertEquals(SecretKind.PIN, graph.securityManager.secretKind)
     }
 
     @Test

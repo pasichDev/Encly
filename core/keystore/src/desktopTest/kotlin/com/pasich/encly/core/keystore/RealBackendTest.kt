@@ -108,14 +108,20 @@ class RealBackendTest {
 
             assertTrue(factor.ensureKey(PinKeySlot.B))
             factor.delete(PinKeySlot.B)
-            assertTrue(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.B, data) }.lost)
+            assertMissing(store, assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.B, data) })
 
             factor.delete(PinKeySlot.A)
-            assertTrue(assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }.lost)
+            assertMissing(store, assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) })
         } finally {
             runCatching { store.delete(PinKeySlot.A) }
             runCatching { store.delete(PinKeySlot.B) }
         }
+    }
+
+    /** A deleted secret is lost where the store is the only place it can be, and "not found" on the Secret Service. */
+    private fun assertMissing(store: SecretStore, e: PinFactorException) {
+        assertTrue(e.lost == store.missingMeansLost)
+        assertTrue(e.notFound == !store.missingMeansLost)
     }
 
     private companion object {

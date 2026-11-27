@@ -11,6 +11,7 @@ import com.pasich.encly.desktop.window.WindowForeground
 import com.pasich.encly.desktop.window.WindowFrames
 import com.pasich.encly.desktop.window.WindowServices
 import com.pasich.encly.desktop.window.awaitPendingWork
+import com.pasich.encly.desktop.window.dropWhenUnlocked
 import com.pasich.encly.presentation.designsystem.AppCommand
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CompletableDeferred
@@ -106,9 +107,69 @@ class DesktopWindowsTest {
         )) {
             val services = assertNotNull(windows.open()).services
             services.startStatus.complete(status)
-            // Still "locked" as a flag: only a vault that starts locked waits for the unlock.
-            services.awaitReadyForFiles(kotlinx.coroutines.flow.MutableStateFlow(true)) { }
+            // Not locked now: nothing to wait for, whatever the start status was.
+            services.awaitReadyForFiles(kotlinx.coroutines.flow.MutableStateFlow(false)) { }
         }
+    }
+
+    @Test
+    fun aFileHandedToALockedAppWaitsForTheUnlockWhateverTheStartStatusWas() = runBlocking {
+        // Was: only a window that STARTED locked (AUTH) waited. A first start on onboarding that has locked since, or
+        // a vault that was open and re-locked, took the file at once and the lock screen swallowed it.
+        for (status in listOf(
+            com.pasich.encly.core.security.InitialStatus.MAIN,
+            com.pasich.encly.core.security.InitialStatus.ONBOARDING,
+            com.pasich.encly.core.security.InitialStatus.AUTH,
+        )) {
+            val services = assertNotNull(windows().open()).services
+            services.startStatus.complete(status)
+            val locked = kotlinx.coroutines.flow.MutableStateFlow(true)
+            var ready = false
+            var settled = false
+            val waiting = launch {
+                services.awaitReadyForFiles(locked) { settled = true }
+                ready = true
+            }
+
+            kotlinx.coroutines.delay(50)
+            assertFalse(ready, "$status: still locked")
+
+            locked.value = false
+            waiting.join()
+            assertTrue(ready && settled, "$status: taken after the unlock, once the lock screen left")
+        }
+    }
+
+    @Test
+    fun aFileDroppedOnALockedWindowIsNotRoutedUntilTheUnlockSoItsWaitCannotRunOutOnTheLockScreen() = runBlocking {
+        val graph = createGraph()
+        val services = WindowServices.create(graph.environment, graph.lifecycle)
+        services.startStatus.complete(com.pasich.encly.core.security.InitialStatus.AUTH)
+        val file = temp.newFile("notes.enclybak").toPath()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val routes = java.util.concurrent.CopyOnWriteArrayList<String>()
+        scope.launch { services.navigation.routes.collect { routes += it } }
+        val locked = kotlinx.coroutines.flow.MutableStateFlow(true)
+
+        val taken = services.dropWhenUnlocked(locked, scope, listOf(file)) { }
+        kotlinx.coroutines.delay(150)
+
+        assertTrue(taken, "the drop is accepted at once")
+        assertTrue(routes.isEmpty(), "but nothing is routed while the vault is locked")
+
+        locked.value = false
+        val deadline = System.currentTimeMillis() + 5_000
+        while (routes.isEmpty() && System.currentTimeMillis() < deadline) kotlinx.coroutines.delay(20)
+        assertEquals(listOf(com.pasich.encly.presentation.navigation.NavRoutes.BackupRoute.name), routes.toList())
+
+        // With the vault open the drop is routed on the spot.
+        routes.clear()
+        assertTrue(services.dropWhenUnlocked(locked, scope, listOf(file)) { })
+        val again = System.currentTimeMillis() + 5_000
+        while (routes.isEmpty() && System.currentTimeMillis() < again) kotlinx.coroutines.delay(20)
+        assertEquals(1, routes.size)
+        scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
+        Unit
     }
 
     @Test

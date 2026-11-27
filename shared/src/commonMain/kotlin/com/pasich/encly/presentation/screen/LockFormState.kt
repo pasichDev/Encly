@@ -10,11 +10,16 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.error_database_open
 import com.pasich.encly.core.resources.error_keystore_unavailable
 import com.pasich.encly.core.resources.key_store_unavailable
+import com.pasich.encly.core.resources.keyring_no_default
+import com.pasich.encly.core.resources.keyring_not_running
+import com.pasich.encly.core.resources.keyring_prompt_dismissed
 import com.pasich.encly.core.resources.lock_device_locked
+import com.pasich.encly.core.resources.lock_passphrase_slot_unusable
 import com.pasich.encly.core.resources.lock_pin_key_lost
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.lock_wrong_recovery_phrase
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
+import com.pasich.encly.presentation.screen.pincode.PassphraseInput
 import com.pasich.encly.presentation.screen.pincode.PinBuffer
 import com.pasich.encly.presentation.screen.pincode.lockoutSecondsLeft
 import com.pasich.encly.presentation.viewmodel.PinUnlockResult
@@ -22,14 +27,14 @@ import com.pasich.encly.presentation.viewmodel.SeedUnlockResult
 import org.jetbrains.compose.resources.StringResource
 
 /**
- * What the lock screen's forms show: the PIN typed so far, the recovery phrase, and the last
- * error of each. Held by [LockScreen] itself, above the "Unlocking…" view that replaces the
+ * What the lock screen's forms show: the PIN typed so far (or the passphrase, where the secret is one), the recovery
+ * phrase, and the last error of each. Held by [LockScreen] itself, above the "Unlocking…" view that replaces the
  * forms while a credential is checked, so a wrong PIN or phrase is still shown afterwards
  * instead of being lost with the form that asked for it.
  */
 @Stable
 @Suppress("TooManyFunctions") // One small handler per field of the PIN and phrase forms.
-internal class LockFormState {
+internal class LockFormState(maxPassphraseUnits: Int = PassphraseInput.MAX_TYPED_CHARS) {
     /** The recovery-phrase form is shown instead of the PIN pad. */
     var useRecovery by mutableStateOf(false)
 
@@ -39,6 +44,9 @@ internal class LockFormState {
 
     /** The digits typed so far, wiped when taken or cleared (see [PinBuffer]). */
     private val pinDigits = PinBuffer()
+
+    /** The passphrase typed so far, where the unlock secret is one (see [PassphraseInput]). */
+    val passphrase = PassphraseInput(maxPassphraseUnits)
 
     /** How many PIN digits are typed. */
     val pinLength: Int get() = pinDigits.length
@@ -51,6 +59,12 @@ internal class LockFormState {
         private set
 
     var lockoutSeconds by mutableLongStateOf(0L)
+
+    /**
+     * The keyring answered but holds no key: the screen that says so (try again, the recovery phrase, and last of all
+     * a wipe) replaces the forms until the user leaves it.
+     */
+    var keyNotFound by mutableStateOf(false)
 
     /** The recovery words typed so far. */
     val phrase = RecoveryPhraseState()
@@ -78,8 +92,22 @@ internal class LockFormState {
         return pinDigits.take()
     }
 
-    /** Forgets the typed digits. */
-    fun clearPin() = pinDigits.clear()
+    /** Something is typed in the passphrase field; the Unlock button is on from here, nothing is sent by itself. */
+    val canSubmitPassphrase: Boolean get() = passphrase.canSubmit
+
+    /** The passphrase, taken out of the field to be checked, which is emptied. The caller wipes the copy. */
+    fun takePassphrase(): CharArray = passphrase.take()
+
+    /** An edit of the passphrase; the first one of a new attempt clears the last error. */
+    fun onPassphraseEdited() {
+        if (pinError != null) pinError = null
+    }
+
+    /** Forgets the typed digits, and the typed passphrase. */
+    fun clearPin() {
+        pinDigits.clear()
+        passphrase.clear()
+    }
 
     fun onPinResult(result: PinUnlockResult, lockoutRemainingMillis: Long) {
         when (result) {
@@ -92,6 +120,14 @@ internal class LockFormState {
             PinUnlockResult.DB_ERROR -> pinError = Res.string.error_database_open
 
             PinUnlockResult.KEY_STORE_UNAVAILABLE -> pinError = Res.string.key_store_unavailable
+
+            PinUnlockResult.KEY_STORE_NOT_RUNNING -> pinError = Res.string.keyring_not_running
+
+            PinUnlockResult.KEY_STORE_NO_DEFAULT -> pinError = Res.string.keyring_no_default
+
+            PinUnlockResult.KEY_STORE_DISMISSED -> pinError = Res.string.keyring_prompt_dismissed
+
+            PinUnlockResult.KEY_NOT_FOUND -> keyNotFound = true
 
             PinUnlockResult.KEY_STORE_FAILED -> pinError = Res.string.error_keystore_unavailable
 
@@ -117,6 +153,23 @@ internal class LockFormState {
     /** System back: from the recovery form to the PIN pad; the PIN pad itself stays. */
     fun back() {
         if (useRecovery) leaveRecovery()
+    }
+
+    /** The stored secret slot is of a format this version cannot check: the recovery form says so, once. */
+    fun markSlotUnusable() {
+        phraseError = Res.string.lock_passphrase_slot_unusable
+    }
+
+    /** "Try again" on the missing-key screen: back to the form, with nothing left of the attempt. */
+    fun leaveKeyNotFound() {
+        keyNotFound = false
+        pinError = null
+    }
+
+    /** The recovery phrase from the missing-key screen. */
+    fun recoverFromKeyNotFound() {
+        keyNotFound = false
+        useRecovery = true
     }
 
     /** Back to the PIN pad; the typed words are dropped. */

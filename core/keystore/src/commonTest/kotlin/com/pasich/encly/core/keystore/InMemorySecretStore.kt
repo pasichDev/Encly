@@ -10,6 +10,15 @@ internal class InMemorySecretStore : SecretStore {
     /** Every array [read] and [create] returned, so that a test can check that the caller wiped it. */
     val handedOut = mutableListOf<ByteArray>()
 
+    /** Whether a missing secret proves it is gone, as on every store but the freedesktop Secret Service. */
+    override var missingMeansLost: Boolean = true
+
+    var prepareFailure: SecretStoreException? = null
+    var prepared = 0
+        private set
+    var abandoned = 0
+        private set
+
     var readFailure: SecretStoreException? = null
     var createFailure: SecretStoreException? = null
     var deleteFailure: SecretStoreException? = null
@@ -31,6 +40,15 @@ internal class InMemorySecretStore : SecretStore {
         val secret = Crypto.randomBytes(SecretStore.SECRET_SIZE)
         secrets[slot] = secret
         return secret.copyOf().also { handedOut += it }
+    }
+
+    override fun prepare() {
+        prepareFailure?.let { throw it }
+        prepared++
+    }
+
+    override fun abandonPending() {
+        abandoned++
     }
 
     override fun delete(slot: PinKeySlot) {

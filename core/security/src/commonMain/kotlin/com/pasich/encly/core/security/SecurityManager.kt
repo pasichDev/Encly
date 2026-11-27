@@ -52,7 +52,17 @@ public enum class VaultUnlockResult {
     /** The store of the device-bound PIN key is locked or not running (a desktop keyring); the attempt was refunded. */
     KEY_STORE_UNAVAILABLE,
 
-    /** The device's key store failed on this attempt (it may pass); the attempt was refunded, the database is fine. */
+    /**
+     * The store of the device-bound PIN key holds no key, but may be another one than the key was made in (a desktop
+     * keyring: a different provider is running, the keyring is closed, the vault folder moved): the vault is intact
+     * and nothing was counted. Never on Android or iOS, where a missing key is [PIN_KEY_LOST].
+     */
+    KEY_NOT_FOUND,
+
+    /**
+     * The device's key store failed on this attempt (it may pass), or the password stretch could not be made for lack
+     * of memory; the attempt was refunded, the database is fine.
+     */
     KEY_STORE_FAILED,
     DB_ERROR,
 }
@@ -205,9 +215,17 @@ public class SecurityManager(
     private fun isCommittedWithoutFlag(): Boolean = !isRestorePending() &&
         !seedPhraseManager.hasBootstrapKey() &&
         seedPhraseManager.hasStoredSeed() &&
-        (authenticationManager.hasPinSlot() || seedPhraseManager.hasRecoverySeed()) &&
+        hasSlotData() &&
         // A wipe-PIN erase that has not created the empty database yet leaves none: the vault is still committed.
         (vaultDatabase.hasEncryptedDatabase() || authenticationManager.pendingWipe() != null)
+
+    /**
+     * Whether a secret slot or the recovery slot exists. A slot of a format this platform cannot use (a desktop vault
+     * of the PIN era) is still a vault's data: it makes a vault a damaged one, never "no vault, start over".
+     */
+    private fun hasSlotData(): Boolean = authenticationManager.hasPinSlot() ||
+        authenticationManager.hasStoredSlotEntry() ||
+        seedPhraseManager.hasRecoverySeed()
 
     /** True when first-run setup may (re)create the vault without destroying user data. */
     private fun isSafeToCreateVault(): Boolean = !vaultStore.isUnreadable() &&
@@ -237,6 +255,18 @@ public class SecurityManager(
      * may say so: Settings looks the same, and this layer refuses what belongs to the real vault.
      */
     public fun isDecoySession(): Boolean = sessionDek != null && sessionVault == VaultKind.DECOY
+
+    /** What this vault is unlocked with: a PIN (Android, iOS) or a password (desktop). */
+    public val secretKind: SecretKind get() = authenticationManager.secretKind
+
+    /** The most units a typed secret may have before it is refused unseen (12 for a PIN, 768 for a password). */
+    public val maxTypedUnits: Int get() = authenticationManager.maxTypedUnits
+
+    /** Whether [typed] may be set as a secret, and if not why; see [AuthenticationManager.checkNewSecret]. */
+    public fun checkNewSecret(typed: CharArray): SecretRule = authenticationManager.checkNewSecret(typed)
+
+    /** A fresh secret to offer the user, or null when this kind has none (a PIN). The caller wipes it. */
+    public fun suggestSecret(): CharArray? = authenticationManager.suggestSecret()
 
     /** Sets a new PIN slot around the live DEK. [pin] is wiped. */
     public fun configurePin(pin: CharArray): Boolean = changePin(pin) == PinChange.SET
@@ -334,6 +364,8 @@ public class SecurityManager(
             PinUnlock.KeyLost -> VaultUnlockResult.PIN_KEY_LOST
 
             PinUnlock.KeyStoreUnavailable -> VaultUnlockResult.KEY_STORE_UNAVAILABLE
+
+            PinUnlock.KeyStoreNotFound -> VaultUnlockResult.KEY_NOT_FOUND
 
             PinUnlock.KeyStoreFailed -> VaultUnlockResult.KEY_STORE_FAILED
 
@@ -477,11 +509,33 @@ public class SecurityManager(
      * Re-authentication with the PIN of the open vault (the duress PIN in a decoy session);
      * counts like an unlock attempt. [pin] is wiped.
      */
-    public fun verifyPin(pin: CharArray): Boolean = try {
-        authenticationManager.verifyPinAuth(pin, decoy = isDecoySession())
+    public fun verifyPin(pin: CharArray): Boolean = verifyPinResult(pin) == PinCheck.OK
+
+    /** [verifyPin], telling a wrong secret from a device key store that did not answer. [pin] is wiped. */
+    public fun verifyPinResult(pin: CharArray): PinCheck = try {
+        authenticationManager.verifyPinAuthResult(pin, decoy = isDecoySession())
     } finally {
         SensitiveDataCleaner.clear(pin)
     }
+
+    /**
+     * What the last unlock, check or setting that found the device key store unusable said was missing (no store
+     * running, locked, no default keyring, a prompt dismissed), for the message; null when it did not meet that.
+     */
+    public fun keyStoreProblem(): KeyStoreProblem? = authenticationManager.keyStoreProblem
+
+    /** Whether [prepareKeyStore] has anything to do on this platform (a desktop keyring; false on Android and iOS). */
+    public fun keyStoreMayNeedPreparing(): Boolean = authenticationManager.keyStoreMayNeedPreparing
+
+    /**
+     * Gets the device key store ready before a vault is made around a key in it: null when it is, else what is missing
+     * (and the system's own prompt was already shown where it has one). Blocks while the user answers it: never on the
+     * main thread. Nothing is created.
+     */
+    public fun prepareKeyStore(): KeyStoreProblem? = authenticationManager.prepareKeyStore()
+
+    /** Ends a system prompt the key store waits on; the lock of the vault does it ([lock]). */
+    public fun abandonKeyStorePrompt(): Unit = authenticationManager.abandonKeyStorePrompt()
 
     public fun verifySeed(phrase: CharArray): Boolean = seedPhraseManager.verifyMnemonic(phrase)
 
@@ -703,6 +757,9 @@ public class SecurityManager(
      * session key behind; the failure is passed on.
      */
     public fun lock() {
+        // Before the lock waits for anything: a keyring prompt left open must not outlive the lock, and the unlock that
+        // waits on it must not keep this one waiting.
+        authenticationManager.abandonKeyStorePrompt()
         synchronized(databaseLock) {
             try {
                 vaultDatabase.reset()

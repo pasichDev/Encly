@@ -36,6 +36,8 @@ kotlin {
             implementation(libs.jna.platform)
             implementation(libs.dbus.java.core)
             implementation(libs.dbus.java.transport)
+            // Argon2id for the desktop password. Desktop only: it must not reach the Android or iOS classpath.
+            implementation(libs.bouncycastle.bcprov)
         }
         getByName("desktopTest").dependencies {
             implementation(kotlin("test"))

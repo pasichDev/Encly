@@ -67,6 +67,9 @@ internal class FieldHighlight(
     // Where a mouse drag began, in this field or as the anchor a Shift+click extends; null while there is none.
     private var mouseAnchor: TextPoint? = null
 
+    /** Whether a mouse button is down that started in this field: its own selection is being dragged. */
+    val isMouseDown: Boolean get() = mouseAnchor != null
+
     /** The field's lines as the cursor moves between fields need them; null until it is measured. */
     fun geometry(): CaretGeometry? = layout?.invoke()?.geometry()
 

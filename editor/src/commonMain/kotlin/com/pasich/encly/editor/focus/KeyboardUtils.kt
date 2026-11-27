@@ -28,6 +28,7 @@ internal object KeyboardUtils {
         onNavigateDown: () -> Boolean = { false },
         onEnterPressed: () -> Boolean = { false },
         onBackspaceAtStart: () -> Boolean = { false },
+        onDeleteAtEnd: () -> Boolean = { false },
         onNavigateLeft: () -> Boolean = { false },
         onNavigateRight: () -> Boolean = { false },
         line: CaretLine? = null,
@@ -42,6 +43,8 @@ internal object KeyboardUtils {
             onNavigateDown = onNavigateDown,
             onEnterPressed = onEnterPressed,
             onBackspaceAtStart = onBackspaceAtStart,
+            // Shift+Delete cuts, in the field's own way.
+            onDeleteAtEnd = { !event.isShiftPressed && onDeleteAtEnd() },
             onNavigateLeft = onNavigateLeft,
             onNavigateRight = onNavigateRight,
         ),
@@ -51,7 +54,7 @@ internal object KeyboardUtils {
     /**
      * What [handleKey] runs for each key it handles. Backspace with the cursor at the start runs
      * [onBackspaceAtStart] first (join with the block above); if that does nothing and the field
-     * is empty, [onBackspaceEmpty].
+     * is empty, [onBackspaceEmpty]. Delete with the cursor at the end runs [onDeleteAtEnd] (join the block below).
      */
     internal class KeyHandlers(
         val onBackspaceEmpty: () -> Unit = {},
@@ -59,6 +62,7 @@ internal object KeyboardUtils {
         val onNavigateDown: () -> Boolean = { false },
         val onEnterPressed: () -> Boolean = { false },
         val onBackspaceAtStart: () -> Boolean = { false },
+        val onDeleteAtEnd: () -> Boolean = { false },
         val onNavigateLeft: () -> Boolean = { false },
         val onNavigateRight: () -> Boolean = { false },
     )
@@ -75,8 +79,14 @@ internal object KeyboardUtils {
         if (type != KeyEventType.KeyDown) return false
         return when {
             key.isArrow() -> handleArrow(key, text, cursorPosition, handlers, line)
+
             key == Key.Enter -> handlers.onEnterPressed()
+
             key.keyCode == Key.Backspace.keyCode -> handleBackspace(text, cursorPosition, handlers)
+
+            // Inside the text, or a selection to delete: the field's own Delete.
+            key == Key.Delete -> cursorPosition == text.length && handlers.onDeleteAtEnd()
+
             else -> false
         }
     }

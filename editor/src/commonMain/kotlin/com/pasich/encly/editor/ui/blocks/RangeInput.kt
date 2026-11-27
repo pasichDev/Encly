@@ -26,8 +26,10 @@ import androidx.compose.ui.text.TextRange
 import com.pasich.encly.editor.focus.CaretLine
 import com.pasich.encly.editor.state.HeadMove
 import com.pasich.encly.editor.state.TextPoint
+import com.pasich.encly.editor.state.TextRangeSelection
 import com.pasich.encly.editor.ui.BlockActions
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 
 /**
  * Watches the mouse over a field for a drag or a Shift+click that runs into another field, which makes a text
@@ -52,6 +54,10 @@ internal fun Modifier.rangeMouse(field: FieldHighlight): Modifier = pointerInput
  * field's own (a long press, a drag, Ctrl+A, Shift+arrows) is the whole selection until it runs into another
  * field, and its handles and tint are drawn the same way. Also lets the selection reach the field's own state, so a
  * handle dragged inside the field moves the field's selection.
+ *
+ * Once the selection runs across fields, the field's own selection ends: it would only keep the field's own pair of
+ * handles (and its copy and cut) on one paragraph next to the pair of the whole selection. The cursor stays where
+ * the selection's head in the field was, so a soft keyboard's delete or typed text still has a text to change.
  */
 @Composable
 internal fun BindFieldRange(state: TextFieldState, blockActions: BlockActions, highlight: FieldHighlight) {
@@ -66,7 +72,19 @@ internal fun BindFieldRange(state: TextFieldState, blockActions: BlockActions, h
             state.selection
         }.drop(1).collect { selection -> highlight.onSelection(selection, actions.textRange) }
     }
+    LaunchedEffect(state, highlight) {
+        snapshotFlow { ownsSelectionAcrossFields(state, actions.textRange, highlight) }.filter { it }.collect {
+            state.edit { selection = TextRange(selection.end) }
+        }
+    }
 }
+
+/**
+ * Whether [state] still holds a selection of its own while [range] runs across fields. A mouse drag in the field is
+ * left alone: the field moves its selection with every step of it, and there are no handles to double.
+ */
+internal fun ownsSelectionAcrossFields(state: TextFieldState, range: TextRangeSelection, highlight: FieldHighlight) =
+    !state.selection.collapsed && range.isCrossField && !highlight.isMouseDown
 
 /** What the field does with [event] while a text selection across blocks exists or may start; true if it took it. */
 internal fun rangeKey(event: KeyEvent, field: RangeField, actions: BlockActions): Boolean {

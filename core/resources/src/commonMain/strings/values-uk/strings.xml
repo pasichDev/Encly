@@ -62,6 +62,7 @@
     <string name="selection_close">Зняти виділення</string>
     <string name="selection_copy">Копіювати</string>
     <string name="selection_cut">Вирізати</string>
+    <string name="selection_paste">Вставити</string>
     <string name="selection_delete">Видалити виділені блоки</string>
     <string name="select_all">Виділити все</string>
     <string name="selection_copied">Скопійовано</string>
@@ -124,7 +125,7 @@
 
     <string name="falied_content">Не вдалося завантажити вміст</string>
 
-    <string name="faq_background_a">Encly зберігає зміни й після затримки, вибраної в Налаштування → Безпека (за замовчуванням 15 секунд), закриває зашифровану базу та очищає сесійний ключ. Вимкнення екрана чи блокування телефона робить це одразу. Після цього потрібно розблокувати знову.</string>
+    <string name="faq_background_a">Encly зберігає зміни й після затримки, вибраної в Налаштування → Безпека (за замовчуванням 15 секунд), закриває зашифровану базу та очищає сесійний ключ. Вимкнення екрана чи блокування пристрою робить це одразу. Після цього потрібно розблокувати знову.</string>
     <string name="faq_background_q">Що відбувається після згортання застосунку?</string>
     <string name="faq_biometrics_a">У Налаштування → Безпека використайте перемикач біометрії. Щоб увімкнути або вимкнути розблокування біометрією, потрібно підтвердити його надійною біометрією (наприклад, відбитком пальця).</string>
     <string name="faq_biometrics_q">Як увімкнути або вимкнути біометрію?</string>
@@ -372,7 +373,7 @@
     <string name="backup_settings_subtitle">Зашифрована копія, імпорт і Markdown</string>
     <string name="backup_title">Резервна копія</string>
     <string name="backup_intro_title">Зашифровано вашою фразою відновлення</string>
-    <string name="backup_intro_body">Резервна копія містить усі ваші нотатки, завдання та мітки, зашифровані вашою фразою відновлення з 12 слів. Encly нікуди її не вивантажує: ви самі обираєте, де зберегти файл. На новому телефоні ті самі 12 слів її відновлять.</string>
+    <string name="backup_intro_body">Резервна копія містить усі ваші нотатки, завдання та мітки, зашифровані вашою фразою відновлення з 12 слів. Encly нікуди її не вивантажує: ви самі обираєте, де зберегти файл. На новому пристрої ті самі 12 слів її відновлять.</string>
     <string name="backup_last_export">Останній експорт: %1$s</string>
     <string name="backup_never_exported">Резервну копію ще не експортовано</string>
     <string name="backup_export">Експортувати копію</string>
@@ -459,7 +460,7 @@
     <string name="pin_unlock_with_fingerprint">Розблокувати відбитком пальця</string>
     <string name="onboarding_step_of">Крок %1$d з %2$d</string>
     <string name="onboarding_welcome_headline">Записник, який можете відкрити лише ви.</string>
-    <string name="onboarding_welcome_sub">Нотатки й завдання, зашифровані на цьому телефоні. Налаштування займе близько хвилини.</string>
+    <string name="onboarding_welcome_sub">Нотатки й завдання, зашифровані на цьому пристрої. Налаштування займе близько хвилини.</string>
     <string name="onboarding_fact_account_title">Без облікового запису</string>
     <string name="onboarding_fact_account_desc">Без реєстрації, без пошти, без скидання пароля.</string>
     <string name="onboarding_fact_offline_title">Працює офлайн</string>
@@ -479,7 +480,7 @@
     <string name="onboarding_recovery_pin_desc">Фраза відмикає сховище й дозволяє задати новий PIN.</string>
     <string name="onboarding_recovery_backups_title">Відкриває резервні копії</string>
     <string name="onboarding_recovery_backups_desc">Зашифровані файли копій можна прочитати лише з цими словами.</string>
-    <string name="onboarding_recovery_phone_title">Новий телефон</string>
+    <string name="onboarding_recovery_phone_title">Новий пристрій</string>
     <string name="onboarding_recovery_phone_desc">Файл копії разом із фразою відновлює всі нотатки, завдання й мітки.</string>
     <string name="onboarding_recovery_warning">Ніхто не відновить її за вас, навіть ми. Якщо втратити і PIN, і фразу, нотатки буде втрачено.</string>
     <string name="onboarding_recovery_create">Створити мою фразу</string>
@@ -514,9 +515,9 @@
     <string name="onboarding_restore_label">Відновлення, потім PIN</string>
     <string name="onboarding_restore_intro">Оберіть файл резервної копії Encly, потім введіть 12 слів, з якими її створено.</string>
     <string name="onboarding_restore_file_section">1 · Файл копії</string>
-    <string name="onboarding_restore_tap_other">Торкніться, щоб обрати інший файл</string>
+    <string name="onboarding_restore_tap_other">Обрати інший файл</string>
     <string name="onboarding_restore_phrase_section">2 · Фраза відновлення</string>
-    <string name="onboarding_restore_phrase_helper">Ці слова також стануть фразою відновлення на цьому телефоні.</string>
+    <string name="onboarding_restore_phrase_helper">Ці слова також стануть фразою відновлення на цьому пристрої.</string>
     <string name="notes_title">Нотатки</string>
     <string name="lock_now">Заблокувати зараз</string>
     <string name="search_placeholder">Пошук у заголовках і тексті</string>
@@ -720,7 +721,7 @@
     </plurals>
     <string name="trash_notice_open">Відкрити кошик</string>
     <string name="faq_pin_length_q">Якої довжини може бути PIN?</string>
-    <string name="faq_pin_length_a">Від 6 до 12 цифр на ваш вибір. Коротших PIN не пропонується: блокування й ключ пристрою обмежують кількість спроб, а 6 цифр — найкоротший PIN, що лишається безпечним за цих обмежень. Екран блокування ніколи не показує довжину вашого PIN: коли закінчите, натисніть «Розблокувати» — так само для PIN для стирання та PIN під примусом. PIN, задані раніше, працюють без змін.</string>
+    <string name="faq_pin_length_a">Від 6 до 12 цифр на ваш вибір. Коротших PIN не пропонується: блокування й ключ пристрою обмежують кількість спроб, а 6 цифр — найкоротший PIN, що лишається безпечним за цих обмежень. Encly не зберігає довжину вашого PIN і не показує її, поки ви не почнете вводити. Крапки з’являються по одній на цифру, тож той, хто дивиться, може їх порахувати. Коли закінчите, натисніть «Розблокувати» — так само для PIN для стирання та PIN під примусом. PIN, задані раніше, працюють без змін.</string>
     <string name="block_code">Код</string>
     <string name="block_table">Таблиця</string>
     <string name="table_add_row">Додати рядок</string>
@@ -809,6 +810,8 @@
     <string name="security_encryption_pin_plain_nobio">Ваші нотатки зашифровано. Їх відкриває ваш PIN.</string>
     <string name="security_encryption_seed_plain_nobio">Ваші нотатки зашифровано. Їх відкриває ваш PIN, а якщо ви забудете PIN, то фраза відновлення.</string>
     <string name="lock_pin_key_lost_desktop">Ваш PIN більше не може розблокувати Encly на цьому комп’ютері: секрет у системній в’язці ключів зник або був скинутий. Скористайтеся фразою відновлення, а потім задайте новий PIN.</string>
+    <string name="error_keystore_unavailable_desktop">Системна в’язка ключів не відповіла. Спробуйте ще раз; якщо помилка повторюється, перезапустіть її або вийдіть із системи й увійдіть знову.</string>
+    <string name="loss_message_desktop">Схоже, що зашифровані дані або ключі шифрування (зокрема секрет у системній в’язці ключів) були змінені або пошкоджені, тож відновлення неможливе.\n\nЩоб і далі користуватися застосунком, потрібно скинути його та стерти пошкоджені дані на цьому комп’ютері. Усі збережені нотатки й налаштування буде видалено назавжди.</string>
     <string name="security_protection_slots_desc_nobio">PIN і фраза відновлення відкривають кожен свій зашифрований слот.</string>
     <string name="duress_pin_real_vault_nobio">Ваше справжнє сховище лишається заблокованим і недоторканим. На відміну від PIN для стирання, PIN під примусом нічого не стирає. Фраза відновлення завжди відкриває справжнє сховище.</string>
     <string name="security_protection_pin_title_device">PIN прив’язаний до цього пристрою</string>
@@ -822,4 +825,49 @@
     <string name="faq_swipe_a_other">За замовчуванням свайп нотатки праворуч закріплює або відкріплює її, а ліворуч — архівує. У Налаштування → Дії свайпом можна вибрати для кожного напрямку: закріпити, архівувати, наступний колір, перемістити в кошик (завжди з підтвердженням) або нічого, а також вимкнути свайпи.</string>
     <string name="faq_theme_a_other">У Налаштування → Зовнішній вигляд виберіть одну з п’яти тем, світлий, темний чи системний режим, один із трьох стилів шрифту та розмір тексту.</string>
     <string name="faq_language_a_ios">Відкрийте Налаштування → Мова та виберіть одну з доступних мов або «Як у системі», щоб використовувати мову пристрою. Зміна застосується під час наступного запуску Encly.</string>
+    <!-- Passphrase wording: the twin of a PIN text, used where the unlock secret is a passphrase (desktop). -->
+    <string name="lock_passphrase_subtitle">Введіть парольну фразу, щоб продовжити</string>
+    <string name="lock_wrong_passphrase">Неправильна парольна фраза</string>
+    <string name="lock_back_to_passphrase">Повернутися до парольної фрази</string>
+    <string name="backup_reauth_passphrase_subtitle">Введіть парольну фразу, щоб продовжити</string>
+    <string name="passphrase_change_current_title">Введіть поточну парольну фразу</string>
+    <string name="passphrase_change_current_subtitle">Підтвердьте поточну парольну фразу перед її зміною</string>
+    <string name="passphrase_create_title">Створіть парольну фразу</string>
+    <string name="passphrase_change_new_subtitle">Від 12 до 128 символів, не лише цифри</string>
+    <string name="passphrase_change_confirm_title">Підтвердьте парольну фразу</string>
+    <string name="passphrase_change_confirm_subtitle">Повторно введіть парольну фразу для підтвердження</string>
+    <string name="passphrase_changed">Парольну фразу змінено</string>
+    <string name="passphrase_current_wrong">Поточна парольна фраза неправильна</string>
+    <string name="passphrase_mismatch_retry">Парольні фрази не збігаються. Спробуйте ще раз.</string>
+    <string name="passphrase_save_failed">Не вдалося зберегти парольну фразу</string>
+    <string name="passphrase_update_failed">Не вдалося оновити парольну фразу. Спробуйте ще раз.</string>
+    <string name="passphrase_reset_subtitle">Ви розблокували Encly фразою відновлення. Щоб продовжити, задайте нову парольну фразу.</string>
+    <string name="onboarding_passphrase_title">Оберіть парольну фразу</string>
+    <string name="onboarding_passphrase_body">Від 12 до 128 символів, не лише цифри. Добре підійде кілька слів. Вона щодня відмикає Encly на цьому комп’ютері й захищає ключ до вашого сховища. Це не фраза відновлення, і скинути її через пошту неможливо.</string>
+    <string name="onboarding_passphrase_again_title">Введіть парольну фразу ще раз</string>
+    <string name="onboarding_passphrase_again_body">Щоб переконатися, що це саме та парольна фраза.</string>
+    <string name="onboarding_recovery_passphrase_title">Забули парольну фразу?</string>
+    <string name="onboarding_recovery_passphrase_desc">Фраза відновлення відмикає сховище й дозволяє задати нову парольну фразу.</string>
+    <string name="onboarding_recovery_warning_passphrase">Ніхто не відновить її за вас, навіть ми. Парольна фраза працює разом із секретом у системній в’язці ключів цього комп’ютера. Якщо в’язку скинуто чи замінено, ви перейшли на новий обліковий запис ОС або домашню теку перенесено чи відновлено без неї, ваші нотатки зможе відкрити лише фраза відновлення. Якщо втратити і її, нотатки зникнуть.</string>
+    <string name="onboarding_recovery_skip_passphrase">Пропустити: лише парольна фраза, без резервних копій</string>
+    <string name="onboarding_ready_passphrase_title">Парольну фразу задано</string>
+    <string name="onboarding_ready_passphrase_desc">Запитується щоразу, коли відкривається Encly</string>
+    <string name="onboarding_restore_label_passphrase">Відновлення, потім парольна фраза</string>
+    <string name="auth_method_passphrase_title">Парольна фраза</string>
+    <string name="auth_method_passphrase_desc">Від 12 до 128 символів. Натисніть, щоб змінити парольну фразу.</string>
+    <string name="security_recovery_missing_passphrase">Не налаштовано. Без неї забута парольна фраза означає втрату всього. Виберіть, щоб створити.</string>
+    <string name="backup_needs_phrase_body_passphrase">Резервні копії шифруються фразою відновлення, тож відкрити їх можуть лише її 12 слів. У цьому сховищі її ще немає. Створіть її зараз: вона також дозволить розблокувати сховище, якщо ви забудете парольну фразу.</string>
+    <string name="markdown_export_warning_body_passphrase">Експортований файл не зашифрований. Будь-хто, хто його отримає, зможе прочитати ваші нотатки. Місце, куди ви його збережете, зокрема хмарна тека, міститиме читабельну копію, яку Encly не може ні захистити, ні відкликати. Далі потрібно буде підтвердити парольною фразою.</string>
+    <string name="pdf_export_warning_body_passphrase">PDF не зашифрований. Будь-хто, хто його отримає, зможе прочитати вашу нотатку. Місце, куди ви його збережете, зокрема хмарна тека, міститиме читабельну копію, яку Encly не може ні захистити, ні відкликати. Далі потрібно буде підтвердити парольною фразою.</string>
+    <string name="print_warning_body_passphrase">Під час друку текст нотатки надсилається на принтер без шифрування. Системна черга друку може зберігати його тимчасові копії, а мережевий або хмарний принтер також може його зберегти. Encly не може їх видалити. Далі потрібно буде підтвердити парольною фразою.</string>
+    <string name="faq_change_passphrase_q">Як змінити парольну фразу?</string>
+    <string name="faq_change_passphrase_a">Відкрийте Налаштування → Безпека, підтвердьте поточну парольну фразу, а потім двічі введіть нову.</string>
+    <string name="faq_forgot_passphrase_q">Що буде, якщо я забуду парольну фразу?</string>
+    <string name="faq_forgot_passphrase_a">На екрані блокування натисніть «Відновити доступ» і введіть 12 слів відновлення. Якщо ваша парольна фраза ще працює, її можна залишити або задати нову; якщо ні, нову парольну фразу задають одразу. Без фрази відновлення іншого способу увійти немає: скинути її не може ніхто, навіть розробник.</string>
+    <string name="faq_passphrase_length_q">Якої довжини може бути парольна фраза?</string>
+    <string name="faq_passphrase_length_a">Від 12 до 128 символів, будь-якою мовою. Вона не може складатися лише з цифр і має містити щонайменше 5 різних символів. Кілька випадкових слів — це надійно й легко запам’ятати, а Encly може запропонувати п’ять. Encly не зберігає довжину вашої парольної фрази й не показує її, поки ви не почнете вводити. Те, що ви вводите, приховано, але той, хто дивиться, може порахувати крапки. Коли закінчите, натисніть «Розблокувати» — так само для парольної фрази для стирання та парольної фрази під примусом. Парольна фраза — не фраза відновлення: фраза відновлення — це 12 слів, які ви записуєте на той день, коли забудете її.</string>
+    <string name="faq_db_key_a_passphrase">Encly створює випадковий 256-бітний ключ бази даних. Парольна фраза захищає окрему зашифровану (AES-GCM) копію цього ключа: вона розтягується за допомогою Argon2id і змішується із секретом, що зберігається в системній в’язці ключів.</string>
+    <string name="faq_recovery_phrase_a_passphrase">Це запасний ключ із 12 слів. Він відкриває сховище, якщо ви забули парольну фразу, і це єдиний ключ до ваших резервних копій. Фразу створюють під час налаштування або пізніше в Налаштування → Безпека, якщо ви її пропустили. Зберігайте її на папері, офлайн. Це не ваша парольна фраза, яку ви вводите щодня.</string>
+    <string name="faq_report_bug_a_passphrase">Відкрийте «Про застосунок» і скористайтеся зворотним зв\'язком або напишіть розробнику. Ніколи не додавайте до повідомлення про помилку фразу відновлення, парольну фразу або приватний текст нотаток.</string>
+    <string name="faq_markdown_a_passphrase">Так. У меню нотатки виберіть «Експортувати як Markdown», щоб отримати один файл .md, або відкрийте Налаштування → Резервна копія → «Експортувати як Markdown», щоб отримати .zip з усіма нотатками (архівні лежать у теці archive, кошик не входить) і файлом із завданнями. Ці файли не зашифровані: Encly спершу попередить, попросить парольну фразу і збереже їх лише туди, куди ви вкажете.</string>
 </resources>

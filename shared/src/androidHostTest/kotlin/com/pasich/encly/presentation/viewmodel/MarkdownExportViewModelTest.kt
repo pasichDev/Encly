@@ -11,6 +11,7 @@ import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.markdown_export_done
 import com.pasich.encly.core.resources.pdf_export_done
 import com.pasich.encly.core.resources.print_done
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
 import com.pasich.encly.data.backup.VaultDataStore
@@ -62,7 +63,7 @@ class MarkdownExportViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         security = mock(SecurityManager::class.java)
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         documents = mock(MarkdownDocuments::class.java)
         doAnswer { invocation ->
             @Suppress("UNCHECKED_CAST")
@@ -132,7 +133,7 @@ class MarkdownExportViewModelTest {
 
         assertEquals(BackupStep.ConfirmPlainExport, step())
         verify(documents, never()).write(any(DocumentRef::class.java) ?: uri, anyBlock())
-        verify(security, never()).verifyPin(anyCharArray())
+        verify(security, never()).verifyPinResult(anyCharArray())
     }
 
     @Test
@@ -154,7 +155,7 @@ class MarkdownExportViewModelTest {
 
     @Test
     fun aWrongPinStaysOnTheReauthAndReachesNothingElse() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         viewModel.start(MarkdownExportTarget.AllData)
         viewModel.confirmWarning()
 
@@ -298,9 +299,9 @@ class MarkdownExportViewModelTest {
     @Test
     fun aPinThatVerifiesAfterTheFlowWasCancelledCannotSkipTheNextWarning() {
         val release = java.util.concurrent.CountDownLatch(1)
-        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
             release.await(TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
-            true
+            PinCheck.OK
         }
         viewModel.start(MarkdownExportTarget.AllData)
         viewModel.confirmWarning()
@@ -441,7 +442,7 @@ class MarkdownExportViewModelTest {
     fun aPdfAsksTheSameWarningAndThePinBeforeTheSaveDialog() {
         viewModel.start(asPdf())
         assertEquals(BackupStep.ConfirmDocumentExport(print = false), step())
-        verify(security, never()).verifyPin(anyCharArray())
+        verify(security, never()).verifyPinResult(anyCharArray())
 
         authenticate()
 

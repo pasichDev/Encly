@@ -15,14 +15,19 @@ import com.pasich.encly.core.resources.onboarding_recovery_skip
 import com.pasich.encly.core.resources.onboarding_verify_confirm
 import com.pasich.encly.core.resources.onboarding_verify_show_again
 import com.pasich.encly.core.resources.restore
+import com.pasich.encly.core.resources.vault_unreadable_retry
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretVariant
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
 import com.pasich.encly.presentation.designsystem.PinnedFooter
 import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
+import com.pasich.encly.presentation.screen.pincode.PassphraseInput
 import com.pasich.encly.presentation.viewmodel.OnboardingStep
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
+import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
 internal fun footerSpec(
@@ -30,24 +35,32 @@ internal fun footerSpec(
     actions: OnboardingActions,
     restorePhrase: RecoveryPhraseState,
     finishing: Boolean,
+    passphrase: PassphraseInput,
 ): FooterSpec {
     val busy = state.isLoading
     return when (state.step) {
         OnboardingStep.WELCOME -> FooterSpec(
-            Res.string.onboarding_get_started,
+            // The keyring was not ready: the same button asks again.
+            if (state.keyStoreProblem != null) Res.string.vault_unreadable_retry else Res.string.onboarding_get_started,
             actions.onGetStarted,
+            loading = busy,
             secondary = Res.string.onboarding_have_backup,
             onSecondary = actions.onStartRestore,
         )
 
-        OnboardingStep.PIN ->
-            FooterSpec(Res.string.action_continue, actions.pin.onSubmit, state.pinLength >= MIN_PIN_LENGTH, busy)
+        OnboardingStep.PIN -> FooterSpec(
+            Res.string.action_continue,
+            actions.pin.onSubmit,
+            // A PIN needs its digits; a passphrase only something typed: the policy says why one is refused.
+            if (state.secretKind == SecretKind.PASSWORD) passphrase.canSubmit else state.pinLength >= MIN_PIN_LENGTH,
+            busy,
+        )
 
         OnboardingStep.RECOVERY_INFO -> FooterSpec(
             Res.string.onboarding_recovery_create,
             actions.onCreatePhrase,
             loading = busy,
-            secondary = Res.string.onboarding_recovery_skip,
+            secondary = secretVariant(Res.string.onboarding_recovery_skip, state.secretKind),
             onSecondary = actions.onSkipPhrase,
             secondaryMuted = true,
         )
@@ -84,12 +97,18 @@ internal fun footerSpec(
 
 /**
  * The footer: the primary action, and below it a text action or the same space left empty,
- * so the primary button never moves between steps. Text actions wait while the primary runs.
+ * so the primary button never moves between steps. Text actions wait while the primary runs. In a desktop
+ * card ([inCard]) the footer follows the form and the empty space is not kept.
  */
 @Composable
-internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier) {
+internal fun OnboardingFooter(spec: FooterSpec, modifier: Modifier = Modifier, inCard: Boolean = false) {
     val secondary = spec.secondary
-    PinnedFooter(modifier = modifier, reserveTextRow = secondary == null) {
+    // In the desktop card the footer follows the form, so no row is kept free for a text action that is not there.
+    PinnedFooter(
+        modifier = modifier,
+        reserveTextRow = secondary == null && !inCard,
+        restBottom = if (inCard) EnclyTheme.spacing.m else EnclyTheme.spacing.stepGap,
+    ) {
         EnclyButton(
             text = stringResource(spec.primary),
             onClick = spec.onPrimary,

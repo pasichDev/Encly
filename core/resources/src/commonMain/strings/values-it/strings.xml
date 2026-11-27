@@ -62,6 +62,7 @@
     <string name="selection_close">Annulla selezione</string>
     <string name="selection_copy">Copia</string>
     <string name="selection_cut">Taglia</string>
+    <string name="selection_paste">Incolla</string>
     <string name="selection_delete">Elimina i blocchi selezionati</string>
     <string name="select_all">Seleziona tutto</string>
     <string name="selection_copied">Copiato</string>
@@ -124,7 +125,7 @@
 
     <string name="falied_content">Impossibile caricare il contenuto</string>
 
-    <string name="faq_background_a">Encly salva le modifiche e, dopo il ritardo scelto in Impostazioni → Sicurezza (15 secondi per impostazione predefinita), chiude il database crittografato e cancella la chiave di sessione. Spegnere lo schermo o bloccare il telefono lo fa subito. Poi sblocchi di nuovo.</string>
+    <string name="faq_background_a">Encly salva le modifiche e, dopo il ritardo scelto in Impostazioni → Sicurezza (15 secondi per impostazione predefinita), chiude il database crittografato e cancella la chiave di sessione. Spegnere lo schermo o bloccare il dispositivo lo fa subito. Poi sblocchi di nuovo.</string>
     <string name="faq_background_q">Cosa succede quando esco dall\'app?</string>
     <string name="faq_biometrics_a">Usa l\'interruttore della biometria in Impostazioni → Sicurezza. Creare o rimuovere lo slot biometrico richiede un\'autenticazione biometrica forte.</string>
     <string name="faq_biometrics_q">Come attivo o disattivo la biometria?</string>
@@ -369,7 +370,7 @@
     <string name="backup_settings_subtitle">Backup crittografato, importazione e Markdown</string>
     <string name="backup_title">Backup</string>
     <string name="backup_intro_title">Crittografato con la tua frase di recupero</string>
-    <string name="backup_intro_body">Un backup contiene tutte le tue note, attività ed etichette, crittografate con la tua frase di recupero di 12 parole. Encly non lo carica da nessuna parte: scegli tu dove salvare il file. Su un nuovo telefono, le stesse 12 parole lo ripristinano.</string>
+    <string name="backup_intro_body">Un backup contiene tutte le tue note, attività ed etichette, crittografate con la tua frase di recupero di 12 parole. Encly non lo carica da nessuna parte: scegli tu dove salvare il file. Su un nuovo dispositivo, le stesse 12 parole lo ripristinano.</string>
     <string name="backup_last_export">Ultima esportazione: %1$s</string>
     <string name="backup_never_exported">Nessun backup ancora esportato</string>
     <string name="backup_export">Esporta backup</string>
@@ -456,7 +457,7 @@
     <string name="pin_unlock_with_fingerprint">Sblocca con l\'impronta</string>
     <string name="onboarding_step_of">Passo %1$d di %2$d</string>
     <string name="onboarding_welcome_headline">Un taccuino che solo tu puoi aprire.</string>
-    <string name="onboarding_welcome_sub">Note e attività, cifrate su questo telefono. La configurazione richiede circa un minuto.</string>
+    <string name="onboarding_welcome_sub">Note e attività, cifrate su questo dispositivo. La configurazione richiede circa un minuto.</string>
     <string name="onboarding_fact_account_title">Nessun account</string>
     <string name="onboarding_fact_account_desc">Nessuna registrazione, nessuna email, nessun reset della password.</string>
     <string name="onboarding_fact_offline_title">Funziona offline</string>
@@ -476,7 +477,7 @@
     <string name="onboarding_recovery_pin_desc">La frase sblocca la cassaforte e ti permette di impostare un nuovo PIN.</string>
     <string name="onboarding_recovery_backups_title">Apre i tuoi backup</string>
     <string name="onboarding_recovery_backups_desc">I file di backup cifrati si leggono solo con queste parole.</string>
-    <string name="onboarding_recovery_phone_title">Nuovo telefono</string>
+    <string name="onboarding_recovery_phone_title">Nuovo dispositivo</string>
     <string name="onboarding_recovery_phone_desc">File di backup più frase ripristinano ogni nota, attività ed etichetta.</string>
     <string name="onboarding_recovery_warning">Nessuno può recuperarla per te, nemmeno noi. Se perdi sia il PIN sia la frase, le note sono perse.</string>
     <string name="onboarding_recovery_create">Crea la mia frase</string>
@@ -511,9 +512,9 @@
     <string name="onboarding_restore_label">Ripristina, poi imposta un PIN</string>
     <string name="onboarding_restore_intro">Scegli il file di backup di Encly, poi inserisci le 12 parole con cui è stato creato.</string>
     <string name="onboarding_restore_file_section">1 · File di backup</string>
-    <string name="onboarding_restore_tap_other">Tocca per scegliere un altro file</string>
+    <string name="onboarding_restore_tap_other">Scegli un altro file</string>
     <string name="onboarding_restore_phrase_section">2 · Frase di recupero</string>
-    <string name="onboarding_restore_phrase_helper">Queste parole diventano anche la frase di recupero di questo telefono.</string>
+    <string name="onboarding_restore_phrase_helper">Queste parole diventano anche la frase di recupero di questo dispositivo.</string>
     <string name="notes_title">Note</string>
     <string name="lock_now">Blocca ora</string>
     <string name="search_placeholder">Cerca nei titoli e nel testo</string>
@@ -713,7 +714,7 @@
     </plurals>
     <string name="trash_notice_open">Apri il cestino</string>
     <string name="faq_pin_length_q">Quanto può essere lungo il PIN?</string>
-    <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. La schermata di blocco non mostra mai la lunghezza del PIN: tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
+    <string name="faq_pin_length_a">Da 6 a 12 cifre, a tua scelta. PIN più corti non sono previsti: il blocco e la chiave del dispositivo limitano i tentativi, e 6 cifre è il minimo che resta sicuro con quei limiti. Encly non memorizza la lunghezza del PIN e non la mostra prima che tu scriva. I puntini compaiono uno per cifra, quindi chi guarda può contarli. Tocchi «Sblocca» quando hai finito, e lo stesso vale per il PIN di cancellazione e il PIN di coercizione. I PIN impostati prima continuano a funzionare così come sono.</string>
     <string name="block_code">Codice</string>
     <string name="block_table">Tabella</string>
     <string name="table_add_row">Aggiungi riga</string>
@@ -795,6 +796,8 @@
     <string name="security_encryption_pin_plain_nobio">Le tue note sono cifrate. Il tuo PIN le sblocca.</string>
     <string name="security_encryption_seed_plain_nobio">Le tue note sono cifrate. Il tuo PIN le sblocca, e la frase di recupero se dimentichi il PIN.</string>
     <string name="lock_pin_key_lost_desktop">Il tuo PIN non può più sbloccare Encly su questo computer: il segreto nel portachiavi di sistema manca o è stato reimpostato. Usa la frase di recupero, poi imposta un nuovo PIN.</string>
+    <string name="error_keystore_unavailable_desktop">Il portachiavi di sistema non ha risposto. Riprova; se l\'errore persiste, riavvialo oppure esci e rientra nella sessione.</string>
+    <string name="loss_message_desktop">Sembra che i dati crittografati o le chiavi di crittografia (incluso il segreto nel portachiavi di sistema) siano stati modificati o danneggiati, quindi il recupero non è possibile.\n\nPer continuare a usare l\'app devi reimpostarla e cancellare i dati danneggiati su questo computer. Tutte le note e le impostazioni salvate verranno eliminate definitivamente.</string>
     <string name="security_protection_slots_desc_nobio">PIN e frase di recupero aprono ciascuno il proprio slot cifrato.</string>
     <string name="duress_pin_real_vault_nobio">La tua vera cassaforte resta bloccata e intatta. A differenza del PIN di cancellazione, il PIN di coercizione non cancella nulla. La frase di recupero apre sempre la cassaforte vera.</string>
     <string name="security_protection_pin_title_device">Un PIN legato a questo dispositivo</string>
@@ -808,4 +811,49 @@
     <string name="faq_swipe_a_other">Per impostazione predefinita, scorrere una nota a destra la fissa o la sblocca, a sinistra la archivia. In Impostazioni → Azioni con scorrimento puoi scegliere per ogni direzione: fissa, archivia, colore successivo, sposta nel cestino (chiede sempre conferma) o niente, oppure disattivare gli scorrimenti.</string>
     <string name="faq_theme_a_other">In Impostazioni → Aspetto scegli uno dei cinque temi, la modalità chiara, scura o di sistema, uno dei tre stili di carattere e la dimensione del testo.</string>
     <string name="faq_language_a_ios">Apri Impostazioni → Lingua e scegli una delle lingue disponibili, oppure «Predefinita di sistema» per usare la lingua del dispositivo. La modifica si applica al prossimo avvio di Encly.</string>
+    <!-- Passphrase wording: the twin of a PIN text, used where the unlock secret is a passphrase (desktop). -->
+    <string name="lock_passphrase_subtitle">Inserisci la passphrase per continuare</string>
+    <string name="lock_wrong_passphrase">Passphrase errata</string>
+    <string name="lock_back_to_passphrase">Torna alla passphrase</string>
+    <string name="backup_reauth_passphrase_subtitle">Inserisci la passphrase per continuare</string>
+    <string name="passphrase_change_current_title">Inserisci la passphrase attuale</string>
+    <string name="passphrase_change_current_subtitle">Conferma la passphrase attuale prima di cambiarla</string>
+    <string name="passphrase_create_title">Crea una passphrase</string>
+    <string name="passphrase_change_new_subtitle">Da 12 a 128 caratteri, non solo cifre</string>
+    <string name="passphrase_change_confirm_title">Conferma la passphrase</string>
+    <string name="passphrase_change_confirm_subtitle">Inserisci di nuovo la passphrase per confermare</string>
+    <string name="passphrase_changed">Passphrase cambiata</string>
+    <string name="passphrase_current_wrong">La passphrase attuale non è corretta</string>
+    <string name="passphrase_mismatch_retry">Le due passphrase non coincidono. Riprova.</string>
+    <string name="passphrase_save_failed">Impossibile salvare la passphrase</string>
+    <string name="passphrase_update_failed">Impossibile aggiornare la passphrase. Riprova.</string>
+    <string name="passphrase_reset_subtitle">Hai sbloccato Encly con la frase di recupero. Imposta una nuova passphrase per continuare.</string>
+    <string name="onboarding_passphrase_title">Scegli una passphrase</string>
+    <string name="onboarding_passphrase_body">Da 12 a 128 caratteri, non solo cifre. Alcune parole vanno bene. Sblocca Encly ogni giorno su questo computer e protegge la chiave della tua cassaforte. Non è la tua frase di recupero e non c\'è un\'email per reimpostarla.</string>
+    <string name="onboarding_passphrase_again_title">Inserisci di nuovo la passphrase</string>
+    <string name="onboarding_passphrase_again_body">Così sappiamo che è quella che volevi.</string>
+    <string name="onboarding_recovery_passphrase_title">Passphrase dimenticata?</string>
+    <string name="onboarding_recovery_passphrase_desc">La frase di recupero sblocca la cassaforte e ti permette di impostare una nuova passphrase.</string>
+    <string name="onboarding_recovery_warning_passphrase">Nessuno può recuperarla per te, nemmeno noi. La tua passphrase funziona insieme a un segreto nel portachiavi di sistema di questo computer. Se quel portachiavi viene reimpostato o sostituito, passi a un nuovo account di sistema oppure la tua cartella home viene spostata o ripristinata senza di esso, solo la frase di recupero potrà ancora aprire le tue note. Se perdi anche quella, le note sono perse.</string>
+    <string name="onboarding_recovery_skip_passphrase">Salta: solo passphrase, niente backup</string>
+    <string name="onboarding_ready_passphrase_title">Passphrase impostata</string>
+    <string name="onboarding_ready_passphrase_desc">Richiesta a ogni apertura di Encly</string>
+    <string name="onboarding_restore_label_passphrase">Ripristina, poi imposta una passphrase</string>
+    <string name="auth_method_passphrase_title">Passphrase</string>
+    <string name="auth_method_passphrase_desc">Da 12 a 128 caratteri. Seleziona per cambiare la passphrase.</string>
+    <string name="security_recovery_missing_passphrase">Non configurata. Senza di essa, una passphrase dimenticata significa perdere tutto. Seleziona per crearne una.</string>
+    <string name="backup_needs_phrase_body_passphrase">I backup sono crittografati con una frase di recupero, quindi solo le sue 12 parole possono aprirli. Questa cassaforte non ne ha ancora una. Creala ora: ti permette anche di sbloccare la cassaforte se dimentichi la passphrase.</string>
+    <string name="markdown_export_warning_body_passphrase">Il file esportato non è cifrato. Chiunque lo ottenga può leggere le tue note. Ovunque tu lo salvi, anche in una cartella cloud, ci sarà una copia leggibile che Encly non può proteggere né ritirare. Poi confermerai con la tua passphrase.</string>
+    <string name="pdf_export_warning_body_passphrase">Il PDF non è cifrato. Chiunque lo ottenga può leggere la tua nota. Ovunque lo salvi, anche in una cartella cloud, ci sarà una copia leggibile che Encly non può proteggere né revocare. Subito dopo confermerai con la tua passphrase.</string>
+    <string name="print_warning_body_passphrase">La stampa invia il testo della tua nota alla stampante senza cifratura. Lo spooler di stampa del sistema può conservarne copie temporanee e anche una stampante di rete o cloud può memorizzarlo. Encly non può rimuoverle. Subito dopo confermerai con la tua passphrase.</string>
+    <string name="faq_change_passphrase_q">Come cambio la passphrase?</string>
+    <string name="faq_change_passphrase_a">Apri Impostazioni → Sicurezza, conferma la passphrase attuale e poi inserisci due volte quella nuova.</string>
+    <string name="faq_forgot_passphrase_q">Cosa succede se dimentico la passphrase?</string>
+    <string name="faq_forgot_passphrase_a">Nella schermata di blocco scegli «Recupera l’accesso» e inserisci le 12 parole di recupero. Se la passphrase funziona ancora, puoi tenerla o impostarne una nuova; altrimenti imposti subito una nuova passphrase. Senza frase di recupero non c’è altro modo di entrare: nessuno, nemmeno lo sviluppatore, può reimpostarla.</string>
+    <string name="faq_passphrase_length_q">Quanto può essere lunga la passphrase?</string>
+    <string name="faq_passphrase_length_a">Tra 12 e 128 caratteri, in qualsiasi lingua. Non può essere fatta solo di cifre e servono almeno 5 caratteri diversi. Poche parole casuali sono sicure e facili da ricordare, ed Encly può suggerirne cinque. Encly non memorizza la lunghezza della passphrase e non la mostra prima che tu scriva. Ciò che digiti è nascosto, ma chi guarda può contare i puntini. Premi Sblocca quando hai finito, e lo stesso vale per la passphrase di cancellazione e la passphrase di coercizione. La passphrase non è la frase di recupero: la frase di recupero sono le 12 parole che annoti per il giorno in cui dimenticherai la passphrase.</string>
+    <string name="faq_db_key_a_passphrase">Encly crea una chiave casuale del database a 256 bit. La passphrase protegge uno slot di sblocco AES-GCM separato: viene rafforzata con Argon2id e combinata con un segreto conservato nel portachiavi del sistema.</string>
+    <string name="faq_recovery_phrase_a_passphrase">È una chiave di riserva di 12 parole. Sblocca la cassaforte se dimentichi la passphrase ed è l’unica chiave dei tuoi file di backup. La crei durante la configurazione, o più tardi in Impostazioni → Sicurezza se l’hai saltata. Conservala su carta, offline. Non è la tua passphrase, quella che digiti ogni giorno.</string>
+    <string name="faq_report_bug_a_passphrase">Apri «Informazioni» e usa l\'opzione di feedback, oppure scrivi allo sviluppatore. Non includere mai la frase di recupero, la passphrase o il testo privato delle note in una segnalazione di bug.</string>
+    <string name="faq_markdown_a_passphrase">Sì. Nel menu di una nota scegli «Esporta come Markdown» per un file .md, oppure vai su Impostazioni → Backup → «Esporta come Markdown» per uno .zip con tutte le note (quelle archiviate in una cartella archive, senza il cestino) e un file delle attività. Questi file non sono crittografati: Encly ti avvisa prima, chiede la passphrase e salva solo dove scegli tu.</string>
 </resources>

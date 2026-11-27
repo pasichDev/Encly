@@ -1,0 +1,6 @@
+Encly 3.1.0
+• PIN przymusowy: fałszywy sejf ma własny licznik kosza i tę samą przerwę przed zmianą PIN-ów.
+• Edytor: jedna para uchwytów po „Zaznacz wszystko”, Kopiuj z klawiatury obejmuje całe zaznaczenie, mniejszy odstęp nad tabelą.
+• Listy zadań: przycisk blokady zawsze pod ręką; notatka przewija się podczas przeciągania.
+• Ekran blokady mieści się na podzielonym ekranie.
+• Import dużych plików zużywa mniej pamięci.

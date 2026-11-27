@@ -1,0 +1,5 @@
+Encly 3.1.0
+• The first release for Linux (.deb and Flatpak): encrypted notes and tasks, tags, backups with a 12-word recovery phrase, import from other apps and PDF export.
+• Unlock with a passphrase of 12 to 128 characters, stretched with Argon2id and mixed with a secret in your system keyring. Encly can suggest five random words.
+• Your vault is as strong as your passphrase: make it long.
+• It locks with every lock your session reports, such as swaylock or i3lock through xss-lock.

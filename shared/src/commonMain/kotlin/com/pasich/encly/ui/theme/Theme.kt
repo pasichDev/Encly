@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pasich.encly.domain.model.ThemePalette
 import com.pasich.encly.domain.model.ThemeSettings
 import com.pasich.encly.platform.LocalAppWindow
+import com.pasich.encly.presentation.designsystem.ProvideTextContextMenu
 import com.pasich.encly.presentation.viewmodel.ThemeViewModel
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
@@ -70,8 +71,10 @@ fun EnclyTheme(settings: ThemeSettings, dark: Boolean, content: @Composable () -
             colorScheme = colorScheme,
             typography = typography,
             shapes = EnclyShapes,
-            content = content,
-        )
+        ) {
+            // One right-click menu for every text field of the app, in its language (a desktop; elsewhere a no-op).
+            ProvideTextContextMenu(allowCopyAndCut = true, content = content)
+        }
     }
 }
 

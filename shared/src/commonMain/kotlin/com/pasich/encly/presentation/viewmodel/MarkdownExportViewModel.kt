@@ -18,8 +18,10 @@ import com.pasich.encly.core.resources.priority_high
 import com.pasich.encly.core.resources.priority_low
 import com.pasich.encly.core.resources.priority_medium
 import com.pasich.encly.core.resources.untitled
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.backup.VaultSnapshot
 import com.pasich.encly.data.export.MarkdownDocuments
@@ -82,12 +84,20 @@ class MarkdownExportViewModel(
     private val store: VaultDataStore,
     private val documents: MarkdownDocuments,
     private val strings: AppStrings,
+    /** What the vault's secret is; the graph always passes the real policy, the default only spares tests. */
+    policy: UnlockSecretPolicy = PinSecretPolicy(),
 ) : ViewModel() {
 
     private val state = BackupFlowState(viewModelScope, null, ::dropPending)
     val uiState: StateFlow<BackupUiState> = state.ui.asStateFlow()
 
-    val reauthFlow = ReauthFlow(state, securityManager, onAuthenticated = ::proceed)
+    val reauthFlow = ReauthFlow(
+        state,
+        securityManager,
+        onAuthenticated = ::proceed,
+        secretKind = policy.kind,
+        secretMaxUnits = SecretChoice(policy).maxTypedUnits,
+    )
 
     private var target: MarkdownExportTarget? = null
 

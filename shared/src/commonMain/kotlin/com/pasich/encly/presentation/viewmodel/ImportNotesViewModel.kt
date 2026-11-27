@@ -5,9 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pasich.encly.core.backup.BackupException
 import com.pasich.encly.core.di.IoDispatcher
 import com.pasich.encly.core.security.SessionLockManager
-import com.pasich.encly.data.backup.BackupImporter
-import com.pasich.encly.data.backup.ImportMode
-import com.pasich.encly.data.backup.TagMatch
+import com.pasich.encly.data.backup.ImportSummary
 import com.pasich.encly.data.backup.VaultDataStore
 import com.pasich.encly.data.importer.Analysis
 import com.pasich.encly.data.importer.ImportAnalyzer
@@ -15,6 +13,7 @@ import com.pasich.encly.data.importer.ImportDocuments
 import com.pasich.encly.data.importer.ImportError
 import com.pasich.encly.data.importer.ImportException
 import com.pasich.encly.data.importer.ImportFileSource
+import com.pasich.encly.data.importer.ImportMerger
 import com.pasich.encly.data.importer.ImportPlan
 import com.pasich.encly.data.importer.ImportPreview
 import com.pasich.encly.data.importer.ImportReader
@@ -110,7 +109,8 @@ sealed interface ImportStep {
 
 /**
  * Settings → Import notes. A selection is read into memory (never to disk), recognised, mapped
- * and shown as counts; only [confirm] writes, through the backup MERGE import in one transaction
+ * and shown as counts; only [confirm] writes, through [ImportMerger] (the backup MERGE, in batches
+ * inside one transaction, so a failure, a cancel or a killed process leaves the vault as it was)
  * on the vault that was open when the read started (a re-lock or vault switch fails instead of
  * writing elsewhere). Everything decrypted-in-memory (the read files, the mapped notes) is
  * dropped on cancel, when the import ends, and the moment the vault locks.
@@ -203,7 +203,7 @@ class ImportNotesViewModel(
         withContext(ioDispatcher) {
             val context = currentCoroutineContext()
             val read = ImportReader().read(source) { context.ensureActive() }
-            show(ImportAnalyzer.analyze(read), read, store)
+            show(ImportAnalyzer.analyze(read, checkCancelled = { context.ensureActive() }), read, store)
         }
     } catch (e: CancellationException) {
         throw e
@@ -244,6 +244,7 @@ class ImportNotesViewModel(
     }
 
     /** The user named the source of an ambiguous selection; it still has to validate. */
+    @Suppress("TooGenericExceptionCaught") // The Error branch rethrows all but the out-of-memory one.
     fun chooseSource(source: ImportSource) {
         val read = pending ?: return
         if (_step.value != ImportStep.ChooseSource) return
@@ -252,11 +253,18 @@ class ImportNotesViewModel(
         job = viewModelScope.launch {
             settle(
                 try {
-                    withContext(ioDispatcher) { show(ImportAnalyzer.analyze(read, forced = source), read, store) }
+                    withContext(ioDispatcher) {
+                        val context = currentCoroutineContext()
+                        val analysis = ImportAnalyzer.analyze(read, forced = source) { context.ensureActive() }
+                        show(analysis, read, store)
+                    }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: ImportException) {
                     failure(failureOf(e.error))
+                } catch (e: Error) {
+                    if (!e.isOutOfMemory()) throw e
+                    failure(ImportFailure.TOO_LARGE)
                 } catch (_: RuntimeException) {
                     failure(ImportFailure.VAULT)
                 },
@@ -264,40 +272,46 @@ class ImportNotesViewModel(
         }
     }
 
-    /** Imports the previewed notes: one transaction, all or nothing. */
+    /** Imports the previewed notes: batches inside one transaction, all or nothing. */
     fun confirm() {
         val ready = plan ?: return
         val store = bound ?: return
         val review = (_step.value as? ImportStep.Preview)?.review ?: return
-        val selected = review.selected
-        if (selected.isEmpty()) return
-        val preview = ready.preview
-        val payload = ImportReview.selection(ready.payload, selected)
+        if (review.selected.isEmpty()) return
         _step.value = ImportStep.Importing
-        job = viewModelScope.launch {
-            _step.value = try {
-                val summary = withContext(ioDispatcher) {
-                    BackupImporter.import(payload, ImportMode.MERGE, store, TagMatch.UID_OR_NAME)
-                }
-                drop()
-                ImportStep.Done(
-                    ImportResult(
-                        imported = summary.notesAdded,
-                        duplicates = payload.notes.size - summary.notesAdded + review.rows.count { it.existing },
-                        notImported = preview.unsupported + preview.filesSkipped + preview.nestedArchives +
-                            (review.newCount - selected.size),
-                        tagsAdded = summary.tagsAdded,
-                    ),
-                )
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: BackupException) {
-                failed(ImportFailure.IMPORT)
-            } catch (_: RuntimeException) {
-                failed(ImportFailure.IMPORT)
-            }
-        }
+        job = viewModelScope.launch { _step.value = write(ready, review, store) }
     }
+
+    /** What the user chose, written; or the step to show when nothing was (the vault is then unchanged). */
+    @Suppress("TooGenericExceptionCaught") // The Error branch rethrows all but the out-of-memory one.
+    private suspend fun write(ready: ImportPlan, review: ReviewState, store: VaultDataStore): ImportStep = try {
+        val (chosen, summary) = withContext(ioDispatcher) {
+            // Built off the main thread: the selection is checked again as a whole before anything is written.
+            val payload = ImportReview.selection(ready.payload, review.selected)
+            payload.notes.size to ImportMerger.merge(payload, store)
+        }
+        drop()
+        ImportStep.Done(result(ready.preview, review, chosen, summary))
+    } catch (e: CancellationException) {
+        throw e
+    } catch (_: BackupException) {
+        failed(ImportFailure.IMPORT)
+    } catch (_: IOException) {
+        failed(ImportFailure.IMPORT)
+    } catch (e: Error) {
+        if (!e.isOutOfMemory()) throw e
+        failed(ImportFailure.TOO_LARGE)
+    } catch (_: RuntimeException) {
+        failed(ImportFailure.IMPORT)
+    }
+
+    private fun result(preview: ImportPreview, review: ReviewState, chosen: Int, summary: ImportSummary) = ImportResult(
+        imported = summary.notesAdded,
+        duplicates = chosen - summary.notesAdded + review.rows.count { it.existing },
+        notImported = preview.unsupported + preview.filesSkipped + preview.nestedArchives +
+            (review.newCount - review.selected.size),
+        tagsAdded = summary.tagsAdded,
+    )
 
     fun toggle(uid: String) = review { state ->
         if (state.rows.firstOrNull { it.uid == uid }?.existing != false) {

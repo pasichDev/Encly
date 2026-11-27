@@ -9,20 +9,24 @@ import com.pasich.encly.core.common.UiText
 import com.pasich.encly.core.di.platformIoDispatcher
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
-import com.pasich.encly.core.resources.key_store_unavailable
 import com.pasich.encly.core.resources.onboarding_error_initialization
 import com.pasich.encly.core.resources.onboarding_error_seed_generation
 import com.pasich.encly.core.resources.onboarding_error_vault_creation
 import com.pasich.encly.core.resources.pin_mismatch_retry
 import com.pasich.encly.core.resources.pin_save_failed
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.MAX_PIN_LENGTH
 import com.pasich.encly.core.security.MIN_PIN_LENGTH
 import com.pasich.encly.core.security.PinChange
+import com.pasich.encly.core.security.PinSecretPolicy
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.domain.usecase.OnboardingUseCase
 import com.pasich.encly.platform.DocumentRef
 import com.pasich.encly.platform.ScreenBiometricHost
+import com.pasich.encly.platform.secretVariant
 import com.pasich.encly.presentation.screen.backup.backupErrorMessage
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
@@ -96,10 +100,17 @@ data class StepProgress(val step: Int, val total: Int)
 class OnboardingViewModel(
     private val onboardingUseCase: OnboardingUseCase,
     private val backupDocuments: BackupDocuments,
+    /** What the vault's secret is; the graph always passes the real policy, the default only spares tests. */
+    policy: UnlockSecretPolicy = PinSecretPolicy(),
 ) : ViewModel() {
 
+    private val secrets = SecretChoice(policy)
+
+    /** The most UTF-16 units a typed passphrase may have: the field takes no more. */
+    val secretMaxUnits: Int = secrets.maxTypedUnits
+
     private val _uiState = MutableStateFlow(
-        OnboardingUiState(biometricAvailable = onboardingUseCase.biometricAvailable()),
+        OnboardingUiState(biometricAvailable = onboardingUseCase.biometricAvailable(), secretKind = secrets.kind),
     )
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
@@ -126,16 +137,60 @@ class OnboardingViewModel(
 
     // --- navigation -----------------------------------------------------------------------
 
-    /** Welcome → "Get started". */
+    /** Welcome → "Get started" (or "Try again", when the key store was not ready: the same path again). */
     fun getStarted() {
-        resetPin()
-        _uiState.update { it.copy(path = OnboardingPath.CREATE, step = OnboardingStep.PIN, error = null) }
+        if (restoreRequested && _uiState.value.keyStoreProblem != null) {
+            startRestore()
+            return
+        }
+        restoreRequested = false
+        whenKeyStoreReady {
+            resetPin()
+            _uiState.update { it.copy(path = OnboardingPath.CREATE, step = OnboardingStep.PIN, error = null) }
+        }
     }
 
     /** Welcome → "I have a backup". */
     fun startRestore() {
-        _uiState.update {
-            it.copy(path = OnboardingPath.RESTORE, step = OnboardingStep.RESTORE, securityType = null, error = null)
+        restoreRequested = true
+        whenKeyStoreReady {
+            _uiState.update {
+                it.copy(path = OnboardingPath.RESTORE, step = OnboardingStep.RESTORE, securityType = null, error = null)
+            }
+        }
+    }
+
+    /** Whether "I have a backup" was the last way out of Welcome, so that "Try again" repeats it. */
+    private var restoreRequested = false
+
+    /**
+     * Runs [next] once the device key store is ready, before any secret is chosen or any phrase is written down: on a
+     * phone there is nothing to prepare and [next] runs at once. On a desktop the keyring is asked to start, unlock or
+     * make its default collection (the system's own prompt, off the main thread), and what is missing is said on
+     * Welcome, with "Try again", instead of after twelve words were written down.
+     */
+    private fun whenKeyStoreReady(next: () -> Unit) {
+        if (!onboardingUseCase.keyStoreMayNeedPreparing()) {
+            next()
+            return
+        }
+        if (_uiState.value.isLoading) return
+        _uiState.update { it.copy(isLoading = true, error = null, keyStoreProblem = null) }
+        viewModelScope.launch {
+            val problem = withContext(Dispatchers.Default) { onboardingUseCase.prepareKeyStore() }
+            if (problem == null) {
+                // Still "loading" while the next step is set, so nobody sees Welcome ready and unchanged in between.
+                next()
+                _uiState.update { it.copy(isLoading = false) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        keyStoreProblem = problem,
+                        error = UiText.of(keyStoreMessage(problem)),
+                    )
+                }
+            }
         }
     }
 
@@ -207,17 +262,63 @@ class OnboardingViewModel(
         if (first == null) askPinAgain(entered) else confirmPin(first, entered, state.path)
     }
 
+    // --- step 1, where the secret is a passphrase ----------------------------------------
+
+    /**
+     * "Continue" on the passphrase step, with what was typed ([typed] is wiped here): the first entry is checked
+     * against the policy and, when it passes, asked for again; a matching second entry moves on, a different one
+     * starts over. False when [typed] was refused (the reason is in [OnboardingUiState.pinError]) and the field keeps
+     * its text for the user to edit; true when it was used and the field is to be emptied.
+     */
+    fun submitPassphrase(typed: CharArray): Boolean {
+        val state = _uiState.value
+        val first = firstPin
+        return when {
+            state.isLoading || typed.isEmpty() -> {
+                SensitiveDataCleaner.clear(typed)
+                false
+            }
+
+            first == null -> choosePassphrase(typed)
+
+            else -> {
+                confirmPin(first, typed, state.path)
+                true
+            }
+        }
+    }
+
+    private fun choosePassphrase(typed: CharArray): Boolean {
+        val refusal = secrets.refusal(typed)
+        if (refusal == null) {
+            askPinAgain(typed)
+            return true
+        }
+        SensitiveDataCleaner.clear(typed)
+        _uiState.update { it.copy(pinError = UiText.of(refusal.message)) }
+        return false
+    }
+
+    /** An edit of the passphrase: a refusal or a mismatch shown under the field goes away. */
+    fun onPassphraseEdited() {
+        if (_uiState.value.pinError != null) _uiState.update { it.copy(pinError = null) }
+    }
+
+    /** A passphrase to offer on the choose step (the caller wipes it), or null where the secret is a PIN. */
+    fun suggestPassphrase(): CharArray? = secrets.suggest()
+
     private fun askPinAgain(entered: CharArray) {
         firstPin = entered
         _uiState.update { it.copy(pinLength = 0, isConfirmingPin = true, pinError = null) }
     }
 
     private fun confirmPin(first: CharArray, entered: CharArray, path: OnboardingPath) {
-        val matches = first.contentEquals(entered)
+        val matches = secrets.same(first, entered)
         SensitiveDataCleaner.clear(entered)
         if (!matches) {
             resetPin()
-            _uiState.update { it.copy(pinError = UiText.of(Res.string.pin_mismatch_retry)) }
+            val mismatch = secretVariant(Res.string.pin_mismatch_retry, secrets.kind)
+            _uiState.update { it.copy(pinError = UiText.of(mismatch)) }
             return
         }
         firstPin = null
@@ -347,11 +448,11 @@ class OnboardingViewModel(
             withContext(Dispatchers.Default) { onboardingUseCase.configurePin(pin.copyOf()) }
         }
         if (change != PinChange.SET) {
-            // A locked desktop keyring says so; every other failure is the generic one.
+            // A keyring that is not usable says what is missing; every other failure is the generic one.
             val message = if (change == PinChange.KEY_STORE_UNAVAILABLE) {
-                Res.string.key_store_unavailable
+                keyStoreMessage(onboardingUseCase.keyStoreProblem())
             } else {
-                Res.string.pin_save_failed
+                secretVariant(Res.string.pin_save_failed, secrets.kind)
             }
             _uiState.update { it.copy(isLoading = false, error = UiText.of(message)) }
             return
@@ -525,10 +626,14 @@ class OnboardingViewModel(
         val securityType: SecurityType? = null,
         val isLoading: Boolean = false,
         val error: UiText? = null,
+        /** The desktop keyring was not ready when Welcome asked: what is missing (the message is [error]). */
+        val keyStoreProblem: KeyStoreProblem? = null,
         // PIN
         val pinLength: Int = 0,
         val isConfirmingPin: Boolean = false,
         val pinError: UiText? = null,
+        /** What the vault's secret is: the PIN step shows a keypad for a PIN and a field for a passphrase. */
+        val secretKind: SecretKind = SecretKind.PIN,
         val biometricAvailable: Boolean = false,
         val biometricRequested: Boolean = true,
         // Recovery phrase

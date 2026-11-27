@@ -31,10 +31,10 @@ By taking part you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
    day-to-day work.
 4. Encly is a Kotlin Multiplatform project; the module map is in
    [README → Project structure](README.md#project-structure). Only Android is released. The
-   desktop app (Windows, macOS, Linux) is the `:desktopApp` module: `./gradlew :desktopApp:run`, and
-   `:desktopApp:desktopTest` for its headless tests (see [desktopApp/README.md](desktopApp/README.md)).
-   The iOS app is built from Xcode on a Mac ([iosApp/README.md](iosApp/README.md)). Neither is
-   published or supported yet.
+   desktop app (Linux, Windows and macOS, none of them published) is the `:desktopApp` module:
+   `./gradlew :desktopApp:run`, and `:desktopApp:desktopTest` for its headless tests (see
+   [desktopApp/README.md](desktopApp/README.md)). The iOS app is built from Xcode on a Mac
+   ([iosApp/README.md](iosApp/README.md)); it is not published or supported yet.
 
 ## Before you open a pull request
 
@@ -195,6 +195,24 @@ terms precise and consistent within a language: *PIN*, *recovery phrase* / *seed
 (the 12 BIP39 words), *vault*, *encryption*, *biometrics*. Never put seed words or other secrets
 into resources.
 
+**Security wording:** a changed string about the vault, the PIN, the duress PIN, the wipe PIN, the
+recovery phrase or backups is checked by the maintainer before the Weblate pull request that
+carries it is merged. In the diff of that pull request look for:
+
+- the meaning is the same as the English text: a warning is not softened, a consequence (data is
+  erased, the phrase cannot be recovered) is not dropped, and nothing is added that the app does not do;
+- the terms match the style above and the other strings of that language, and the duress PIN and
+  the wipe PIN are not mixed up with the normal PIN or with each other;
+- format arguments (`%d`, `%s`, `%1$s`) are the same as in English,
+  and no seed word, PIN or other secret appears in a string.
+
+CI already enforces that the keys and the format arguments match English (see the rules above); it
+cannot judge meaning, so this check is done by reading. To change the English text of such a string,
+edit `values/` in a normal pull request; the translations are then reviewed the same way.
+
+How to merge, resolve a conflict in or reset a Weblate pull request:
+[docs/weblate-maintenance.md](docs/weblate-maintenance.md).
+
 ## Releasing
 
 (Maintainers.) Three channels ship the same source and the same application ID
@@ -240,8 +258,8 @@ upload this key instead of letting Google generate one).
    `fastlane/metadata/android/<locale>/changelogs/<versionCode>.txt` for **every** locale folder
    (`en-US`, `uk`, `de-DE`, `fr-FR`, `es-ES`, `it-IT`, `pl-PL`, `pt-PT`, `nl-NL`, `ar`);
    `StoreMetadataTest` checks they exist and fit. The iOS and desktop apps read their own notes from
-   `fastlane/metadata/{ios,desktop}/<locale>/changelogs/<versionCode>.txt`; they matter only once
-   those platforms ship.
+   `fastlane/metadata/{ios,desktop}/<locale>/changelogs/<versionCode>.txt`; the desktop and
+   iOS notes must exist for the current version too (`WhatsNewTest`), but they matter only once those apps ship.
    Add the version to `<releases>` in `desktopApp/packaging/flatpak/io.github.pasichdev.Encly.metainfo.xml`
    too; the Flatpak build in CI refuses a version that is not listed there.
 4. Test the release APK on a device. If a dependency or the app added or dropped a permission, the
@@ -249,11 +267,18 @@ upload this key instead of letting Google generate one).
    in the pull request.
 5. Merge to `main`, then tag the merge commit `vX.Y.Z` and push the tag. The
    [release workflow](.github/workflows/release.yml) refuses a tag that does not match
-   `version.properties`, fails when a signing secret or `ENCLY_CERT_SHA256` is missing, builds
-   both flavors unsigned, signs them with `apksigner` in a separate step (Gradle never sees
-   the keystore), checks the certificate against `ENCLY_CERT_SHA256`, and publishes the APKs
-   with `SHA256SUMS` (signed as `SHA256SUMS.asc` when the GPG secrets are set) and the R8
-   mapping files.
+   `version.properties` or whose commit is not on `main`, and fails when a signing secret or
+   `ENCLY_CERT_SHA256` is missing. It builds both Android flavors unsigned, signs them with
+   `apksigner` in a separate step (Gradle never sees the keystore), checks the certificate against
+   `ENCLY_CERT_SHA256`. Then one job
+   creates the GitHub Release as a draft, uploads the APKs and the R8 mapping files, writes one `SHA256SUMS` over them
+   (signed as `SHA256SUMS.asc` when the GPG secrets are set), attests the build provenance of every APK and mapping file,
+   writes the notes ("Verify what you download") and publishes the draft. A pushed tag builds Android only: the desktop
+   app is not released, and the Linux packages (the `.deb` and the Flatpak bundle) are built by CI on pull requests and
+   by a manual run of the **Release** workflow (Actions, Release, Run workflow, with an existing tag), which builds and
+   checks only the Linux packages and adds them to that tag's Release. That run does nothing unless the repository variable `LINUX_RELEASE_ENABLED` is
+   `true`; it is not set while Linux is not released. The
+   Windows and macOS installers are never released from here. A failed Android job publishes nothing.
 6. Google Play: the same tag runs [Publish to Google Play](.github/workflows/publish-play.yml),
    which builds and signs the `play` bundle and publishes it to production as a staged rollout to 10% of users (raise it in Play Console),
    with the R8 mapping file (so Play Console shows readable crash stack traces) and the release

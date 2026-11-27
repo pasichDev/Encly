@@ -64,6 +64,8 @@ import com.pasich.encly.core.resources.security_recovery_replace_confirm_title
 import com.pasich.encly.core.resources.security_recovery_replace_title
 import com.pasich.encly.core.resources.security_recovery_replace_warning_body
 import com.pasich.encly.core.resources.security_recovery_replace_warning_title
+import com.pasich.encly.platform.secretString
+import com.pasich.encly.platform.secretVariant
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -97,11 +99,11 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun BackupDialogs(actions: BackupDialogActions, step: BackupStep, busy: Boolean = false) {
     when (step) {
-        is BackupStep.Reauth -> ReauthDialog(actions.reauth, step, actions.cancel)
+        is BackupStep.Reauth -> ReauthDialog(actions.reauth, step, actions.cancel, busy)
 
         BackupStep.NeedsPhrase -> MessageDialog(
             title = Res.string.backup_needs_phrase_title,
-            body = Res.string.backup_needs_phrase_body,
+            body = secretVariant(Res.string.backup_needs_phrase_body, actions.reauth.secretKind),
             confirm = Res.string.backup_create_phrase,
             onConfirm = actions.phrase::create,
             onDismiss = actions.cancel,
@@ -239,7 +241,7 @@ private fun NewPhraseStep(words: List<String>, replacing: Boolean, actions: Back
         if (replacing) {
             EnclyCallout(
                 title = stringResource(Res.string.security_recovery_replace_warning_title),
-                text = stringResource(Res.string.security_recovery_replace_warning_body),
+                text = secretString(actions.reauth.secretKind, Res.string.security_recovery_replace_warning_body),
                 tone = CalloutTone.WARNING,
             )
         }

@@ -53,8 +53,9 @@ import com.pasich.encly.core.resources.security_screenshots_warning_title
 import com.pasich.encly.core.resources.wipe_pin_row_desc
 import com.pasich.encly.core.resources.wipe_pin_row_turned_off
 import com.pasich.encly.core.resources.wipe_pin_title
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.LocalKeyboardPrivacyOffered
-import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.DialogAction
 import com.pasich.encly.presentation.designsystem.EnclyDialog
 import com.pasich.encly.presentation.designsystem.EnclyGroup
@@ -74,7 +75,7 @@ private const val ERASE_HOLD_MS = 5_000
 
 /** How Encly protects the notes: three facts in a group, not a wall of bullets. */
 @Composable
-internal fun ProtectionSection(modifier: Modifier = Modifier) {
+internal fun ProtectionSection(kind: SecretKind, modifier: Modifier = Modifier) {
     Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.s), modifier = modifier) {
         SectionOverline(
             text = stringResource(Res.string.security_protection_section),
@@ -89,15 +90,15 @@ internal fun ProtectionSection(modifier: Modifier = Modifier) {
             )
             EnclyGroupDivider()
             EnclyListRow(
-                title = hostString(Res.string.security_protection_pin_title),
-                supporting = hostString(Res.string.security_protection_pin_desc),
+                title = secretString(kind, Res.string.security_protection_pin_title),
+                supporting = secretString(kind, Res.string.security_protection_pin_desc),
                 icon = EnclyIcons.Shield,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )
             EnclyGroupDivider()
             EnclyListRow(
                 title = stringResource(Res.string.security_protection_slots_title),
-                supporting = hostString(Res.string.security_protection_slots_desc),
+                supporting = secretString(kind, Res.string.security_protection_slots_desc),
                 icon = EnclyIcons.Fingerprint,
                 modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s),
             )
@@ -169,10 +170,11 @@ internal fun EraseSection(busy: Boolean, onErase: () -> Unit, modifier: Modifier
  * key reset it says that any wipe PIN was turned off.
  */
 @Composable
-internal fun WipePinRow(turnedOff: Boolean, onClick: () -> Unit) {
+internal fun WipePinRow(turnedOff: Boolean, kind: SecretKind, onClick: () -> Unit) {
     EnclyNavigationRow(
-        title = stringResource(Res.string.wipe_pin_title),
-        supporting = stringResource(
+        title = secretString(kind, Res.string.wipe_pin_title),
+        supporting = secretString(
+            kind,
             if (turnedOff) Res.string.wipe_pin_row_turned_off else Res.string.wipe_pin_row_desc,
         ),
         icon = EnclyIcons.Trash,
@@ -183,10 +185,11 @@ internal fun WipePinRow(turnedOff: Boolean, onClick: () -> Unit) {
 
 /** "Duress PIN": opens a separate vault; after a PIN key reset it says that it was turned off. */
 @Composable
-internal fun DuressPinRow(turnedOff: Boolean, onClick: () -> Unit) {
+internal fun DuressPinRow(turnedOff: Boolean, kind: SecretKind, onClick: () -> Unit) {
     EnclyNavigationRow(
-        title = stringResource(Res.string.duress_pin_title),
-        supporting = stringResource(
+        title = secretString(kind, Res.string.duress_pin_title),
+        supporting = secretString(
+            kind,
             if (turnedOff) Res.string.duress_pin_row_turned_off else Res.string.duress_pin_row_desc,
         ),
         icon = EnclyIcons.Shield,
@@ -202,7 +205,12 @@ internal fun DuressPinRow(turnedOff: Boolean, onClick: () -> Unit) {
  * otherwise only be wiped when the PIN is forgotten.
  */
 @Composable
-internal fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStart: (BackupAction) -> Unit) {
+internal fun RecoveryPhraseRow(
+    hasRecoveryPhrase: Boolean,
+    kind: SecretKind,
+    busy: Boolean,
+    onStart: (BackupAction) -> Unit,
+) {
     val title = stringResource(Res.string.backup_needs_phrase_title)
     val modifier = Modifier.padding(horizontal = EnclyTheme.spacing.s)
     if (hasRecoveryPhrase) {
@@ -232,7 +240,7 @@ internal fun RecoveryPhraseRow(hasRecoveryPhrase: Boolean, busy: Boolean, onStar
     } else {
         EnclyNavigationRow(
             title = title,
-            supporting = stringResource(Res.string.security_recovery_missing),
+            supporting = secretString(kind, Res.string.security_recovery_missing),
             icon = EnclyIcons.File,
             onClick = { if (!busy) onStart(BackupAction.CREATE_PHRASE) },
             modifier = modifier,

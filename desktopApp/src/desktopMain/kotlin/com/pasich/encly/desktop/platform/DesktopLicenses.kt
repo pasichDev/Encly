@@ -27,6 +27,7 @@ object DesktopLicenses {
         ),
         OpenSourceNotice("dbus-java", MIT, "https://github.com/hypfvieh/dbus-java"),
         OpenSourceNotice("SLF4J", MIT, "https://www.slf4j.org/"),
+        OpenSourceNotice("Bouncy Castle Provider", MIT, "https://www.bouncycastle.org/"),
         OpenSourceNotice("Skiko", APACHE_2, "https://github.com/JetBrains/skiko"),
         OpenSourceNotice("JetBrains Runtime API, JSpecify", APACHE_2, "https://jspecify.dev/"),
         OpenSourceNotice("OpenJDK", "GPL 2 with the Classpath Exception", "https://openjdk.org/legal/gplv2+ce.html"),

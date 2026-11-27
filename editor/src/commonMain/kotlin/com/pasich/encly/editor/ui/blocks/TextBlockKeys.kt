@@ -18,11 +18,12 @@ import com.pasich.encly.editor.ui.SlashActions
 /**
  * Keyboard handling of a text-bearing block editing [state]: Backspace at the start joins the
  * block to the one above (a heading or quote first becomes a paragraph), Backspace in an empty
- * paragraph removes it. Up from the first visual line and Down from the last move to the block
- * above or below at the same column, Left at the start and Right at the end to its end or start;
- * blocks without a field are skipped, and in the last block Down does nothing (no block is
- * added). Enter is left to the field: its line break reaches [BlockInput], from a hardware key
- * and a soft keyboard alike. [highlight] holds the field's measured lines.
+ * paragraph removes it, Delete at the end joins the paragraph below. Up from the first visual
+ * line and Down from the last move to the block above or below at the same column, Left at the
+ * start and Right at the end to its end or start; blocks without a field are skipped, and in the
+ * last block Down does nothing (no block is added). Enter is left to the field: its line break
+ * reaches [BlockInput], from a hardware key and a soft keyboard alike. [highlight] holds the
+ * field's measured lines.
  */
 internal fun Modifier.textBlockKeys(
     state: TextFieldState,
@@ -42,6 +43,7 @@ internal fun Modifier.textBlockKeys(
             cursorPosition = if (selection.collapsed) selection.start else -1,
             onBackspaceEmpty = { blockActions.onRemoveBlock(BlockRemoveAction.REMOVE_BACKSPACE) },
             onBackspaceAtStart = { blockActions.onBackspaceAtStart() },
+            onDeleteAtEnd = { blockActions.onForwardDeleteAtEnd() },
             onNavigateUp = { blockActions.navigate(CaretMove.Up(line?.x)) },
             onNavigateDown = { blockActions.navigate(CaretMove.Down(line?.x)) },
             onNavigateLeft = { blockActions.navigate(CaretMove.Left) },

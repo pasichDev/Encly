@@ -14,11 +14,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navArgument
 import androidx.savedstate.read
 import com.pasich.encly.platform.LocalAppInfo
+import com.pasich.encly.presentation.designsystem.AuthPage
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.effects.LocalSharedTransitionScope
 import com.pasich.encly.presentation.effects.animationScreens
 import com.pasich.encly.presentation.effects.enterFor
 import com.pasich.encly.presentation.effects.exitFor
-import com.pasich.encly.presentation.pane.CenteredContent
 import com.pasich.encly.presentation.pane.NavigationPage
 import com.pasich.encly.presentation.screen.AboutScreen
 import com.pasich.encly.presentation.screen.EditTagScreen
@@ -48,6 +49,7 @@ import com.pasich.encly.presentation.screen.trash.TrashScreen
 import com.pasich.encly.presentation.viewmodel.EditNoteViewModel
 import com.pasich.encly.presentation.viewmodel.LossRecoveryViewModel
 import com.pasich.encly.presentation.viewmodel.NoteTabsViewModel
+import com.pasich.encly.presentation.viewmodel.SecuritySettingsViewModel
 import com.pasich.encly.presentation.viewmodel.StorageUnreadableViewModel
 import com.pasich.encly.ui.theme.LocalWidthClass
 import com.pasich.encly.ui.theme.WidthClass
@@ -175,7 +177,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                 animationScreens(NavRoutes.OnboardingRoute.name) {
                     // Onboarding includes the mandatory PIN setup; it completes only once the vault
                     // is committed and open.
-                    CenteredContent {
+                    AuthPage {
                         OnboardingScreen(onComplete = {
                             navController.navigate(NavRoutes.HomeRoute.name) {
                                 popUpTo(NavRoutes.OnboardingRoute.name) { inclusive = true }
@@ -185,20 +187,20 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                 }
 
                 animationScreens(NavRoutes.LossDataRoute.name) {
-                    CenteredContent { LossRoute(navController, NavRoutes.LossDataRoute, LossReason.DAMAGED) }
+                    AuthPage { LossRoute(navController, NavRoutes.LossDataRoute, LossReason.DAMAGED) }
                 }
                 animationScreens(NavRoutes.LegacyVaultRoute.name) {
-                    CenteredContent { LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION) }
+                    AuthPage { LossRoute(navController, NavRoutes.LegacyVaultRoute, LossReason.OLDER_VERSION) }
                 }
                 animationScreens(NavRoutes.StorageUnreadableRoute.name) {
-                    CenteredContent { StorageUnreadableRoute(navController) }
+                    AuthPage { StorageUnreadableRoute(navController) }
                 }
                 animationScreens(NavRoutes.PinCodeConfig.name) {
-                    NavigationPage(navController, NavRoutes.SettingsRoute) { PinCodeConfigScreen(navController) }
+                    PinCodeConfigRoute(navController)
                 }
 
                 animationScreens(NavRoutes.RecoveryChoiceRoute.name) {
-                    CenteredContent { RecoveryChoiceScreen(navController) }
+                    AuthPage { RecoveryChoiceScreen(navController) }
                 }
 
                 animationScreens(NavRoutes.WipePinRoute.name) {
@@ -210,7 +212,7 @@ fun AppNavHost(navController: NavHostController, startDestination: String = NavR
                 }
 
                 animationScreens(NavRoutes.LockRoute.name) {
-                    CenteredContent { LockScreen(navController) }
+                    AuthPage { LockScreen(navController) }
                 }
 
                 animationScreens(
@@ -326,6 +328,25 @@ private fun StorageUnreadableRoute(
             }
         },
     )
+}
+
+/**
+ * The new-PIN page: from Settings a page of the settings, in the navigation; after a recovery-phrase unlock (no PIN
+ * can be used, so no way past it but a new one) a page of its own, in the card of the other first-run pages where a
+ * desktop window has one. Which of the two is settled once, as the screen settles it, not when the PIN is set.
+ */
+@Composable
+private fun PinCodeConfigRoute(
+    navController: NavHostController,
+    viewModel: SecuritySettingsViewModel = metroViewModel(),
+) {
+    // The screen resolves the same ViewModel instance: it is scoped to this back-stack entry.
+    val forced = remember { !viewModel.requiresCurrentPin() }
+    if (forced && authCardApplies()) {
+        AuthPage { PinCodeConfigScreen(navController) }
+    } else {
+        NavigationPage(navController, NavRoutes.SettingsRoute) { PinCodeConfigScreen(navController) }
+    }
 }
 
 /** The vault cannot be opened ([reason]): wiping it, once confirmed, starts onboarding afresh. */

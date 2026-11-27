@@ -107,7 +107,7 @@ public fun LazyListScope.editorBlocks(
                 },
             )
         }
-        BlockChrome(block, host.controller, isLocked) {
+        BlockChrome(block, host.controller, host.highlights, isLocked) {
             EditorBlock(
                 block = block,
                 blockActions = blockActions,
@@ -186,6 +186,7 @@ private fun EditorBlock(
     val lockedFlow = remember(checklist) { checklist?.locked ?: MutableStateFlow(false) }
     val checklistLocked by lockedFlow.collectAsState()
     val commands = blockCommands(callbacks, position, isOnlyBlock, checklist?.let { checklistLocked })
+    val onTouch = rememberListTouch(callbacks.onInteract, dropsFocus = checklistLocked && !isLocked)
     // The block's actions for TalkBack, for the keyboard (Ctrl / Cmd+Shift+Up and Down move it) and for a
     // right click on a desktop.
     EditorContextMenu(
@@ -200,7 +201,7 @@ private fun EditorBlock(
                 .onPreviewKeyEvent { event -> moveBlockByKey(event, callbacks, position, isLocked) }
                 // A touch anywhere in a list makes it the block the toolbar acts on, even where its text
                 // cannot take focus (a locked checklist), so its lock can be undone from the toolbar.
-                .then(if (block is Block.ListBlock) Modifier.markInteractionOn(callbacks.onInteract) else Modifier)
+                .then(if (block is Block.ListBlock) Modifier.markInteractionOn(onTouch) else Modifier)
                 // Blocks carry an 8 dp frame of their own: they sit that much inside the gutter.
                 .padding(horizontal = theme.spacing.m)
                 .onFocusChanged { focusState ->

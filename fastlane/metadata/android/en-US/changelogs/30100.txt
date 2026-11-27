@@ -1,0 +1,6 @@
+Encly 3.1.0
+• Duress PIN: the decoy vault has its own trash timer and the same pause before changing PINs.
+• Editor: one pair of selection handles after Select all, keyboard Copy takes the whole selection, Delete joins the next paragraph, smaller gap above tables.
+• Checklists: the lock button stays in reach; the note scrolls while you drag an item.
+• Lock screen fits split screen; the dots show only what you typed.
+• Importing large files needs less memory.

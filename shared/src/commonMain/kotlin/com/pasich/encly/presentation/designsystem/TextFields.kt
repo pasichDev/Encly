@@ -27,10 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.field_correct
@@ -55,7 +57,9 @@ sealed interface FieldState {
  * Rest: 1 dp `outline`. Focused: 2 dp `onSurface`. [FieldState.Valid]: 1 dp `primary` and a
  * trailing "Correct". [FieldState.Error]: 2 dp `error` and the message below. [fieldModifier]
  * reaches the text field itself (a FocusRequester), [modifier] the whole block. With `singleLine = false` the
- * field wraps and grows up to [maxLines] lines, then scrolls.
+ * field wraps and grows up to [maxLines] lines, then scrolls. [visualTransformation] masks the text (a passphrase),
+ * [trailing] is a control at the end of the field (the show/hide eye); [labelInSemantics] false hides the visible
+ * label from accessibility, for a field that gives itself the same name.
  */
 @Composable
 fun EnclyTextField(
@@ -72,6 +76,9 @@ fun EnclyTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     singleLine: Boolean = true,
     maxLines: Int = 1,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailing: (@Composable () -> Unit)? = null,
+    labelInSemantics: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
@@ -85,7 +92,13 @@ fun EnclyTextField(
     val textColor = if (enabled) colors.onSurface else colors.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(text = label, style = MaterialTheme.typography.labelMedium, color = colors.onSurface)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = colors.onSurface,
+            // A field that names itself by a description of its own is not read twice: the label stays visible only.
+            modifier = if (labelInSemantics) Modifier else Modifier.clearAndSetSemantics {},
+        )
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -96,6 +109,7 @@ fun EnclyTextField(
             cursorBrush = SolidColor(colors.primary),
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
+            visualTransformation = visualTransformation,
             interactionSource = interactionSource,
             modifier = fieldModifier.fillMaxWidth(),
             decorationBox = { inner ->
@@ -117,6 +131,7 @@ fun EnclyTextField(
                         inner()
                     }
                     if (state is FieldState.Valid) ValidMark()
+                    trailing?.invoke()
                 }
             },
         )

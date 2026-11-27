@@ -1,0 +1,6 @@
+Encly 3.1.0
+• PIN de coacción: la bóveda señuelo tiene su propio temporizador de papelera y la misma pausa antes de cambiar los PIN.
+• Editor: un solo par de controles tras «Seleccionar todo», Copiar desde el teclado toma toda la selección, menos espacio sobre las tablas.
+• Listas: el botón de bloqueo queda a mano; la nota se desplaza al arrastrar un elemento.
+• La pantalla de bloqueo cabe en pantalla dividida.
+• Importar archivos grandes usa menos memoria.

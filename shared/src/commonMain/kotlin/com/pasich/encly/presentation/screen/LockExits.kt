@@ -11,4 +11,9 @@ class LockExits(
     val onRecoveryUnlock: (isSessionLocked: () -> Boolean) -> Unit,
     val onVaultLost: () -> Unit,
     val onBack: (() -> Unit)? = null,
+    /**
+     * Erases the vault from the screen that says its key cannot be found, and leaves for the start; null where that
+     * screen never shows (a phone's lost key is [onVaultLost]).
+     */
+    val onWipeVault: (() -> Unit)? = null,
 )

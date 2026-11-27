@@ -78,7 +78,9 @@ import com.pasich.encly.core.resources.onboarding_welcome_headline
 import com.pasich.encly.core.resources.onboarding_welcome_sub
 import com.pasich.encly.core.resources.pin_unlock_with_fingerprint
 import com.pasich.encly.core.resources.recovery_phrase_entry_label
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.CalloutTone
 import com.pasich.encly.presentation.designsystem.DoneRow
 import com.pasich.encly.presentation.designsystem.EnclyCallout
@@ -97,6 +99,7 @@ import com.pasich.encly.presentation.designsystem.RecoveryPhraseState
 import com.pasich.encly.presentation.designsystem.StepHeading
 import com.pasich.encly.presentation.designsystem.UseRow
 import com.pasich.encly.presentation.designsystem.WordGrid
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.viewmodel.OnboardingPath
 import com.pasich.encly.presentation.viewmodel.OnboardingViewModel.OnboardingUiState
 import com.pasich.encly.presentation.viewmodel.SecurityType
@@ -106,10 +109,12 @@ import org.jetbrains.compose.resources.stringResource
 /** Step 0: what Encly is, in three facts. */
 @Composable
 internal fun WelcomeStep(modifier: Modifier = Modifier) {
+    // The desktop card has its header right above: no phone-sized hero gap.
+    val top = if (authCardApplies()) EnclyTheme.spacing.s else EnclyTheme.spacing.heroTop
     Column(
         modifier = modifier
             .padding(StepPadding)
-            .padding(top = EnclyTheme.spacing.heroTop),
+            .padding(top = top),
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.heroGap),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.m)) {
@@ -144,12 +149,15 @@ internal fun WelcomeStep(modifier: Modifier = Modifier) {
     }
 }
 
-/** What the PIN step reports back to the ViewModel. */
+/** What the PIN step reports back to the ViewModel (the passphrase step too: [onSubmit] sends the field). */
 internal class PinActions(
     val onDigit: (Int) -> Unit,
     val onBackspace: () -> Unit,
     val onBiometricChange: (Boolean) -> Unit,
     val onSubmit: () -> Unit,
+    /** An edit of the passphrase field, and "Suggest a passphrase": only where the secret is a passphrase. */
+    val onPassphraseEdited: () -> Unit = {},
+    val onSuggest: () -> Unit = {},
 )
 
 /**
@@ -254,7 +262,7 @@ private fun BiometricCallout(checked: Boolean, onCheckedChange: (Boolean) -> Uni
 
 /** Step 2: why a recovery phrase, and what losing it means. */
 @Composable
-internal fun RecoveryInfoStep(modifier: Modifier = Modifier) {
+internal fun RecoveryInfoStep(kind: SecretKind, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .padding(StepPadding)
@@ -268,8 +276,8 @@ internal fun RecoveryInfoStep(modifier: Modifier = Modifier) {
         Column {
             UseRow(
                 EnclyIcons.Key,
-                stringResource(Res.string.onboarding_recovery_pin_title),
-                stringResource(Res.string.onboarding_recovery_pin_desc),
+                secretString(kind, Res.string.onboarding_recovery_pin_title),
+                secretString(kind, Res.string.onboarding_recovery_pin_desc),
             )
             UseRow(
                 EnclyIcons.File,
@@ -282,7 +290,10 @@ internal fun RecoveryInfoStep(modifier: Modifier = Modifier) {
                 stringResource(Res.string.onboarding_recovery_phone_desc),
             )
         }
-        EnclyCallout(text = stringResource(Res.string.onboarding_recovery_warning), tone = CalloutTone.WARNING)
+        EnclyCallout(
+            text = secretString(kind, Res.string.onboarding_recovery_warning),
+            tone = CalloutTone.WARNING,
+        )
     }
 }
 
@@ -342,10 +353,11 @@ internal fun VerifyStep(state: OnboardingUiState, onAnswer: (Int, String) -> Uni
 /** Step 4: what was set up. */
 @Composable
 internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) {
+    val top = if (authCardApplies()) EnclyTheme.spacing.m else EnclyTheme.spacing.readyTop
     Column(
         modifier = modifier
             .padding(StepPadding)
-            .padding(top = EnclyTheme.spacing.readyTop),
+            .padding(top = top),
         verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.xl),
     ) {
         StepHeading(
@@ -356,8 +368,8 @@ internal fun ReadyStep(state: OnboardingUiState, modifier: Modifier = Modifier) 
         EnclyCard(contentPadding = PaddingValues(EnclyTheme.spacing.factGap)) {
             Column(verticalArrangement = Arrangement.spacedBy(EnclyTheme.spacing.fieldGap)) {
                 DoneRow(
-                    stringResource(Res.string.onboarding_ready_pin_title),
-                    stringResource(Res.string.onboarding_ready_pin_desc),
+                    secretString(state.secretKind, Res.string.onboarding_ready_pin_title),
+                    secretString(state.secretKind, Res.string.onboarding_ready_pin_desc),
                 )
                 if (state.biometricEnabled) {
                     DoneRow(

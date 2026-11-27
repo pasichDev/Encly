@@ -7,9 +7,11 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.backup_phrase_exists
 import com.pasich.encly.core.resources.security_erase_failed
+import com.pasich.encly.core.security.PinSecretPolicy
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
+import com.pasich.encly.core.security.UnlockSecretPolicy
 import com.pasich.encly.data.backup.BackupDocuments
 import com.pasich.encly.data.backup.BackupManager
 import com.pasich.encly.data.backup.BackupPhraseSetup
@@ -41,6 +43,8 @@ class BackupViewModel(
     private val sessionLockManager: SessionLockManager,
     documents: BackupDocuments,
     private val screenshots: ScreenshotAllowance,
+    /** What the vault's secret is; the graph always passes the real policy, the default only spares tests. */
+    policy: UnlockSecretPolicy = PinSecretPolicy(),
 ) : ViewModel() {
 
     private val state = BackupFlowState(viewModelScope, backupManager.lastExportAt(), ::dropPending)
@@ -49,7 +53,13 @@ class BackupViewModel(
     val exportFlow = ExportFlow(state, backupManager, documents)
     val phraseFlow = RecoveryPhraseFlow(state, backupManager, phraseSetup, onReady = ::onPhraseReady)
     val importFlow = ImportFlow(state, backupManager, documents, onPickerReturned = sessionLockManager::endSystemPicker)
-    val reauthFlow = ReauthFlow(state, securityManager, onAuthenticated = ::proceed)
+    val reauthFlow = ReauthFlow(
+        state,
+        securityManager,
+        onAuthenticated = ::proceed,
+        secretKind = policy.kind,
+        secretMaxUnits = SecretChoice(policy).maxTypedUnits,
+    )
 
     /** The flow in progress, so a ready recovery phrase continues the right one. */
     private var action: BackupAction? = null
@@ -163,6 +173,8 @@ class BackupViewModel(
             if (erased) {
                 // A fresh vault starts protected, whatever the erased one allowed.
                 screenshots.revoke()
+                // Every window shows this vault: each drops what it shows and starts over, not only this one.
+                sessionLockManager.onVaultErased()
                 state.ui.update { it.copy(step = BackupStep.Idle, erased = true) }
             } else {
                 state.finish(BackupMessage.Text(Res.string.security_erase_failed))

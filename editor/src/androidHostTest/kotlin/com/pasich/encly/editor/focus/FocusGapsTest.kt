@@ -63,6 +63,29 @@ class FocusGapsTest {
     }
 
     @Test
+    fun deleteAtTheEndOfTheTextRunsItsHandlerAndElsewhereIsTheFieldsOwn() {
+        var joined = 0
+        fun delete(cursor: Int, meta: Int = 0, action: Int = AndroidKeyEvent.ACTION_DOWN) =
+            KeyboardUtils.handleKeyEvent(
+                key(AndroidKeyEvent.KEYCODE_FORWARD_DEL, action, meta),
+                text = "abc",
+                cursorPosition = cursor,
+                onDeleteAtEnd = { true.also { joined++ } },
+            )
+
+        assertTrue(delete(3))
+        assertEquals(1, joined)
+        // In the text, or over a selection (the cursor is -1): the field deletes.
+        assertFalse(delete(1))
+        assertFalse(delete(0))
+        assertFalse(delete(-1))
+        // Shift+Delete cuts; a key coming up is nothing.
+        assertFalse(delete(3, meta = AndroidKeyEvent.META_SHIFT_ON))
+        assertFalse(delete(3, action = AndroidKeyEvent.ACTION_UP))
+        assertEquals(1, joined)
+    }
+
+    @Test
     fun anArrowWithAModifierNeverLeavesTheField() {
         val shiftDown = key(AndroidKeyEvent.KEYCODE_DPAD_DOWN, meta = AndroidKeyEvent.META_SHIFT_ON)
         assertFalse(KeyboardUtils.handleKeyEvent(shiftDown, onNavigateDown = { true }))

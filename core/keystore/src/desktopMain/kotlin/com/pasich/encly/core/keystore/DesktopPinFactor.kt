@@ -1,5 +1,6 @@
 package com.pasich.encly.core.keystore
 
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinHardwareFactor
 import com.pasich.encly.core.security.PinKeySlot
@@ -23,9 +24,12 @@ import javax.crypto.spec.SecretKeySpec
  * - [ensureKey] creates the secret when there is none and returns true then. A secret that is there but
  *   unreadable counts as existing (like an invalidated Android key): [mac] reports it as lost, and
  *   [reset] replaces it.
- * - [mac] with no secret in the store, or one of the wrong size, fails with `PinFactorException(lost = true)`;
- *   any other failure of the store (locked, not running, I/O) is `lost = false` and may be transient. A store that
- *   is locked or not running (a [SecretStoreUnavailableException] cause) also sets `unavailable = true`.
+ * - [mac] with no secret in the store, or one of the wrong size, fails with `PinFactorException(lost = true)`; where
+ *   a missing secret does not prove it is gone ([SecretStore.missingMeansLost] is false: the Linux Secret Service,
+ *   which may be another provider or a closed keyring) the failure is `notFound = true` instead, with `lost = false`.
+ *   Any other failure of the store (locked, not running, I/O) is `lost = false` and may be transient. A store that
+ *   is locked or not running (a [SecretStoreUnavailableException] cause) also sets `unavailable = true`, and
+ *   `problem` says which.
  * - [delete] never throws.
  *
  * Every copy of the secret that this class controls is wiped after use. The JCA `Mac` and the native
@@ -54,7 +58,12 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
     @Throws(PinFactorException::class)
     override fun reset(slot: PinKeySlot) {
         try {
-            store.delete(slot)
+            try {
+                store.delete(slot)
+            } catch (_: SecretStoreException) {
+                // An item that cannot be deleted is replaced by [SecretStore.create] (which replaces by contract): the
+                // new vault must never keep the secret of an erased one. A store that is really down fails there.
+            }
             SensitiveDataCleaner.clear(store.create(slot))
         } catch (e: SecretStoreException) {
             throw e.toFactorException(lost = false)
@@ -67,7 +76,7 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
             store.read(slot)
         } catch (e: SecretStoreException) {
             throw e.toFactorException()
-        } ?: throw PinFactorException(lost = true)
+        } ?: throw PinFactorException(lost = store.missingMeansLost, notFound = !store.missingMeansLost)
         try {
             if (secret.size != SecretStore.SECRET_SIZE) throw PinFactorException(lost = true)
             return hmacSha256(secret, data)
@@ -84,6 +93,18 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
         }
     }
 
+    override val missingKeyMayReturn: Boolean get() = !store.missingMeansLost
+
+    override fun prepare() {
+        try {
+            store.prepare()
+        } catch (e: SecretStoreException) {
+            throw e.toFactorException(lost = false)
+        }
+    }
+
+    override fun abandonPending(): Unit = store.abandonPending()
+
     /**
      * A store that is not usable right now (a locked or missing Secret Service) is reported as `unavailable`, so
      * the screen can ask the user to unlock the keyring instead of showing a generic failure.
@@ -92,6 +113,7 @@ public class DesktopPinFactor internal constructor(private val store: SecretStor
         lost = lost,
         cause = this,
         unavailable = !lost && cause is SecretStoreUnavailableException,
+        problem = if (!lost && cause is SecretStoreUnavailableException) problem ?: KeyStoreProblem.OTHER else null,
     )
 
     private fun hmacSha256(secret: ByteArray, data: ByteArray): ByteArray = try {

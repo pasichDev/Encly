@@ -275,6 +275,35 @@ class DesktopDeviceLockWatcherTest {
     }
 
     @Test
+    fun `a lock after a lock that never reported its end still reaches the listeners on an OS that can be asked`() {
+        // Linux: logind's Lock, then the user unlocks swaylock (no Unlock signal), then the screen is locked again, or
+        // the machine suspends. The second report must lock the vault, whatever the stale last report says.
+        val signals = object : OsLockSignals {
+            var report: ((Boolean) -> Unit)? = null
+
+            override fun start(onChange: (locked: Boolean) -> Unit): AutoCloseable {
+                report = onChange
+                return AutoCloseable { }
+            }
+
+            override fun liveLocked(): Boolean? = false
+
+            override val asksTheOs: Boolean get() = true
+        }
+        val watcher = watcher(signals).also { it.start() }
+        var locks = 0
+        var screenOff = 0
+        watcher.onLocked { locks++ }
+        watcher.watchScreenOff { screenOff++ }
+
+        signals.report!!(true)
+        signals.report!!(true)
+
+        assertEquals(2, locks)
+        assertEquals(2, screenOff)
+    }
+
+    @Test
     fun `an OS that only reports changes keeps the last report as the state`() {
         val signals = Signals()
         val watcher = watcher(signals).also { it.start() }

@@ -1,0 +1,6 @@
+Encly 3.1.0
+• Dwangpincode: de nepkluis heeft een eigen prullenbaktimer en dezelfde pauze voor het wijzigen van pincodes.
+• Editor: één paar selectiegrepen na ‘Alles selecteren’, Kopiëren via het toetsenbord neemt de hele selectie, minder ruimte boven tabellen.
+• Checklists: de vergrendelknop blijft binnen bereik; de notitie scrolt tijdens het slepen.
+• Het vergrendelscherm past in gesplitst scherm.
+• Grote bestanden importeren kost minder geheugen.

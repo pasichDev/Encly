@@ -3,6 +3,7 @@ package com.pasich.encly.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -20,9 +21,12 @@ import com.pasich.encly.core.resources.vault_unreadable_message
 import com.pasich.encly.core.resources.vault_unreadable_retry
 import com.pasich.encly.core.resources.vault_unreadable_still
 import com.pasich.encly.core.resources.vault_unreadable_title
+import com.pasich.encly.platform.hostString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIconTile
 import com.pasich.encly.presentation.designsystem.EnclyIcons
+import com.pasich.encly.presentation.designsystem.authCardApplies
+import com.pasich.encly.presentation.designsystem.authSurfaceColor
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -33,16 +37,25 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun StorageUnreadableScreen(onRetry: () -> Unit, stillUnreadable: Boolean, modifier: Modifier = Modifier) {
     val spacing = EnclyTheme.spacing
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    // In the desktop card the page is as high as its content, with a short top instead of the phone's.
+    val card = authCardApplies()
+    Surface(
+        modifier = if (card) modifier.fillMaxWidth() else modifier.fillMaxSize(),
+        color = authSurfaceColor(card),
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(spacing.rowGap),
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = (if (card) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
                 .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .navigationBarsPadding()
-                .padding(start = spacing.gutter, end = spacing.gutter, top = spacing.lockTop, bottom = spacing.l),
+                .padding(
+                    start = spacing.gutter,
+                    end = spacing.gutter,
+                    top = if (card) spacing.xl else spacing.lockTop,
+                    bottom = spacing.l,
+                ),
         ) {
             EnclyIconTile(icon = EnclyIcons.Alert)
             Text(
@@ -53,7 +66,7 @@ fun StorageUnreadableScreen(onRetry: () -> Unit, stillUnreadable: Boolean, modif
                 modifier = Modifier.padding(top = spacing.xs),
             )
             Text(
-                text = stringResource(Res.string.vault_unreadable_message),
+                text = hostString(Res.string.vault_unreadable_message),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

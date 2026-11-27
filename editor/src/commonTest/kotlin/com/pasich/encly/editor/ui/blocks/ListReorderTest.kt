@@ -1,8 +1,10 @@
 package com.pasich.encly.editor.ui.blocks
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import com.pasich.encly.editor.model.ItemListBlock
+import com.pasich.encly.editor.ui.RangeDrag
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -118,6 +120,42 @@ class ListReorderTest {
 
         assertNull(drag.itemId)
         assertTrue(drag.moving.isEmpty())
+        assertEquals(0f, drag.offset)
+    }
+
+    @Test
+    fun anItemHeldNearTheEdgeOfTheListFollowsTheNoteWhenItScrolls() {
+        val scroll = RangeDrag()
+        val drag = ListDrag { rows }.also { it.scroll = scroll }
+        placed(drag, rows)
+        drag.begin(rows[0].id)
+
+        drag.holdAt(Offset(10f, 700f))
+
+        assertEquals(Offset(10f, 700f), scroll.pointer)
+        // The note scrolled 24 px: the row went up with it and is brought back under the pointer.
+        scroll.onScroll(24f)
+        scroll.onScroll(24f)
+        assertEquals(48f, drag.offset)
+        assertEquals(1, drag.placesMoved())
+
+        drag.end()
+
+        assertNull(scroll.pointer)
+        scroll.onScroll(24f)
+        assertEquals(0f, drag.offset)
+    }
+
+    @Test
+    fun aDragWithNoNoteToScrollHoldsNothing() {
+        val drag = ListDrag { rows }
+        placed(drag, rows)
+        drag.begin(rows[0].id)
+
+        drag.holdAt(Offset(1f, 2f))
+        drag.by(5f)
+        drag.end()
+
         assertEquals(0f, drag.offset)
     }
 

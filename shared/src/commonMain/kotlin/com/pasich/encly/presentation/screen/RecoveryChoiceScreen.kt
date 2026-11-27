@@ -12,9 +12,11 @@ import com.pasich.encly.core.resources.recovery_choice_title
 import com.pasich.encly.core.resources.recovery_keep_pin
 import com.pasich.encly.core.resources.recovery_set_new_pin
 import com.pasich.encly.core.security.RecoveryStage
+import com.pasich.encly.platform.secretString
 import com.pasich.encly.presentation.designsystem.EnclyButton
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextButton
+import com.pasich.encly.presentation.designsystem.authCardApplies
 import com.pasich.encly.presentation.navigation.NavRoutes
 import com.pasich.encly.presentation.screen.pincode.PinEntryScaffold
 import com.pasich.encly.presentation.viewmodel.LockViewModel
@@ -49,19 +51,20 @@ fun RecoveryChoiceScreen(
     }
     PinEntryScaffold(
         title = stringResource(Res.string.recovery_choice_title),
-        subtitle = stringResource(Res.string.recovery_choice_body_pin),
+        subtitle = secretString(viewModel.secretKind, Res.string.recovery_choice_body_pin),
         icon = EnclyIcons.Key,
+        inCard = authCardApplies(),
         modifier = modifier,
         footer = {
             EnclyButton(
-                text = stringResource(Res.string.recovery_keep_pin),
+                text = secretString(viewModel.secretKind, Res.string.recovery_keep_pin),
                 onClick = {
                     viewModel.keepAfterRecovery()
                     navController.goHome()
                 },
             )
             EnclyTextButton(
-                text = stringResource(Res.string.recovery_set_new_pin),
+                text = secretString(viewModel.secretKind, Res.string.recovery_set_new_pin),
                 onClick = {
                     navController.navigate(NavRoutes.PinCodeConfig.name) {
                         popUpTo(NavRoutes.RecoveryChoiceRoute.name) { inclusive = true }

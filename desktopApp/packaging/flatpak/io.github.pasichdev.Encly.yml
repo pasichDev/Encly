@@ -23,7 +23,10 @@ finish-args:
   - --share=ipc
   # Skiko (Compose's renderer) draws with OpenGL.
   - --device=dri
-  # The device-bound half of the PIN key, in the Secret Service (:core:keystore).
+  # Printing a note: the runtime's libcups reaches the host's print service through this socket and nothing else
+  # (no network is shared). Without it the print dialog finds no printer.
+  - --socket=cups
+  # The device-bound half of the vault key, in the Secret Service (:core:keystore).
   - --talk-name=org.freedesktop.secrets
   # Lock when the session locks: the screen savers' ActiveChanged signal on the session bus ...
   - --talk-name=org.freedesktop.ScreenSaver
@@ -44,11 +47,18 @@ modules:
       - install -Dm644 io.github.pasichdev.Encly.metainfo.xml /app/share/metainfo/io.github.pasichdev.Encly.metainfo.xml
       - install -Dm644 io.github.pasichdev.Encly.mime.xml /app/share/mime/packages/io.github.pasichdev.Encly.xml
       - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/io.github.pasichdev.Encly.png
+      # The licence texts of the bundled parts (Skiko, PDFBox, JNA, dbus-java, ...), Encly's LICENSE, and the
+      # runtime's own legal notices (openjdk/): staged by build.sh from the app image.
+      - install -d /app/share/licenses/io.github.pasichdev.Encly
+      - cp -a licenses/. /app/share/licenses/io.github.pasichdev.Encly/
     sources:
       # Staged by build.sh: the app image, and a launcher that execs its bin/<name>.
       - type: dir
         path: ../../build/flatpak/app
         dest: app
+      - type: dir
+        path: ../../build/flatpak/licenses
+        dest: licenses
       - type: file
         path: ../../build/flatpak/encly
       - type: file

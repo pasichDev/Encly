@@ -12,9 +12,9 @@
   <description>
     <p>Encly is a private notes and tasks app with no account, no cloud, no ads and no network access. Your notes stay in one encrypted vault on this computer.</p>
     <ul>
-      <li>Encrypted at rest: a SQLCipher (AES-256) database under a random key that only your PIN or your 12-word recovery phrase can unlock.</li>
-      <li>The device-bound half of the PIN key lives in your desktop's secret service (GNOME Keyring, KWallet).</li>
-      <li>Locks itself when the window loses focus, after you have been idle, and when the session locks or the computer sleeps.</li>
+      <li>Encrypted at rest: a SQLCipher (AES-256) database under a random key that only your passphrase or your 12-word recovery phrase can unlock.</li>
+      <li>Your passphrase is stretched with Argon2id and mixed with a secret kept in your desktop's secret service (GNOME Keyring, KWallet), which has to be running.</li>
+      <li>Locks itself after the auto-lock delay (15 seconds by default) once the window loses focus, after you have been idle, and when the session locks or the computer sleeps.</li>
       <li>A block editor with headings, quotes, checklists, lists and links, tags, search and tasks with priorities.</li>
       <li>Encrypted backups to a single file that you save wherever you choose; Encly never uploads anything.</li>
     </ul>
@@ -41,8 +41,11 @@
     <control>keyboard</control>
   </supports>
   <releases>
-    <release version="3.0.1" date="2026-11-20"/>
-    <release version="3.0.0" date="2026-11-19"/>
-    <release version="2.3.1" date="2026-10-27"/>
+    <release version="3.1.0" date="2026-11-26">
+      <description>
+        <p>The first release for Linux. The vault opens with a passphrase of 12 to 128 characters, stretched with Argon2id and mixed with a secret in your system keyring.</p>
+        <p>The vault locks with every lock your session reports, such as swaylock or i3lock through xss-lock.</p>
+      </description>
+    </release>
   </releases>
 </component>

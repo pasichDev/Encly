@@ -3,7 +3,7 @@
 # KSP releases use their own version scheme; keep the Kotlin/KSP pair compatible.
 
 [versions]
-agp = "9.5.1"
+agp = "9.5.3"
 kotlin = "2.4.21"
 ksp = "2.3.14"
 metro = "1.6.0"
@@ -13,7 +13,7 @@ kover = "0.9.11"
 dokka = "2.2.0"
 # Compose Multiplatform, used by the :editor module; the app keeps the androidx BOM below.
 composeMultiplatform = "1.12.2"
-spotless = "8.11.0"
+spotless = "8.12.0"
 # ktlint and the Compose detekt rules are tool artifacts, not app dependencies (see build.gradle.kts).
 ktlint = "1.8.0"
 # 0.4.x is the line built against detekt 1.23.x; 0.5+ needs detekt 2.x.
@@ -49,6 +49,8 @@ iconsLucide = "1.1.0"
 jna = "5.19.1"
 dbusJava = "5.2.2"
 slf4j = "2.0.20"
+# Argon2id for the desktop password (MIT licence): only in the desktopMain source set of :core:keystore.
+bouncycastle = "1.86"
 # The desktop PDF writer and printer (Apache-2.0): builds the document in memory, with no network code.
 pdfbox = "3.0.8"
 # Arabic letter shaping and the bidirectional algorithm for the PDF (Unicode License): PDFBox has neither.
@@ -59,7 +61,7 @@ androidxTestCore = "1.7.0"
 androidxTestRunner = "1.7.0"
 androidxTestExtJunit = "1.3.0"
 mockito = "5.24.0"
-robolectric = "4.18"
+robolectric = "4.18.1"
 
 [libraries]
 # Gradle plugins on the classpath of build-logic (the convention plugins apply them).
@@ -119,6 +121,7 @@ jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbusJava" }
 dbus-java-transport = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
+bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 pdfbox = { module = "org.apache.pdfbox:pdfbox", version.ref = "pdfbox" }
 icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 icons-lucide = { module = "com.composables:icons-lucide", version.ref = "iconsLucide" }

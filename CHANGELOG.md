@@ -11,14 +11,39 @@ IzzyOnDroid) and used as the GitHub Release notes.
 
 ## [Unreleased]
 
-### Security
-
-- Someone who only knows your duress PIN can no longer set the clock forward to make the next real unlock delete old notes from your trash early: the decoy vault now has its own trash timer. Turning the duress PIN off or setting a new one now checks that the old decoy database is really deleted and fails otherwise. Changing PINs inside the decoy vault is refused after the same pause as in the real vault. The vault no longer opens when the screen switches off and on while the PIN is still being checked.
-
 ### Added
 
-- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the PIN's device key in the system's secret store ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- Encly for Windows, macOS and Linux (MSI, DMG, DEB and a Flatpak bundle; in the repository, not published): the same vault, notes and security as on the phone, with list and note side by side, note tabs, several windows, keyboard shortcuts and a menu bar, export to PDF and print, and the vault's device key in the system's secret store (on Linux the keyring: GNOME Keyring, KWallet, KeePassXC) ([#85](https://github.com/pasichDev/Encly/issues/85), [#106](https://github.com/pasichDev/Encly/issues/106)).
+- On a computer the vault opens with a passphrase instead of a PIN: 12 to 128 characters, stretched with Argon2id and mixed with the device key; the recovery phrase and backups are the same as on the phone. Limits in [SECURITY.md](https://github.com/pasichDev/Encly/blob/main/SECURITY.md#desktop) ([#106](https://github.com/pasichDev/Encly/issues/106)).
 - Encly for iPhone: each PIN attempt needs the Secure Enclave, Face ID and Touch ID unlock, the vault locks when the app leaves the screen, and the app is hidden in the app switcher ([#107](https://github.com/pasichDev/Encly/issues/107)).
+
+## [3.1.0] - 2026-11-27
+
+versionCode 30100.
+
+### Security
+
+- After you unlock with the recovery phrase, the new PIN (or the choice to keep the old one) can no longer be skipped with a keyboard shortcut from a hardware keyboard.
+- Someone who only knows your duress PIN can no longer set the clock forward to make the next real unlock delete old notes from your trash early: the decoy vault now has its own trash timer. Turning the duress PIN off or setting a new one now checks that the old decoy database is really deleted and fails otherwise. Changing PINs inside the decoy vault is refused after the same pause as in the real vault. The vault no longer opens when the screen switches off and on while the PIN is still being checked.
+
+### Changed
+
+- The lock screen fits a short window (split screen): the header, the gaps and the keys shrink so the whole keypad and Unlock are visible without scrolling ([#137](https://github.com/pasichDev/Encly/issues/137)). Since 3.0 the PIN is confirmed with the Unlock button under the keypad, and the lock screen no longer opens by itself after the last digit; in 3.1.0 that button stays visible on short screens.
+- The PIN dots show only the digits you have typed; the empty rings before them are gone, so the row no longer looks like a hint of how long the PIN is. After a wrong PIN the dots of that attempt turn red until you type again ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- The lock button of a checklist stays in reach on a long list: it follows the scroll at the bottom of the visible part of the list ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- Dragging a list item past the top or the bottom of the screen scrolls the note ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- Standard Notes import cuts a tag title to 256 characters and keeps at most 100 tags per note.
+- The block tools mark the heading level of the block you are in ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- Import reads JSON exports one item at a time instead of building the whole file in memory twice, writes the notes in batches inside one transaction (a failure, Cancel or a re-lock leaves the vault as it was), and reports a file that is too large for the device's memory instead of crashing. A JSON export with a value that is not valid JSON is refused ([#132](https://github.com/pasichDev/Encly/issues/132)).
+
+### Fixed
+
+- A check that asks for your PIN again no longer reports a wrong PIN when the Android Keystore did not answer, and Cancel during that check now really cancels it.
+- After Select all from the keyboard (or twice in the editor), only one pair of selection handles is shown ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- Copy and Cut from the keyboard's own buttons take the whole selection across paragraphs, not only the paragraph selected first ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- Forward delete at the end of a paragraph, heading, quote or code block joins the block below, as one undo step ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- The gap above a table is the same as above any other block: the table's menu button sits beside the first row instead of on a line of its own ([#137](https://github.com/pasichDev/Encly/issues/137)).
+- Tapping a locked checklist no longer leaves the caret blinking in the block you were in before ([#137](https://github.com/pasichDev/Encly/issues/137)).
 
 ## [3.0.1] - 2026-11-20
 
@@ -442,7 +467,8 @@ The last release of the old storage format (versionCode 30): the SQLCipher key w
 Keystore-sealed seed hash, with an optional 4-digit PIN. It had no public users; superseded by
 2.0.0.
 
-[Unreleased]: https://github.com/pasichDev/Encly/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/pasichDev/Encly/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/pasichDev/Encly/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/pasichDev/Encly/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/pasichDev/Encly/compare/v2.3.1...v3.0.0
 [2.3.1]: https://github.com/pasichDev/Encly/compare/v2.3.0...v2.3.1

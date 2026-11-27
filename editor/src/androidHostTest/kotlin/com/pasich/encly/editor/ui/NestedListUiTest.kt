@@ -17,6 +17,8 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performMouseInput
@@ -323,6 +325,31 @@ class NestedListUiTest {
         state.undo()
         assertEquals(listOf("a", "b", "c"), order())
         assertTrue(!state.canUndo.value)
+    }
+
+    @Test
+    fun holdingADraggedItemAtTheBottomOfTheListScrollsTheNote() {
+        show(Block.ListBlock(MutableStateFlow((0..59).map { row("item $it") }), BlockType.LIST_BULLET))
+        val bottom = rule.onRoot().fetchSemanticsNode().boundsInRoot.bottom
+        val handle = bounds(handles()[0])
+        val before = bounds(rule.onNodeWithText("item 58")).height
+
+        rule.mainClock.autoAdvance = false
+        handles()[0].performMouseInput {
+            moveTo(center)
+            press()
+            moveBy(Offset(0f, 20f))
+            // To the strip at the bottom of the list, and held there while the note scrolls under it.
+            moveBy(Offset(0f, bottom - handle.center.y - 20f))
+        }
+        rule.mainClock.advanceTimeBy(10_000)
+        rule.onRoot().performMouseInput { release() }
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+
+        // The end of the list was off screen (its bounds are clipped to nothing) and the note scrolled to it.
+        assertEquals(0f, before)
+        assertTrue(bounds(rule.onNodeWithText("item 58")).height > 0f, "item 58 is on screen now")
     }
 
     @Test

@@ -80,17 +80,25 @@ object FormatDetector {
     private fun isExtensionlessJson(entry: ImportEntry): Boolean =
         '.' !in entry.name && entry.bytes.firstOrNull { !it.toInt().toChar().isWhitespace() } == '{'.code.toByte()
 
+    // Scanned member by member (JsonScan): the tree of a large export is never built, and a file nested
+    // deeper than maxJsonDepth is refused while it is read.
     private fun json(entry: ImportEntry, limits: ImportLimits): EntryKind {
-        val text = ImportText.utf8(entry.bytes)
-        val root = text?.let { ImportText.obj(ImportText.json(it, limits.maxJsonDepth)) }
-        val shape = StandardNotesParser.shape(root)
+        val readable = Utf8.isValid(entry.bytes)
+        val info = if (readable) JsonScan.info(entry.bytes, limits.maxJsonDepth) else null
+        val shape = if (info != null && "items" in info.keys) {
+            StandardNotesParser.shape(entry.bytes, limits.maxJsonDepth)
+        } else {
+            null
+        }
+        val keys = info?.keys.orEmpty()
+        val notesnookBackup = "hash_type" in keys || ("compressed" in keys && "encrypted" in keys)
         return when {
-            text == null -> EntryKind.UNREADABLE
-            root == null -> EntryKind.UNSUPPORTED
-            KeepParser.isNote(root) != null -> EntryKind.KEEP
+            !readable -> EntryKind.UNREADABLE
+            info == null -> EntryKind.UNSUPPORTED
+            info.created != null && info.edited != null -> EntryKind.KEEP
             shape == StandardNotesParser.Shape.DECRYPTED -> EntryKind.STANDARD_NOTES
             shape == StandardNotesParser.Shape.ENCRYPTED -> EntryKind.STANDARD_NOTES_ENCRYPTED
-            "hash_type" in root || ("compressed" in root && "encrypted" in root) -> EntryKind.NOTESNOOK_BACKUP
+            notesnookBackup -> EntryKind.NOTESNOOK_BACKUP
             else -> EntryKind.UNSUPPORTED
         }
     }

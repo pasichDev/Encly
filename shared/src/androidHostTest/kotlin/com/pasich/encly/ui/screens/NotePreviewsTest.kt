@@ -14,6 +14,7 @@ import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_reauth_title
 import com.pasich.encly.core.resources.cancel
 import com.pasich.encly.core.resources.security_previews_title
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.data.model.Note
 import com.pasich.encly.data.model.NoteWithTags
 import com.pasich.encly.data.model.Tag
@@ -129,7 +130,7 @@ class NotePreviewsTest : ComposeScreenTest() {
 
     @Test
     fun theSecuritySwitchHidesPreviewsAtOnceAndShowingThemAsksForThePin() {
-        `when`(app.security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(app.security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         setNavScreen(
             viewModels(app.securitySettings(), app.notePreviewsVm(), app.toolbarVm(), app.backup()),
             route = NavRoutes.SecuritySettingsRoute.name,

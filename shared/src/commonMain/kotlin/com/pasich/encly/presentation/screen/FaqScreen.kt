@@ -65,10 +65,14 @@ import com.pasich.encly.core.resources.faq_trash_a
 import com.pasich.encly.core.resources.faq_trash_q
 import com.pasich.encly.core.resources.faq_vault_damaged_a
 import com.pasich.encly.core.resources.faq_vault_damaged_q
+import com.pasich.encly.core.security.SecretKind
 import com.pasich.encly.platform.BiometricWording
+import com.pasich.encly.platform.HostPlatform
 import com.pasich.encly.platform.LocalBiometricWording
+import com.pasich.encly.platform.LocalHostPlatform
 import com.pasich.encly.platform.LocalScreenshotAllowance
-import com.pasich.encly.platform.hostString
+import com.pasich.encly.platform.secretString
+import com.pasich.encly.platform.secretVariant
 import com.pasich.encly.presentation.designsystem.EnclyExpandableRow
 import com.pasich.encly.presentation.designsystem.EnclyGroup
 import com.pasich.encly.presentation.designsystem.EnclyGroupDivider
@@ -133,8 +137,20 @@ private val faqSections = listOf(
     ),
 )
 
+/**
+ * The answers about the PIN read "passphrase" where the unlock secret is one ([secretKind]). This page has no
+ * ViewModel to ask, so by default a desktop host gets the passphrase wording and the others the PIN's.
+ */
 @Composable
-fun FaqScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+fun FaqScreen(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    secretKind: SecretKind = if (LocalHostPlatform.current == HostPlatform.DESKTOP) {
+        SecretKind.PASSWORD
+    } else {
+        SecretKind.PIN
+    },
+) {
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -161,7 +177,10 @@ fun FaqScreen(navController: NavHostController, modifier: Modifier = Modifier) {
                         section.items.filter { (question, _) -> offered(question) }
                             .forEachIndexed { index, (question, answer) ->
                                 if (index > 0) EnclyGroupDivider()
-                                EnclyExpandableRow(question = stringResource(question), answer = hostString(answer))
+                                EnclyExpandableRow(
+                                    question = stringResource(secretVariant(question, secretKind)),
+                                    answer = secretString(secretKind, answer),
+                                )
                             }
                     }
                 }

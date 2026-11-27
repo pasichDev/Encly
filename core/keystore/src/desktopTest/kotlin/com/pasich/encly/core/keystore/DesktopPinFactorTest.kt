@@ -1,5 +1,6 @@
 package com.pasich.encly.core.keystore
 
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinFactorException
 import com.pasich.encly.core.security.PinKeySlot
 import org.junit.Assume.assumeTrue
@@ -91,6 +92,97 @@ class DesktopPinFactorTest {
     fun macWithoutASecretIsLost() {
         val e = assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }
         assertTrue(e.lost)
+    }
+
+    @Test
+    fun whereAMissingSecretDoesNotProveItIsGoneMacSaysNotFoundAndNotLost() {
+        store.missingMeansLost = false
+
+        val e = assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }
+
+        assertFalse(e.lost)
+        assertTrue(e.notFound)
+        assertFalse(e.unavailable)
+        assertTrue(factor.missingKeyMayReturn)
+        // Making a key anew is still what a new vault or a changed secret does.
+        assertTrue(factor.ensureKey(PinKeySlot.A))
+        factor.mac(PinKeySlot.A, data)
+    }
+
+    @Test
+    fun aMissingSecretIsLostWhereTheStoreIsTheOnlyPlaceForIt() {
+        val e = assertFailsWith<PinFactorException> { factor.mac(PinKeySlot.A, data) }
+
+        assertTrue(e.lost)
+        assertFalse(e.notFound)
+        assertFalse(factor.missingKeyMayReturn)
+    }
+
+    @Test
+    fun theStoreIsPreparedAndWhatIsMissingIsCarriedToTheCaller() {
+        factor.prepare()
+        assertEquals(1, store.prepared)
+
+        for (problem in listOf(KeyStoreProblem.NOT_RUNNING, KeyStoreProblem.LOCKED, KeyStoreProblem.NO_DEFAULT)) {
+            store.prepareFailure = SecretStoreException(
+                lost = false,
+                message = "x",
+                cause = SecretStoreUnavailableException("x"),
+                problem = problem,
+            )
+            val e = assertFailsWith<PinFactorException> { factor.prepare() }
+            assertTrue(e.unavailable)
+            assertEquals(problem, e.problem)
+        }
+
+        // An unavailable store that names no problem is "other"; a failure that is not "unavailable" has none.
+        store.prepareFailure =
+            SecretStoreException(lost = false, message = "x", cause = SecretStoreUnavailableException("x"))
+        assertEquals(KeyStoreProblem.OTHER, assertFailsWith<PinFactorException> { factor.prepare() }.problem)
+        store.prepareFailure = SecretStoreException(lost = false, message = "I/O")
+        assertNull(assertFailsWith<PinFactorException> { factor.prepare() }.problem)
+    }
+
+    @Test
+    fun aStoreThatKnowsNothingOfPromptsNeedsNoPreparingAndLosesAMissingSecretForGood() {
+        val plain = object : SecretStore {
+            override fun read(slot: PinKeySlot): ByteArray? = null
+
+            override fun create(slot: PinKeySlot): ByteArray = ByteArray(SecretStore.SECRET_SIZE)
+
+            override fun delete(slot: PinKeySlot) = Unit
+        }
+
+        assertTrue(plain.missingMeansLost)
+        plain.prepare()
+        plain.abandonPending()
+        assertFalse(DesktopPinFactor(plain).missingKeyMayReturn)
+    }
+
+    @Test
+    fun abandoningAPendingPromptIsPassedToTheStore() {
+        factor.abandonPending()
+
+        assertEquals(1, store.abandoned)
+    }
+
+    @Test
+    fun aKeyThatCannotBeDeletedIsReplacedByTheNewSecretOfAResetAndNotKept() {
+        factor.ensureKey(PinKeySlot.A)
+        val before = store.peek(PinKeySlot.A)!!.copyOf()
+        store.deleteFailure = SecretStoreException(lost = false, message = "cannot delete")
+
+        factor.reset(PinKeySlot.A)
+
+        assertFalse(before.contentEquals(store.peek(PinKeySlot.A)))
+    }
+
+    @Test
+    fun aResetOfAStoreThatIsReallyDownStillFails() {
+        store.deleteFailure = SecretStoreException(lost = false, message = "down")
+        store.createFailure = SecretStoreException(lost = false, message = "down")
+
+        assertFailsWith<PinFactorException> { factor.reset(PinKeySlot.A) }
     }
 
     @Test

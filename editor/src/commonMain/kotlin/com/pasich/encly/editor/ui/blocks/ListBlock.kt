@@ -213,7 +213,7 @@ internal fun ListBlock(
     val numbers = remember(rows) { rows.numbers(block.blockType) }
     val moves = remember(rows) { movesOf(rows) }
     val latestRows by rememberUpdatedState(rows)
-    val drag = remember(block) { ListDrag { latestRows } }
+    val drag = remember(block) { ListDrag { latestRows }.also { it.scroll = blockActions.highlights.drag } }
     val actions by rememberUpdatedState(blockActions)
     val focus = rememberListFocus(block, blockActions)
     val defer = rememberDefer()

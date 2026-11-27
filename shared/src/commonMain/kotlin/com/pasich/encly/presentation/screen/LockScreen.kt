@@ -45,6 +45,12 @@ fun LockScreen(navController: NavHostController, modifier: Modifier = Modifier) 
                     popUpTo(NavRoutes.LockRoute.name) { inclusive = true }
                 }
             },
+            onWipeVault = {
+                // The last resort of the missing-key screen: erase, and start over with onboarding.
+                if (lockViewModel.wipeVault()) {
+                    navController.navigate(NavRoutes.OnboardingRoute.name) { popUpTo(0) { inclusive = true } }
+                }
+            },
         )
     }
     LockScreen(exits = exits, modifier = modifier)
@@ -95,7 +101,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
     val host = LocalBiometricHost.current
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     // Above the loading view below: the forms' input and errors survive the credential check.
-    val form = remember { LockFormState() }
+    val form = rememberLockForm(viewModel)
 
     // From the recovery form Back returns to the PIN pad; from the PIN pad it goes to
     // [LockExits.onBack], or nowhere: by default Back never leaves the lock screen.
@@ -139,6 +145,7 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
             biometricEnabled = biometricEnabled && host != null,
             recoveryAvailable = viewModel.recoveryAvailable(),
             biometricInvalidated = biometricInvalidated,
+            secretKind = viewModel.secretKind,
         ),
         actions = LockActions(
             checks = LockChecks(
@@ -150,9 +157,24 @@ fun LockScreen(exits: LockExits, modifier: Modifier = Modifier, viewModel: LockV
             onRecoveryUnlock = ::goToPinReset,
             onKeyLoss = ::onPinKeyLoss,
             onPromptBiometric = ::promptBiometric,
+            onWipeVault = { (exits.onWipeVault ?: exits.onVaultLost)() },
         ),
         modifier = modifier,
     )
+}
+
+/**
+ * The forms' state. A secret slot of another format (a development vault of the PIN era under the passphrase policy) is
+ * never checked by typing: the recovery phrase is the way in, and its form says so.
+ */
+@Composable
+private fun rememberLockForm(viewModel: LockViewModel): LockFormState = remember {
+    LockFormState(viewModel.secretMaxUnits).also {
+        if (viewModel.secretSlotUnusable()) {
+            it.useRecovery = true
+            it.markSlotUnusable()
+        }
+    }
 }
 
 private fun onLockBack(busy: Boolean, form: LockFormState, onBack: (() -> Unit)?) {

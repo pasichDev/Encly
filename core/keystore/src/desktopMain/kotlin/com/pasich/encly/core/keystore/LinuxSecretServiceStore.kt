@@ -1,10 +1,18 @@
 package com.pasich.encly.core.keystore
 
+import com.pasich.encly.core.security.KeyStoreProblem
 import com.pasich.encly.core.security.PinKeySlot
 import com.pasich.encly.core.security.SensitiveDataCleaner
+import org.freedesktop.dbus.DBusMatchRule
 import org.freedesktop.dbus.DBusPath
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
+import org.freedesktop.dbus.errors.NoReply
+import org.freedesktop.dbus.errors.ServiceUnknown
+import org.freedesktop.dbus.errors.Timeout
+import org.freedesktop.dbus.exceptions.DBusConnectionException
+import org.freedesktop.dbus.interfaces.DBusSigHandler
+import org.freedesktop.dbus.messages.DBusSignal
 import org.freedesktop.dbus.types.Variant
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
@@ -26,30 +34,44 @@ import java.security.SecureRandom
  * the exchange is reported as unavailable rather than silently asked for less protection.
  *
  * There is no file fallback. Without a session bus or a running Secret Service the operations fail with a
- * [SecretStoreException] whose cause is a [SecretStoreUnavailableException]. A locked collection is not
- * unlocked through the user's password prompt (an unlock that needs a prompt fails the same way); the login
- * keyring is normally unlocked by the session login.
+ * [SecretStoreException] whose cause is a [SecretStoreUnavailableException] and whose problem says which. A locked
+ * collection is unlocked, and a missing default collection made, through the service's own prompt (see
+ * [KeyringPrompts]): the user answers it in the service's dialog, with the wait bounded and ended by a lock. An item
+ * that is not found is `null`, and [missingMeansLost] is false: another provider may own the bus, the keyring that
+ * holds the item may be closed, or the data directory may be reached by another path, so the caller must not read it
+ * as gone.
  */
 @Suppress("TooGenericExceptionCaught") // dbus-java reports remote errors as various runtime exceptions.
 internal class LinuxSecretServiceStore(
     private val vault: String,
     private val application: String = APPLICATION_ID,
     private val random: SecureRandom = SecureRandom(),
+    private val prompts: KeyringPrompts = KeyringPrompts(),
 ) : SecretStore {
+    override val missingMeansLost: Boolean get() = false
+
+    override fun abandonPending() = prompts.abandonPending()
+
+    override fun prepare() {
+        session { connection, service, _ -> prompts.openDefaultCollection(DbusKeyring(connection, service), true) }
+    }
+
     override fun read(slot: PinKeySlot): ByteArray? = session { connection, service, opened ->
-        var items = findItems(connection, service, slot)
+        var items = findItems(connection, service, slot, prompt = true)
         if (items.isEmpty()) {
-            // Nothing found. Before that means "gone for good", make sure the keyring that would hold it is there
-            // and open: a locked or missing default collection hides its items, and that passes.
-            requireDefaultCollectionOpen(connection, service)
-            items = findItems(connection, service, slot)
+            // Nothing found. A locked default collection hides its items: it is unlocked first (with the service's
+            // prompt), and only then is nothing "not found". A missing one is not found too: not made here.
+            val bus = DbusKeyring(connection, service)
+            if (prompts.openDefaultCollection(bus, createMissing = false) != null) {
+                items = findItems(connection, service, slot, prompt = true)
+            }
         }
         val item = items.firstOrNull() ?: return@session null
         val secret = item.GetSecret(opened.path)
         try {
             opened.cipher.decrypt(secret.parameters, secret.value)
         } catch (e: GeneralSecurityException) {
-            throw unavailable("The Secret Service sent a secret that could not be decrypted", e)
+            throw unavailable("The Secret Service sent a secret that could not be decrypted", KeyStoreProblem.OTHER, e)
         } finally {
             SensitiveDataCleaner.clear(secret.value)
         }
@@ -60,14 +82,13 @@ internal class LinuxSecretServiceStore(
         val sent = secret.copyOf()
         try {
             session { connection, service, opened ->
-                val collectionPath = service.ReadAlias(DEFAULT_ALIAS)
-                if (collectionPath.path == NO_OBJECT_PATH) {
-                    throw unavailable("The Secret Service has no default collection")
-                }
-                requireNoPrompt(service.Unlock(listOf(collectionPath)).prompt)
+                val bus = DbusKeyring(connection, service)
+                // A missing default collection is made through the service (which prompts), a locked one unlocked.
+                val collectionPath = prompts.openDefaultCollection(bus, createMissing = true)
+                    ?: throw unavailable("The Secret Service has no default collection", KeyStoreProblem.NO_DEFAULT)
                 val collection = connection.getRemoteObject(
                     SECRETS_BUS_NAME,
-                    collectionPath.path,
+                    collectionPath,
                     SecretCollectionApi::class.java,
                     true,
                 )
@@ -77,7 +98,7 @@ internal class LinuxSecretServiceStore(
                 )
                 val sealed = opened.cipher.encrypt(sent, random)
                 val struct = SecretStruct(opened.path, sealed.iv, sealed.encrypted, CONTENT_TYPE)
-                requireNoPrompt(collection.CreateItem(properties, struct, true).prompt)
+                prompts.complete(bus, collection.CreateItem(properties, struct, true).prompt.asPrompt())
             }
             return secret
         } catch (e: Exception) {
@@ -90,7 +111,9 @@ internal class LinuxSecretServiceStore(
 
     override fun delete(slot: PinKeySlot) {
         session { connection, service, _ ->
-            findItems(connection, service, slot).forEach { requireNoPrompt(it.Delete()) }
+            // No prompt: a startup clean-up must not ask the user to unlock a keyring; what cannot be deleted stays
+            // (and a new vault replaces it, see DesktopPinFactor.reset).
+            findItems(connection, service, slot, prompt = false).forEach { requireNoPrompt(it.Delete()) }
         }
     }
 
@@ -99,9 +122,17 @@ internal class LinuxSecretServiceStore(
         connection: DBusConnection,
         service: SecretServiceApi,
         slot: PinKeySlot,
+        prompt: Boolean,
     ): List<SecretItemApi> {
         val found = service.SearchItems(attributesOf(slot))
-        if (found.locked.isNotEmpty()) requireNoPrompt(service.Unlock(found.locked).prompt)
+        if (found.locked.isNotEmpty()) {
+            val unlocking = service.Unlock(found.locked).prompt
+            if (prompt) {
+                prompts.complete(DbusKeyring(connection, service), unlocking.asPrompt())
+            } else {
+                requireNoPrompt(unlocking)
+            }
+        }
         return (found.unlocked + found.locked).map {
             connection.getRemoteObject(SECRETS_BUS_NAME, it.path, SecretItemApi::class.java, true)
         }
@@ -144,44 +175,85 @@ internal class LinuxSecretServiceStore(
         } catch (e: SecretStoreException) {
             throw e
         } catch (e: Exception) {
-            throw unavailable("The Secret Service could not be used: ${e.javaClass.simpleName}", e)
+            throw unavailable("The Secret Service could not be used: ${e.javaClass.simpleName}", problemOf(e), e)
         }
-    }
-
-    /**
-     * The default collection must exist and be unlocked (without a prompt) for "not found" to be an answer: a locked
-     * or missing keyring only hides what is in it, which is a temporary failure and not a lost key.
-     */
-    private fun requireDefaultCollectionOpen(connection: DBusConnection, service: SecretServiceApi) {
-        val collectionPath = service.ReadAlias(DEFAULT_ALIAS)
-        if (collectionPath.path == NO_OBJECT_PATH) throw unavailable("The Secret Service has no default collection")
-        val properties = connection.getRemoteObject(
-            SECRETS_BUS_NAME,
-            collectionPath.path,
-            org.freedesktop.dbus.interfaces.Properties::class.java,
-            true,
-        )
-        val locked = properties.Get<Boolean>(COLLECTION_INTERFACE, "Locked")
-        if (locked) requireNoPrompt(service.Unlock(listOf(collectionPath)).prompt)
     }
 
     private fun requireNoPrompt(prompt: DBusPath) {
         if (prompt.path != NO_OBJECT_PATH) {
-            throw unavailable("The Secret Service needs the user to unlock the keyring first")
+            throw unavailable("The Secret Service needs the user to unlock the keyring first", KeyStoreProblem.LOCKED)
         }
     }
 
-    private fun unavailable(message: String, cause: Throwable? = null) = SecretStoreException(
-        lost = false,
-        message = message,
-        cause = SecretStoreUnavailableException(message, cause),
-    )
+    /** What [KeyringPrompts] needs of the Secret Service on [connection]. */
+    private class DbusKeyring(private val connection: DBusConnection, private val service: SecretServiceApi) :
+        KeyringBus {
+        override fun defaultCollection(): String? =
+            service.ReadAlias(DEFAULT_ALIAS).path.takeIf { it != NO_OBJECT_PATH }
+
+        override fun isLocked(collection: String): Boolean {
+            val properties = connection.getRemoteObject(
+                SECRETS_BUS_NAME,
+                collection,
+                org.freedesktop.dbus.interfaces.Properties::class.java,
+                true,
+            )
+            return properties.Get<Boolean>(COLLECTION_INTERFACE, "Locked")
+        }
+
+        override fun unlock(objects: List<String>): String? =
+            service.Unlock(objects.map(::DBusPath)).prompt.path.takeIf { it != NO_OBJECT_PATH }
+
+        override fun createDefaultCollection(): CreatedCollection {
+            val properties = mapOf<String, Variant<*>>(COLLECTION_LABEL to Variant(COLLECTION_NAME))
+            val created = service.CreateCollection(properties, DEFAULT_ALIAS)
+            return CreatedCollection(
+                collection = created.collection.path.takeIf { it != NO_OBJECT_PATH },
+                prompt = created.prompt.path.takeIf { it != NO_OBJECT_PATH },
+            )
+        }
+
+        override fun watchPrompt(prompt: String, completed: (PromptOutcome) -> Unit): AutoCloseable {
+            val rule = DBusMatchRule("signal", PROMPT_INTERFACE, "Completed", prompt)
+            val handler = DBusSigHandler<DBusSignal> { signal ->
+                val parameters = signal.parameters
+                val dismissed = parameters.getOrNull(0) as? Boolean ?: true
+                completed(PromptOutcome(dismissed, pathOf((parameters.getOrNull(1) as? Variant<*>)?.value)))
+            }
+            connection.addGenericSigHandler(rule, handler)
+            return AutoCloseable { runCatching { connection.removeGenericSigHandler(rule, handler) } }
+        }
+
+        override fun startPrompt(prompt: String) {
+            promptObject(prompt).Prompt(PROMPT_WINDOW_ID)
+        }
+
+        override fun dismissPrompt(prompt: String) {
+            runCatching { promptObject(prompt).Dismiss() }
+        }
+
+        private fun promptObject(prompt: String) =
+            connection.getRemoteObject(SECRETS_BUS_NAME, prompt, SecretPromptApi::class.java, true)
+
+        private fun pathOf(value: Any?): String? = when (value) {
+            is DBusPath -> value.path
+            is String -> value
+            else -> null
+        }?.takeIf { it != NO_OBJECT_PATH }
+    }
 
     private fun attributesOf(slot: PinKeySlot): Map<String, String> =
         mapOf(ATTRIBUTE_APPLICATION to application, ATTRIBUTE_PURPOSE to slot.entryName(), ATTRIBUTE_VAULT to vault)
 
     private companion object {
         const val DEFAULT_ALIAS = "default"
+        const val COLLECTION_LABEL = "org.freedesktop.Secret.Collection.Label"
+        const val COLLECTION_NAME = "Encly"
+        const val PROMPT_INTERFACE = "org.freedesktop.Secret.Prompt"
+
+        // The spec allows an empty window id (the service shows its dialog on its own); an X11 id is not reachable
+        // from the JVM without reaching into the AWT peers.
+        const val PROMPT_WINDOW_ID = ""
         const val COLLECTION_INTERFACE = "org.freedesktop.Secret.Collection"
         const val CONTENT_TYPE = "application/octet-stream"
         const val LABEL = "Encly PIN factor"
@@ -191,4 +263,12 @@ internal class LinuxSecretServiceStore(
         const val ATTRIBUTE_PURPOSE = "purpose"
         const val ATTRIBUTE_VAULT = "vault"
     }
+}
+
+private fun DBusPath.asPrompt(): String? = path.takeIf { it != NO_OBJECT_PATH }
+
+/** No bus, or nobody owning the Secret Service name, is "not running"; anything else is not told apart. */
+private fun problemOf(e: Exception): KeyStoreProblem = when (e) {
+    is DBusConnectionException, is ServiceUnknown, is NoReply, is Timeout -> KeyStoreProblem.NOT_RUNNING
+    else -> KeyStoreProblem.OTHER
 }

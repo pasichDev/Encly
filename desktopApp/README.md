@@ -1,8 +1,11 @@
 # :desktopApp
 
-Encly for Windows, macOS and Linux: Compose Multiplatform on the JVM around `:shared`, with the same security
-model as the Android app (same vault format, same PIN and recovery slots, same encrypted database). It is the
-counterpart of `:app`: its own dependency graph, its own implementations of the platform interfaces, and a window.
+Encly for Windows, macOS and Linux: Compose Multiplatform on the JVM around `:shared`. None of it is released yet: Encly 3.1.0 is for
+Android only, and the Linux packages (a `.deb` and a Flatpak bundle), Windows and macOS are built by CI or from source,
+not published. It has the same
+vault format, recovery slot and encrypted database as the Android app, but it is unlocked with a passphrase instead of
+a PIN (see "Using the Linux package"). It is the counterpart of `:app`: its own dependency graph, its own
+implementations of the platform interfaces, and a window.
 
 ```
 ./gradlew :desktopApp:run                  # run it
@@ -16,6 +19,40 @@ The version is the one in `version.properties`, shared with the Android app. A p
 OS (`jpackage` does not cross-build); CI builds all three, and a Linux Flatpak, in the `desktop-package` job: signed when
 the signing secrets exist, unsigned otherwise (see "Signing the desktop installers").
 
+## Using the Linux package
+
+Not released yet: there is no download. Build the package or run the app from source (see below). The details and the
+limits are in [SECURITY.md](../SECURITY.md#desktop); this is how the Linux app behaves.
+
+- **A passphrase, not a PIN.** It is 12 to 128 characters, not only digits, with at least 5 different characters, in any
+  language. Wherever a new passphrase is chosen, *Suggest a passphrase* is offered: five random words from the recovery-phrase word list (55 bits), shown in
+  clear so you can write them down or change them. They are not your recovery phrase. The lock screen is one field and
+  *Unlock*; it never shows or stores how long your passphrase is. The wipe passphrase and the duress passphrase follow
+  the same rule, and keep working after you change the passphrase unless the stored slot had a different format or costs
+  (then both are turned off and the app says so). There is no biometric unlock.
+- **A Secret Service must be running** (GNOME Keyring, KWallet or KeePassXC). It keeps the device secret that is mixed
+  into your passphrase, so a copy of the vault files alone is useless. Encly checks it at the start of onboarding and
+  asks it to unlock its default keyring, or to create one, through the service's own dialog (waited for at most
+  120 seconds, and closed when the vault locks). There is no fallback to a file: without a Secret Service, or with a
+  keyring that stays locked, Encly cannot unlock, and says what is missing (for example "Unlock your system keyring and
+  try again") without counting the attempt.
+- **An X11 display is required** (XWayland on a Wayland session). On a Wayland session without XWayland Encly writes an
+  error to stderr, sends a desktop notification (the portal's, then `notify-send`) and exits. Links open through the
+  OpenURI portal, then `xdg-open`; AWT's browser call is used only outside a sandbox.
+- **If the keyring is reset or replaced** (a new keyring, a new OS account, the home directory restored without it, the
+  vault copied to another computer). The secret is also tied to the data folder, so a vault moved to another path, a
+  changed `XDG_DATA_HOME`, or a `.deb` vault copied into the Flatpak's folder (or the reverse) finds no secret either. In
+  all of these the passphrase no longer unlocks. On Linux the lock screen says the key was not found, which does not by
+  itself mean it is gone for good: try again (for example after unlocking, or switching back to the keyring that holds
+  it), or use your **recovery phrase** on the lock screen, then set a new passphrase; a wipe, held to confirm, is the
+  last resort. Without a recovery phrase and without the keyring that holds the secret there is no way back, so keep
+  the phrase that onboarding offers.
+- **The strength is the passphrase's.** Argon2id makes each guess about nine times dearer than the PBKDF2 of the phone
+  PIN, and does not make a short passphrase safe: use a long one.
+- Unlocking takes a moment and about 64 MiB of memory; if the computer cannot give it, Encly reports a failure of the key
+  storage, counts nothing, and a retry may work.
+- Backups use the recovery phrase and nothing else, so a backup from a phone restores here and the reverse.
+
 ## Where the data is
 
 One private directory per OS user. It is created `rwx------` where POSIX permissions exist.
@@ -28,7 +65,7 @@ One private directory per OS user. It is created `rwx------` where POSIX permiss
 
 | File | What it is |
 |---|---|
-| `vault_state_v3.bin` | key slots and PIN lockout (every secret in it is already an AES-GCM envelope) |
+| `vault_state_v3.bin` | key slots and the lockout (every secret in it is already an AES-GCM envelope) |
 | `*.db` | the encrypted vault databases (SQLCipher) |
 | `encly_flags_v3.properties` | non-secret flags: onboarding done, auto-lock delay, language, window size and place |
 | `my_notes_settings.preferences_pb` | appearance and editor settings |
@@ -38,10 +75,10 @@ One private directory per OS user. It is created `rwx------` where POSIX permiss
 The flags are a small file written atomically (temp file, fsync, rename), not `java.util.prefs`, which would put them
 in the registry (Windows) or a plist outside this directory (macOS).
 
-The device-bound half of the PIN key is not in this directory: it lives in the OS secret store (Windows DPAPI,
+The device-bound half of the vault key is not in this directory: it lives in the OS secret store (Windows DPAPI,
 the macOS login Keychain, the freedesktop Secret Service). See `SECURITY.md`, "Desktop". On Windows the blob of
 DPAPI sits in `%LOCALAPPDATA%\pasichdev\Encly` too: the roaming `%APPDATA%` is copied to profile servers and to every machine
-the user signs in to, which would take the vault and the PIN's device secret off this device. Windows has no POSIX
+the user signs in to, which would take the vault and its device secret off this device. Windows has no POSIX
 modes; the folder keeps the ACL it inherits from `%LOCALAPPDATA%` (the user, SYSTEM and Administrators), which is the
 same boundary DPAPI gives the secret. Encly does not rewrite ACLs.
 
@@ -49,11 +86,12 @@ same boundary DPAPI gives the secret. Encly does not rewrite ACLs.
 
 | Android | Desktop | Not available |
 |---|---|---|
+| a PIN of 6 to 12 digits, PBKDF2-HMAC-SHA256 (600,000), slot version 3; the device half in the Keystore | a passphrase of 12 to 128 characters, Argon2id (64 MiB, 3 passes), slot version 4; the device half in the OS secret store, bound to the user account (`SECURITY.md`, "Desktop") | StrongBox or TEE binding of the device half; the PIN keypad |
 | `FLAG_SECURE` from the first frame | the window is excluded from screenshots and recordings from the first frame and again whenever the theme asserts it: Windows `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)` (Windows 10 2004+; older: `WDA_MONITOR`, a black window), macOS `NSWindow.sharingType = none` | Linux: X11 and Wayland have no such call. macOS: best effort, newer ScreenCaptureKit tools can ignore the flag on macOS 15 and later |
 | lock when the app goes to the background, after the auto-lock delay | the same, when the window loses the focus or is minimised (its own file dialogs do not count) | |
-| lock at once when the screen turns off | lock at once when the OS locks the session: macOS (the window server's session state, polled every 1.5 s), Windows (the input desktop, polled), Linux (logind `Lock` and `PrepareForSleep`, and the screen-saver `ActiveChanged` of GNOME, KDE, Cinnamon, MATE over D-Bus). A sleep without a session lock locks the vault too: on macOS and Windows it is seen when the machine wakes (the clock that counts sleep runs ahead of the one that does not), at the next 1.5 s poll | |
+| lock at once when the screen turns off | lock at once when the OS locks the session: macOS (the window server's session state, polled every 1.5 s), Windows (the input desktop, polled), Linux (logind `Lock` and `PrepareForSleep`, and the screen-saver `ActiveChanged` of GNOME, KDE, Cinnamon, MATE over D-Bus; every report of a lock locks the vault, also after a locker that never reports its end, such as swaylock or i3lock through xss-lock). A sleep without a session lock locks the vault too: on macOS and Windows it is seen when the machine wakes (the clock that counts sleep runs ahead of the one that does not), at the next 1.5 s poll | |
 | (none) | idle lock: no keyboard or mouse input for the auto-lock delay, but at least 5 minutes, locks a window that stays in front; the time is measured on the OS uptime, so time asleep counts | |
-| clipboard marked sensitive, cleared after a minute | cleared after a minute unless something else was copied since, also for what the editor copies, and on quit. Windows: the text is written with `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory` = 0 and `CanUploadToCloudClipboard` = 0 (no Win+V history, no cloud sync); macOS: with `org.nspasteboard.ConcealedType` and `TransientType` (clipboard managers skip it) | Linux: no marker exists in AWT; a clipboard manager may keep a copy |
+| clipboard marked sensitive, cleared after a minute | cleared after a minute unless something else was copied since, also for what the editor copies, and on quit. Windows: the text is written with `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory` = 0 and `CanUploadToCloudClipboard` = 0 (no Win+V history, no cloud sync); macOS: with `org.nspasteboard.ConcealedType` and `TransientType` (clipboard managers skip it) | Linux: the text is offered with the `x-kde-passwordManagerHint` target, which Klipper and CopyQ honour (not verified on a real KDE session); a manager that ignores the hint keeps a copy that the wipe cannot reach |
 | strict keyboard privacy | not offered (a desktop has no on-screen keyboard that learns) | |
 | PIN lockout on `elapsedRealtime` and boot count | the OS uptime (including sleep) and the boot id (Linux `boot_id`, macOS `kern.bootsessionuuid`), so restarting the app does not shorten a lockout; Windows has no boot id, the uptime comparison covers it | |
 | biometrics | none yet | Windows Hello, Touch ID and fprintd are not wired in |
@@ -89,7 +127,7 @@ socket can be made (a path too long for one) or the first one does not answer, t
   editor would overwrite the first one's work. The window that opens a note another window is editing shows it
   read-only, with a notice, and writes nothing from it;
 - export as PDF and print (File menu, the note's right-click menu and the editor's More sheet) are plaintext exports:
-  they go through the Markdown export's warning and PIN (the print warning also names the system print spooler, which
+  they go through the Markdown export's warning and passphrase (the print warning also names the system print spooler, which
   may keep temporary copies), then the save dialog or the system print dialog. The PDF is written with Apache PDFBox,
   built in memory with the app's Source Sans 3 (Latin and Cyrillic: all nine languages) embedded, and written to the
   file the user picked and nowhere else; it is not touched on the way by the network or a temp file;
@@ -110,6 +148,25 @@ socket can be made (a path too long for one) or the first one does not answer, t
 `compose.desktop.application.nativeDistributions` in `build.gradle.kts`: MSI, DMG and DEB, package name `Encly`,
 bundle id `com.pasich.encly`, a fixed Windows upgrade UUID, per-user MSI install, and the `.enclybak` file
 association with its own type `application/vnd.encly.backup` (never `application/octet-stream`).
+
+### Licences in the installers
+
+The licence and notice texts of what the installer bundles are files, not only the in-app screen (About, Licenses):
+
+| What | Where it comes from | In the `.deb` | In the Flatpak |
+|---|---|---|---|
+| PDFBox, FontBox, ICU4J, Noto Sans Arabic, Commons Logging, JNA, dbus-java, SLF4J, Skiko, Skia, Bouncy Castle (Argon2id), and `THIRD-PARTY-NOTICES.txt` (what is what) | `packaging/resources/common/licenses/`, which Compose puts in the app's resources | `licenses/` in the app's resources, under `/opt/encly/` (jpackage layout) | `/app/share/licenses/io.github.pasichdev.Encly/` |
+| the Java runtime (OpenJDK: Eclipse Temurin in the CI builds) | the `legal/` folder of the runtime that jlink cuts, taken from the built image, not copied into the repository | `lib/runtime/legal/` under `/opt/encly/` | `/app/share/licenses/io.github.pasichdev.Encly/openjdk/` |
+| Encly's own licence | `LICENSE`, given to jpackage as the licence file | where jpackage puts it | `.../licenses/io.github.pasichdev.Encly/LICENSE` |
+
+The texts are taken from the libraries' own jars (PDFBox, Commons Logging, SLF4J), from the Skiko and Skia sources at the
+tags the release uses (Skiko `v0.150.2`, Skia `m150-a3f509bf52`; the Skiko jars carry no licence file), and from the
+runtime itself. When `libs.versions.toml` bumps one of them, refresh its file and the version in
+`THIRD-PARTY-NOTICES.txt`. `flatpak/build.sh` fails when the notices or the runtime's `legal/java.base/LICENSE` are not
+in the image, and the `linux verify` job of the release workflow checks that they are in both installed packages.
+Not included: the licences of the code Skia is built with (FreeType, HarfBuzz, ICU, expat, zlib, libpng ...), which the
+Skiko artifacts do not ship, and ICU4J 79.1 and dbus-java 5.2.2 have no licence file in their jars (the texts kept here are
+from the previous versions).
 
 ### Signing the desktop installers
 
@@ -181,7 +238,8 @@ The sandbox permissions are the minimum the app needs, and there is no network:
 | (none for files) | files are chosen with the FileChooser portal and arrive through the document portal; there is no `--filesystem` |
 | `--socket=x11`, `--share=ipc` | the bundled Java runtime draws through X11 only (XWayland on a Wayland session) |
 | `--device=dri` | OpenGL rendering of Compose (Skiko) |
-| `--talk-name=org.freedesktop.secrets` | the device-bound half of the PIN key lives in the Secret Service |
+| `--socket=cups` | printing a note: the runtime's libcups reaches the host's print service through it; no network is shared |
+| `--talk-name=org.freedesktop.secrets` | the device-bound half of the vault key lives in the Secret Service |
 | `--talk-name=org.freedesktop.ScreenSaver`, `org.gnome.ScreenSaver`, `org.cinnamon.ScreenSaver`, `org.mate.ScreenSaver` | lock when the desktop's screen saver locks the session |
 | `--system-talk-name=org.freedesktop.login1` | lock on logind's `Lock` and on suspend |
 
@@ -189,11 +247,45 @@ The Flatpak keeps its data in `~/.var/app/io.github.pasichdev.Encly/data/encly`,
 of a `.deb` or tarball install is a different vault there. The bundle is not signed and is not on Flathub; a Flathub
 submission needs a build from source (Gradle offline with pinned dependencies) and screenshots in the metainfo.
 
+### The .deb's postinst
+
+The `.deb` has a file association (`.enclybak`), so jpackage puts `xdg-desktop-menu install ...` into the package's
+postinst. That command fails with "No writable system menu directory found" on a system that has no
+`/usr/share/desktop-directories`, for example a bare window manager with no desktop installed, and the install then
+stops half-configured. Compose Desktop has no supported way to change jpackage's maintainer scripts, so
+`packaging/deb/harden-postinst.sh` patches the finished package: one line, added right after the `    configure)` line of
+the postinst (it must be there exactly once, or the script fails and nothing ships), creates that directory (mode 0755)
+when it is missing. It does nothing on uninstall (the directory may be in use by other packages). The script unpacks the
+`.deb` with `dpkg-deb -R`, repacks it with `dpkg-deb -b` under `fakeroot` with the compression it had, checks that the file
+list and every other control file are unchanged, prints a diff of the postinst, and can be run twice. CI runs it right
+after `packageDeb` in `release.yml` and `android.yml`, before the file is uploaded and verified. A `.deb` from a local
+`./gradlew :desktopApp:packageDeb` is not patched unless you run
+`desktopApp/packaging/deb/harden-postinst.sh --in-place <file.deb>` on it (needs `dpkg-deb` and `fakeroot`).
+
+### The Linux packages (not released)
+
+The desktop app is **not released**: Encly 3.1.0 is published for Android only, and no `.deb` or Flatpak bundle is on
+GitHub Releases. The packages are built by CI and from source. `release.yml` builds them only on a manual run (Actions,
+Release, Run workflow, with an existing tag; jobs `linux-deb`, `linux-flatpak` and `linux-verify`), and a pushed tag builds
+Android alone. `android.yml` builds and checks them on every pull request: clean machines install the `.deb` (every Ubuntu
+LTS runner image, Debian 12 and 13 in containers) and the bundle and check the files, the metadata, the sandbox
+permissions and the licence files; the window is not opened (`.github/workflows/_verify-linux.yml`). If they are published
+later, they will be in the Release's one `SHA256SUMS` (and `SHA256SUMS.asc`, which exists only when the GPG secrets are
+configured), each with a build-provenance attestation; they are not code-signed. The MSI and the DMG are never attached to
+a release (they are unsigned).
+
+The `.deb` is built on Ubuntu 22.04, on purpose: jpackage writes the package's `Depends:` from the machine it runs on, and a
+build on Ubuntu 24.04 or later names `libasound2t64`, `libpng16-16t64` and the like, which Ubuntu 22.04 and Debian 12 do not
+have. The pre-t64 names that a 22.04 build gives are also satisfied by the newer systems (their t64 packages `Provide` them,
+checked in the Ubuntu noble and Debian trixie package indexes). The verify script fails a `.deb` whose `Depends:` has a t64
+name. A package built this way is expected to install on Ubuntu 22.04 LTS and later and Debian 12 and later; older systems are not tested.
+
 ## No network
 
 Like the Android app, the desktop app makes no network connection and has no update check; updates come from the
-installer, a store or a package manager. Nothing in the module opens a socket: the only IPC is D-Bus over a local Unix
-socket on Linux (the Secret Service, logind, the file chooser portal), and the OS calls are JNA calls into system
+installer, a store or a package manager. Nothing in the module opens a network socket: the only IPC is D-Bus over a local Unix
+socket on Linux (the Secret Service, logind, the file chooser portal) and the owner-only Unix-domain socket `.instance.sock`
+of the single-instance check, and the OS calls are JNA calls into system
 libraries. Opening a link hands it to the default browser (only `https`, `http` and `mailto`).
 
 ## Tests and coverage

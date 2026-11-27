@@ -6,6 +6,7 @@ import com.pasich.encly.desktop.security.LinuxLiveLock
 import com.pasich.encly.desktop.security.OsLockSignals
 import com.pasich.encly.desktop.security.PollingLockSignals
 import com.pasich.encly.desktop.security.SleepDetector
+import com.pasich.encly.desktop.security.screenSaverSource
 import com.pasich.encly.desktop.storage.DesktopOs
 import com.sun.jna.Library
 import com.sun.jna.Native
@@ -13,13 +14,17 @@ import com.sun.jna.Pointer
 import com.sun.jna.ptr.LongByReference
 import com.sun.jna.win32.StdCallLibrary
 import org.freedesktop.dbus.DBusMatchRule
+import org.freedesktop.dbus.DBusPath
 import org.freedesktop.dbus.annotations.DBusInterfaceName
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
+import org.freedesktop.dbus.interfaces.DBus
 import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.interfaces.DBusSigHandler
 import org.freedesktop.dbus.interfaces.Properties
+import org.freedesktop.dbus.matchrules.DBusMatchRuleBuilder
 import org.freedesktop.dbus.messages.DBusSignal
+import org.freedesktop.dbus.types.UInt32
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -235,7 +240,9 @@ private class LogindLockSignals : OsLockSignals {
 
     private val live = LinuxLiveLock(
         lockedHint = ::readLockedHint,
-        screenSaversActive = SCREEN_SAVERS.map { saver -> { readScreenSaverActive(saver) } },
+        screenSaversActive = SCREEN_SAVERS.map { saver ->
+            screenSaverSource(hasOwner = { screenSaverHasOwner(saver) }, active = { screenSaverActive(saver) })
+        },
     )
     private val reader: ExecutorService by lazy {
         Executors.newSingleThreadExecutor { runnable ->
@@ -243,14 +250,17 @@ private class LogindLockSignals : OsLockSignals {
         }
     }
 
-    override fun liveLocked(): Boolean {
-        // Bounded: a bus that does not answer must not hold up the unlock that asks.
-        val answer = reader.submit(Callable { live.isLocked() })
+    override val asksTheOs: Boolean get() = true
+
+    override fun liveLocked(): Boolean? {
+        // Bounded: a bus that does not answer must not hold up the unlock that asks. No answer is unknown (null), never
+        // "unlocked": the caller decides what unknown means (see DesktopDeviceLockWatcher.isDeviceLocked).
+        val answer = reader.submit(Callable { live.state() })
         return try {
             answer.get(READ_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
         } catch (_: Exception) {
             answer.cancel(true)
-            false
+            null
         }
     }
 
@@ -260,10 +270,18 @@ private class LogindLockSignals : OsLockSignals {
         return session.Get<Boolean>(LOGIND_SESSION, "LockedHint")
     }
 
-    private fun readScreenSaverActive(saver: ScreenSaver): Boolean? {
-        val connection = sessionBus ?: return null
-        // Only a screen saver that is running: asking a name nobody owns could start its service.
-        if (connection.getDBusOwnerName(saver.iface) == null) return null
+    /**
+     * Whether anyone owns the screen saver's name: `NameHasOwner`, a question with an answer. `getDBusOwnerName` is
+     * `GetNameOwner`, which answers a name nobody owns with an error (and four names are asked every time).
+     */
+    private fun screenSaverHasOwner(saver: ScreenSaver): Boolean {
+        val connection = sessionBus ?: return false
+        val bus = connection.getRemoteObject("org.freedesktop.DBus", "/org/freedesktop/DBus", DBus::class.java)
+        return bus.NameHasOwner(saver.iface)
+    }
+
+    private fun screenSaverActive(saver: ScreenSaver): Boolean {
+        val connection = sessionBus ?: error("The session bus is gone")
         return saver.isActive(connection)
     }
 
@@ -271,9 +289,16 @@ private class LogindLockSignals : OsLockSignals {
         val connections = listOfNotNull(
             subscribe({ DBusConnectionBuilder.forSystemBus() }) { connection ->
                 systemBus = connection
-                connection.on(LOGIND_SESSION, "Lock") { onChange(true) }
-                connection.on(LOGIND_SESSION, "Unlock") { onChange(false) }
-                connection.on(LOGIND_MANAGER, "PrepareForSleep") { signal ->
+                // Only logind's own signals, from this session's object (or any session's, when that cannot be
+                // found out) and from the manager: a process that merely talks to the system bus cannot send them.
+                val sessionPath = ownSessionPath(connection)
+                connection.onFromLogind(LOGIND_SESSION, "Lock", sessionPath, pathIsNamespace = sessionPath == null) {
+                    onChange(true)
+                }
+                connection.onFromLogind(LOGIND_SESSION, "Unlock", sessionPath, pathIsNamespace = sessionPath == null) {
+                    onChange(false)
+                }
+                connection.onFromLogind(LOGIND_MANAGER, "PrepareForSleep", LOGIND_MANAGER_PATH) { signal ->
                     onChange(signal.parameters.firstOrNull() as? Boolean ?: true)
                 }
             },
@@ -307,6 +332,52 @@ private class LogindLockSignals : OsLockSignals {
             null
         }
 
+    /** The object path of this process's login session, or null when logind does not say. */
+    private fun ownSessionPath(connection: DBusConnection): String? = try {
+        connection.getRemoteObject(LOGIND_BUS, LOGIND_MANAGER_PATH, LogindManagerCalls::class.java)
+            .GetSessionByPID(UInt32(ProcessHandle.current().pid()))
+            .path
+    } catch (_: Exception) {
+        null
+    }
+
+    /**
+     * Listens for [member] of [iface] only when logind ([LOGIND_BUS]) sent it from [path]; with [pathIsNamespace] (the
+     * session's own path is not known) from any object below [path] instead. The sender is checked here and not in the
+     * match rule: dbus-java compares a rule's sender with the message's unique name (`:1.42`) literally, so a rule
+     * naming `org.freedesktop.login1` would match nothing and no lock would ever be heard. The owner of the name is
+     * asked at every signal, so a logind that restarted is still the one that is heard.
+     */
+    private fun DBusConnection.onFromLogind(
+        iface: String,
+        member: String,
+        path: String?,
+        pathIsNamespace: Boolean = false,
+        handler: (DBusSignal) -> Unit,
+    ) {
+        val rule = DBusMatchRuleBuilder.create()
+            .withType("signal")
+            .withInterface(iface)
+            .withMember(member)
+            .let {
+                when {
+                    pathIsNamespace -> it.withPathNamespace(LOGIND_SESSION_NAMESPACE)
+                    path != null -> it.withPath(path)
+                    else -> it
+                }
+            }
+            .build()
+        addGenericSigHandler(rule, DBusSigHandler<DBusSignal> { signal -> if (sentByLogind(signal)) handler(signal) })
+    }
+
+    // When the owner cannot be asked the signal is taken: a lock that is dropped leaves the vault open behind the lock
+    // screen, while one that is heard wrongly only locks it.
+    private fun DBusConnection.sentByLogind(signal: DBusSignal): Boolean = try {
+        signal.source == getDBusOwnerName(LOGIND_BUS)
+    } catch (_: Exception) {
+        true
+    }
+
     private fun DBusConnection.on(iface: String, member: String, handler: (DBusSignal) -> Unit) {
         addGenericSigHandler(DBusMatchRule("signal", iface, member), DBusSigHandler<DBusSignal> { handler(it) })
     }
@@ -318,6 +389,8 @@ private class LogindLockSignals : OsLockSignals {
         const val LOGIND_SESSION_PATH = "/org/freedesktop/login1/session/auto"
         const val LOGIND_SESSION = "org.freedesktop.login1.Session"
         const val LOGIND_MANAGER = "org.freedesktop.login1.Manager"
+        const val LOGIND_MANAGER_PATH = "/org/freedesktop/login1"
+        const val LOGIND_SESSION_NAMESPACE = "/org/freedesktop/login1/session"
         const val READ_TIMEOUT_MILLIS = 500L
         val SCREEN_SAVERS = listOf(
             screenSaver(
@@ -345,6 +418,12 @@ private class LogindLockSignals : OsLockSignals {
             active: (I) -> Boolean,
         ) = ScreenSaver(iface) { connection -> active(connection.getRemoteObject(iface, path, type)) }
     }
+}
+
+@DBusInterfaceName("org.freedesktop.login1.Manager")
+private interface LogindManagerCalls : DBusInterface {
+    /** `GetSessionByPID(u pid) -> o object`: the session of a process. */
+    fun GetSessionByPID(pid: UInt32): DBusPath
 }
 
 /** A desktop screen saver on the session bus: its interface (also its bus name) and how to ask it on a connection. */

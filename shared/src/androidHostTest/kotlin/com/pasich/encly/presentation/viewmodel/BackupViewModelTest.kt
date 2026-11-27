@@ -3,9 +3,12 @@ package com.pasich.encly.presentation.viewmodel
 import com.pasich.encly.core.resources.Res
 import com.pasich.encly.core.resources.backup_error_no_picker
 import com.pasich.encly.core.resources.backup_phrase_exists
+import com.pasich.encly.core.resources.keyring_not_running
 import com.pasich.encly.core.resources.lock_wrong_pin
 import com.pasich.encly.core.resources.security_erase_failed
 import com.pasich.encly.core.security.AutoLockDelay
+import com.pasich.encly.core.security.KeyStoreProblem
+import com.pasich.encly.core.security.PinCheck
 import com.pasich.encly.core.security.ScreenshotAllowance
 import com.pasich.encly.core.security.SecurityManager
 import com.pasich.encly.core.security.SessionLockManager
@@ -79,7 +82,7 @@ class BackupViewModelTest {
         val step = viewModel.uiState.value.step as BackupStep.Reauth
         assertNull(step.error)
         // Nothing is verified, so the lockout is neither extended nor reported as a wrong PIN.
-        verify(security, never()).verifyPin(anyCharArray())
+        verify(security, never()).verifyPinResult(anyCharArray())
     }
 
     @Test
@@ -90,7 +93,7 @@ class BackupViewModelTest {
         assertArrayEquals(CharArray(refused.size), refused)
 
         `when`(security.pinLockoutRemainingMillis()).thenReturn(0L)
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         val checked = "000000".toCharArray()
         viewModel.reauthFlow.submitPin(checked)
         waitForStep { (it as? BackupStep.Reauth)?.error != null }
@@ -99,7 +102,7 @@ class BackupViewModelTest {
 
     @Test
     fun aWrongPinOutsideALockoutIsReported() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
 
         viewModel.reauthFlow.submitPin("000000".toCharArray())
 
@@ -109,7 +112,7 @@ class BackupViewModelTest {
 
     @Test
     fun theRightPinOutsideALockoutProceeds() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
 
         viewModel.reauthFlow.submitPin("123456".toCharArray())
 
@@ -118,7 +121,7 @@ class BackupViewModelTest {
 
     @Test
     fun creatingARecoveryPhraseLaterShowsNewWordsAfterThePin() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.hasRecoverySeed()).thenReturn(false)
         `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
         viewModel.start(BackupAction.CREATE_PHRASE)
@@ -131,7 +134,7 @@ class BackupViewModelTest {
 
     @Test
     fun eachWrongPinCountsAFailureSoTheDotsShakeAgain() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
 
         viewModel.reauthFlow.submitPin("000000".toCharArray())
         waitForStep { (it as? BackupStep.Reauth)?.failures == 1 }
@@ -142,7 +145,7 @@ class BackupViewModelTest {
 
     @Test
     fun creatingARecoveryPhraseWhenOneExistsSaysSo() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.hasRecoverySeed()).thenReturn(true)
         viewModel.start(BackupAction.CREATE_PHRASE)
 
@@ -154,7 +157,7 @@ class BackupViewModelTest {
 
     @Test
     fun theCheckKnowsItsWordsAndCanGoBackToThem() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.hasRecoverySeed()).thenReturn(false)
         `when`(security.generateMnemonicCode()).thenReturn(WORDS.toCharArray())
         viewModel.start(BackupAction.CREATE_PHRASE)
@@ -171,7 +174,7 @@ class BackupViewModelTest {
 
     @Test
     fun eraseNeedsThePinThenRunsAtOnce() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.wipeAndReset()).thenReturn(true)
         viewModel.start(BackupAction.ERASE)
 
@@ -186,8 +189,76 @@ class BackupViewModelTest {
     }
 
     @Test
+    fun eraseAllDataIsToldToEveryWindow() {
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
+        `when`(security.wipeAndReset()).thenReturn(true)
+        viewModel.start(BackupAction.ERASE)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle && viewModel.uiState.value.erased }
+        assertEquals(1L, sessionLock.erasedCount.value)
+        assertFalse(sessionLock.locked.value)
+    }
+
+    @Test
+    fun aRefusedEraseIsNotToldToTheOtherWindows() {
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
+        `when`(security.wipeAndReset()).thenReturn(false)
+        viewModel.start(BackupAction.ERASE)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it == BackupStep.Idle && viewModel.uiState.value.message != null }
+        assertEquals(0L, sessionLock.erasedCount.value)
+        assertFalse(sessionLock.locked.value)
+    }
+
+    @Test
+    fun cancelDuringTheCheckCancelsTheEraseAndTheScreenshotAllowance() {
+        for (action in listOf(BackupAction.ERASE, BackupAction.ALLOW_SCREENSHOTS)) {
+            val checking = java.util.concurrent.CountDownLatch(1)
+            val release = java.util.concurrent.CountDownLatch(1)
+            `when`(security.wipeAndReset()).thenReturn(true)
+            `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
+                checking.countDown()
+                release.await(5, java.util.concurrent.TimeUnit.SECONDS)
+                PinCheck.OK
+            }
+            viewModel.start(action)
+
+            viewModel.reauthFlow.submitPin("123456".toCharArray())
+            assertTrue(checking.await(5, java.util.concurrent.TimeUnit.SECONDS))
+            viewModel.cancel()
+            release.countDown()
+
+            waitForStep { it == BackupStep.Idle }
+            assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
+            assertFalse("the allowance was not granted", screenshots.allowed.value)
+            assertFalse("nothing was erased", viewModel.uiState.value.erased)
+            verify(security, never()).wipeAndReset()
+        }
+    }
+
+    @Test
+    fun theKeyStoreThatDidNotAnswerIsNotReportedAsAWrongPinAndKeepsTheStep() {
+        `when`(security.keyStoreProblem()).thenReturn(KeyStoreProblem.NOT_RUNNING)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.KEY_STORE_UNAVAILABLE)
+        viewModel.start(BackupAction.EXPORT)
+
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+
+        waitForStep { it is BackupStep.Reauth && it.error != null }
+        assertEquals(Res.string.keyring_not_running, (viewModel.uiState.value.step as BackupStep.Reauth).error)
+
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
+        viewModel.reauthFlow.submitPin("123456".toCharArray())
+        waitForStep { it is BackupStep.Reauth && it.error == Res.string.lock_wrong_pin }
+    }
+
+    @Test
     fun allowingScreenshotsNeedsReauthenticationAndNothingElse() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
         assertEquals(BackupStep.Reauth(BackupAction.ALLOW_SCREENSHOTS, biometric = false), viewModel.uiState.value.step)
         assertFalse(screenshots.allowed.value)
@@ -197,7 +268,7 @@ class BackupViewModelTest {
         waitForStep { it is BackupStep.Reauth && it.error != null }
         assertFalse(screenshots.allowed.value)
 
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.Idle && screenshots.allowed.value }
@@ -211,9 +282,9 @@ class BackupViewModelTest {
         `when`(security.isLockable()).thenReturn(true)
         `when`(security.isDatabaseUnlocked()).thenReturn(true)
         // The app locks (no auto-lock delay) while the PIN is being checked.
-        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
             sessionLock.lockNow()
-            true
+            PinCheck.OK
         }
         viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
 
@@ -230,9 +301,9 @@ class BackupViewModelTest {
         `when`(security.isDatabaseUnlocked()).thenReturn(true)
         // An editor is saving: the lock revokes the allowance at once but closes the vault only after the save.
         sessionLock.registerPreLockFlush { awaitCancellation() }
-        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
             sessionLock.lockNow()
-            true
+            PinCheck.OK
         }
         viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
 
@@ -245,7 +316,7 @@ class BackupViewModelTest {
 
     @Test
     fun erasingTheVaultEndsTheAllowance() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         `when`(security.wipeAndReset()).thenReturn(true)
         screenshots.allow()
         viewModel.start(BackupAction.ERASE)
@@ -268,7 +339,7 @@ class BackupViewModelTest {
 
     @Test
     fun aWeakeningChangeAsksForThePinAndAppliesOnlyAfterTheRightOne() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(false)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.WRONG)
         var applied = 0
         viewModel.changeAutoLock(AutoLockDelay.SECONDS_15, AutoLockDelay.MINUTE_1) { applied++ }
         assertEquals(BackupStep.Reauth(BackupAction.CONFIRM_SETTING, biometric = false), viewModel.uiState.value.step)
@@ -279,7 +350,7 @@ class BackupViewModelTest {
         waitForStep { it is BackupStep.Reauth && it.error != null }
         assertEquals(0, applied)
 
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         viewModel.reauthFlow.submitPin("123456".toCharArray())
 
         waitForStep { it == BackupStep.Idle }
@@ -288,7 +359,7 @@ class BackupViewModelTest {
 
     @Test
     fun cancellingAWeakeningChangeKeepsTheOldValue() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         var applied = 0
         viewModel.changeStrictKeyboard(strict = false) { applied++ }
 
@@ -305,9 +376,9 @@ class BackupViewModelTest {
     fun aLockBetweenTheRequestAndThePinDiscardsTheChange() {
         `when`(security.isLockable()).thenReturn(true)
         `when`(security.isDatabaseUnlocked()).thenReturn(true)
-        `when`(security.verifyPin(anyCharArray())).thenAnswer {
+        `when`(security.verifyPinResult(anyCharArray())).thenAnswer {
             sessionLock.lockNow()
-            true
+            PinCheck.OK
         }
         var applied = 0
         viewModel.changeNotePreviews(show = true) { applied++ }
@@ -329,7 +400,7 @@ class BackupViewModelTest {
         sessionLock.lockNow()
         assertEquals(BackupStep.Idle, viewModel.uiState.value.step)
 
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         viewModel.start(BackupAction.ALLOW_SCREENSHOTS)
         viewModel.reauthFlow.submitPin("123456".toCharArray())
         waitForStep { it == BackupStep.Idle }
@@ -353,7 +424,7 @@ class BackupViewModelTest {
 
     @Test
     fun enablingBiometricAsksForThePinBeforeTheEnrolment() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         var enrolled = 0
         viewModel.changeBiometric(enable = true) { enrolled++ }
         assertEquals(0, enrolled)
@@ -367,7 +438,7 @@ class BackupViewModelTest {
 
     @Test
     fun aRefusedEraseIsReportedAsFailed() {
-        `when`(security.verifyPin(anyCharArray())).thenReturn(true)
+        `when`(security.verifyPinResult(anyCharArray())).thenReturn(PinCheck.OK)
         // The security layer refused (a decoy session): nothing was erased.
         `when`(security.wipeAndReset()).thenReturn(false)
         viewModel.start(BackupAction.ERASE)
