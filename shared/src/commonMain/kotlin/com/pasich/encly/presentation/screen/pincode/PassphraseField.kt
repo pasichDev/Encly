@@ -48,6 +48,8 @@ import com.pasich.encly.platform.vaultTextKeyboardOptions
 import com.pasich.encly.presentation.designsystem.EnclyIcons
 import com.pasich.encly.presentation.designsystem.EnclyTextField
 import com.pasich.encly.presentation.designsystem.IconWithTooltip
+import com.pasich.encly.presentation.designsystem.ProvideTextContextMenu
+import com.pasich.encly.presentation.designsystem.providesTextContextMenu
 import com.pasich.encly.ui.theme.EnclyTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -58,7 +60,9 @@ import org.jetbrains.compose.resources.stringResource
  * hint shows while it is, since a masked field gives no sign of it. [onEdit] runs after every edit (to clear an error).
  * The keyboard is the vault's text keyboard with autocorrect off, not the ASCII-only password one of the desktop.
  * The passphrase is kept off the clipboard: the copy and cut keys are swallowed (masked or not, so a cut deletes
- * nothing either), there is no selection toolbar and no pointer menu. Dragging selected text out is not stopped.
+ * nothing either), there is no selection toolbar, and the right-click menu of a desktop lists Paste and Select all
+ * only (a passphrase is pasted in from a password manager; nothing leaves). Where the host has no such menu, the
+ * right button is refused. Dragging selected text out is not stopped.
  */
 @Composable
 internal fun PassphraseField(
@@ -76,45 +80,48 @@ internal fun PassphraseField(
     var capsOn by remember { mutableStateOf(false) }
     val mask = remember { PasswordVisualTransformation() }
     Column(modifier = modifier) {
-        // No selection toolbar (Android, iOS) and no pointer menu (desktop): nothing here offers to copy the text.
+        // No selection toolbar (Android, iOS) and a pointer menu without Cut and Copy (desktop): nothing here offers to
+        // copy the text.
         CompositionLocalProvider(LocalTextToolbar provides NoTextToolbar) {
-            EnclyTextField(
-                value = input.text,
-                onValueChange = {
-                    input.edit(it)
-                    onEdit()
-                },
-                label = label,
-                enabled = enabled,
-                keyboardOptions = vaultTextKeyboardOptions(ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { onSubmit() }, onGo = { onSubmit() }),
-                visualTransformation = if (input.revealed) VisualTransformation.None else mask,
-                trailing = { RevealToggle(input) },
-                labelInSemantics = false,
-                fieldModifier = Modifier
-                    .refuseSecondaryButton()
-                    .focusRequester(focus)
-                    .onFocusChanged {
-                        focused = it.isFocused
-                        if (it.isFocused) capsOn = capsLock() == true
-                    }
-                    .onPreviewKeyEvent { event ->
-                        capsOn = capsLock() == true
-                        when {
-                            // Copy and cut are never run here: a cut would delete what a copy could not keep.
-                            event.copiesOrCutsText() -> true
-
-                            // The keyboard action may fire for the same press: it finds nothing left to send.
-                            event.type == KeyEventType.KeyDown && event.isEnter() -> {
-                                onSubmit()
-                                true
-                            }
-
-                            else -> false
+            ProvideTextContextMenu(allowCopyAndCut = false) {
+                EnclyTextField(
+                    value = input.text,
+                    onValueChange = {
+                        input.edit(it)
+                        onEdit()
+                    },
+                    label = label,
+                    enabled = enabled,
+                    keyboardOptions = vaultTextKeyboardOptions(ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { onSubmit() }, onGo = { onSubmit() }),
+                    visualTransformation = if (input.revealed) VisualTransformation.None else mask,
+                    trailing = { RevealToggle(input) },
+                    labelInSemantics = false,
+                    fieldModifier = Modifier
+                        .then(if (providesTextContextMenu) Modifier else Modifier.refuseSecondaryButton())
+                        .focusRequester(focus)
+                        .onFocusChanged {
+                            focused = it.isFocused
+                            if (it.isFocused) capsOn = capsLock() == true
                         }
-                    }
-                    .semantics { contentDescription = label },
-            )
+                        .onPreviewKeyEvent { event ->
+                            capsOn = capsLock() == true
+                            when {
+                                // Copy and cut are never run here: a cut would delete what a copy could not keep.
+                                event.copiesOrCutsText() -> true
+
+                                // The keyboard action may fire for the same press: it finds nothing left to send.
+                                event.type == KeyEventType.KeyDown && event.isEnter() -> {
+                                    onSubmit()
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        }
+                        .semantics { contentDescription = label },
+                )
+            }
         }
         if (focused && capsOn) {
             Text(
@@ -144,7 +151,7 @@ private object NoTextToolbar : TextToolbar {
     override fun hide() = Unit
 }
 
-/** Eats a press of the secondary (right) button before the field sees it: the field's context menu never opens. */
+/** Eats a press of the secondary (right) button before the field sees it: the field's own menu never opens. */
 private fun Modifier.refuseSecondaryButton(): Modifier = pointerInput(Unit) {
     awaitPointerEventScope {
         while (true) {

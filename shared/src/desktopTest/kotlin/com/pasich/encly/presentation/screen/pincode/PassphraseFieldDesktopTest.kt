@@ -95,7 +95,9 @@ class PassphraseFieldDesktopTest {
     @OptIn(ExperimentalComposeUiApi::class)
     private class RecordingClipboard : Clipboard {
         var writes = 0
-        override val nativeClipboard: NativeClipboard get() = error("not used")
+
+        // An empty one of its own: the menu asks it whether there is anything to paste.
+        override val nativeClipboard: NativeClipboard = java.awt.datatransfer.Clipboard("test")
 
         override suspend fun getClipEntry(): ClipEntry? = null
 
@@ -175,7 +177,7 @@ class PassphraseFieldDesktopTest {
         onNodeWithContentDescription(LABEL).performMouseInput { rightClick() }
         waitForIdle()
 
-        assertEquals(0, menuEntries())
+        assertEquals(0, copyOrCutEntries())
         assertEquals(0, clipboard.writes)
         assertEquals("correct horse battery", input.text)
     }
@@ -195,6 +197,10 @@ class PassphraseFieldDesktopTest {
     private fun ComposeUiTest.menuEntries(): Int = listOf("Copy", "Cut", "Paste", "Select all", "Select All")
         .sumOf { onAllNodes(hasText(it)).fetchSemanticsNodes().size }
 
+    /** The entries that would take the passphrase out of the field; Paste and Select all may be there. */
+    private fun ComposeUiTest.copyOrCutEntries(): Int =
+        listOf("Copy", "Cut").sumOf { onAllNodes(hasText(it)).fetchSemanticsNodes().size }
+
     @Test
     fun aPlainFieldOpensAContextMenuOnRightClickSoTheNextTestMeansSomething() = runComposeUiTest {
         var text by mutableStateOf("some text to copy")
@@ -213,7 +219,7 @@ class PassphraseFieldDesktopTest {
     }
 
     @Test
-    fun theRevealedPassphraseFieldOpensNoContextMenu() = runComposeUiTest {
+    fun theRevealedPassphraseFieldOffersNoCopyOrCutInItsContextMenu() = runComposeUiTest {
         show()
         onNodeWithContentDescription(LABEL).performTextInput("correct horse battery")
         input.revealed = true
@@ -222,7 +228,7 @@ class PassphraseFieldDesktopTest {
         onNodeWithContentDescription(LABEL).performMouseInput { rightClick() }
         waitForIdle()
 
-        assertEquals(0, menuEntries())
+        assertEquals(0, copyOrCutEntries())
     }
 
     private fun ComposeUiTest.onAllNodesWithTextCount(text: String): Int =
